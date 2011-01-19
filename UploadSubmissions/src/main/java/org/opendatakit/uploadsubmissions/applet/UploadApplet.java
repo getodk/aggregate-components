@@ -15,12 +15,10 @@
  */
 package org.opendatakit.uploadsubmissions.applet;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -41,12 +39,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JApplet;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.parser.ParserDelegator;
 
 import org.opendatakit.uploadsubmissions.applet.UploadWorker.ActionListener;
 import org.opendatakit.uploadsubmissions.ui.SubmissionUploaderPanel;
@@ -60,6 +58,10 @@ public class UploadApplet extends JApplet implements
 	public static final String SUBMISSION_UPLOAD_URL_ELEMENT = "UploadSubmissionsApplet";
 	public static final int SEPARATION_DISTANCE = 10;
 	public static final int STATUS_TEXT_INSET = 7;
+	public static final String HTML_OPEN = "<html>";
+	public static final String HTML_CLOSE = "</html>";
+	public static final String SPAN_OPEN = "<span style=\"font-family: arial; font-size: 120%; color: blue;\">";
+	public static final String SPAN_CLOSE = "</span>";
 
 	private static final long serialVersionUID = 1067499473847917508L;
 
@@ -101,8 +103,10 @@ public class UploadApplet extends JApplet implements
 	 * Swing controls for the user interface
 	 */
 	/** status display control */
-	private JTextArea statusCtrl;
+	private JTextPane statusCtrl;
 	private SubmissionUploaderPanel _panel;
+	private final Dimension STATUS_CTRL_DIM = new Dimension(800,400);
+	
 	private CookieHandler mgr;
 	/**************************************************************
 	 * The user's request values.
@@ -149,6 +153,8 @@ public class UploadApplet extends JApplet implements
 				activityState = ActivityState.DONE;
 				// update UI...
 				statusCtrl.setText(getStatus());
+				statusCtrl.setMinimumSize(STATUS_CTRL_DIM);
+				statusCtrl.setPreferredSize(STATUS_CTRL_DIM);
 				EventQueue.invokeLater(new Runnable() {
 					@Override
 					public void run() {
@@ -172,24 +178,31 @@ public class UploadApplet extends JApplet implements
 	 * @return string summarizing the current processing status.
 	 */
 	public synchronized String getStatus() {
+		String text = null;
 		switch (activityState) {
 		case IDLE:
-			return "Idle - select a location and hit `" + 
+			text = "Idle - select a location and hit `" + 
 						SubmissionUploaderPanel.COMMAND_SELECT + "`";
+			break;
 		case WORKING:
-			return "Working...";
+			text = "Working...";
+			break;
 		case POSTING:
-			return "Posting (" + Integer.toString(count) + ":" +
+			text = "Posting (" + Integer.toString(count) + ":" +
 								Integer.toString(tries)	+ ") - " +
 								currentSubmission;
+			break;
 		case DONE:
 			if ( uploadStatus ) {
-				return "Outcome = SUCCESS";
+				text = "Outcome = SUCCESS";
 			} else {
-				return "Outcome = FAILURE: " + eUploadFailure.getMessage();
+				text = "Outcome = FAILURE: " + eUploadFailure.getMessage();
 			}
+			break;
+		default:
+			text = "Bad State - please close all browser windows.";
 		}
-		return "Bad State - please close all browser windows.";
+		return HTML_OPEN + SPAN_OPEN + text + SPAN_CLOSE + HTML_CLOSE;
 	}
 
 	private void toggleEnable(boolean isEnabled) {
@@ -215,11 +228,12 @@ public class UploadApplet extends JApplet implements
 		}
 		
 		Container pane = getContentPane();
-		Font f = pane.getFont();
-		FontMetrics mf = pane.getFontMetrics(f);
-		Font fStatus = f.deriveFont(Font.PLAIN, (float) (mf.getHeight() * 1.5));
 		pane.setLayout(new GridBagLayout());
 
+		// This line of code is needed to avoid a NullPointerException
+		// http://kr.forums.oracle.com/forums/thread.jspa?threadID=1997861
+		new ParserDelegator() ;
+		 
 		GridBagConstraints c = new GridBagConstraints();
 		c.gridx = GridBagConstraints.LINE_START;
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -231,20 +245,19 @@ public class UploadApplet extends JApplet implements
 		JLabel label;
 		label = new JLabel("<html><font size=\"+2\"><b>ODK UploadSubmissions Applet </b></font><font size=\"3\">Version " + UploadWorker.APP_VERSION + "</font></html>", JLabel.LEFT);
 		addUI(label,c);
-		statusCtrl = new JTextArea(4,0);
-		statusCtrl.setText(getStatus());
+		statusCtrl = new JTextPane();
+		statusCtrl.setContentType("text/html");
 		statusCtrl.setEditable(false);
-		statusCtrl.setLineWrap(true);
-		statusCtrl.setWrapStyleWord(false);
-		statusCtrl.setFont(fStatus);
-		statusCtrl.setForeground(Color.BLUE);
-	    Border border = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
-	    Border margin = new EmptyBorder(STATUS_TEXT_INSET,STATUS_TEXT_INSET,
-	    								STATUS_TEXT_INSET,STATUS_TEXT_INSET);
-	    statusCtrl.setBorder(new CompoundBorder(border, margin));
+		statusCtrl.setText(getStatus());
+		statusCtrl.setMinimumSize(STATUS_CTRL_DIM);
+		statusCtrl.setPreferredSize(STATUS_CTRL_DIM);
 		GridBagConstraints cc = (GridBagConstraints) c.clone();
 		cc.fill = GridBagConstraints.BOTH;
-		addUI(statusCtrl,cc);
+		JScrollPane scrollable = new JScrollPane(statusCtrl);
+	    Border border = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
+	    scrollable.setBorder(border);
+	    scrollable.setMinimumSize(STATUS_CTRL_DIM);
+		addUI(scrollable,cc);
 
 		_panel = new SubmissionUploaderPanel(ODK_INSTANCES_DIR, this);
 		_panel.setOpaque(true);
@@ -258,8 +271,14 @@ public class UploadApplet extends JApplet implements
 	 * @param value
 	 */
 	private void errorDialog(String error, String value) {
-		String msgError = error.substring(0,1).toUpperCase() + error.substring(1) + ". " + value;
-		JOptionPane.showMessageDialog(this, msgError, error,
+		String msgError = "<html>" + error.substring(0,1).toUpperCase() + error.substring(1) + ". " + value + "</html>";
+
+		JTextPane msgElement = new JTextPane();
+		msgElement.setContentType("text/html"); // lets Java know it will be HTML                  
+		msgElement.setEditable(false);
+		msgElement.setText(msgError);		
+
+		JOptionPane.showMessageDialog(this, msgElement, error,
 										JOptionPane.ERROR_MESSAGE);
 	}
 	
@@ -268,6 +287,7 @@ public class UploadApplet extends JApplet implements
 	 */
 	public void stop() {
 		executor.shutdownNow();
+		this.getContentPane().removeAll();
 		super.stop();
 	}
 

@@ -15,9 +15,9 @@
  */
 package org.opendatakit.briefcase;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -52,15 +52,15 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.parser.ParserDelegator;
 
 /**
  * Applet to fetch data from Aggregate and store it in csv and binary
@@ -84,7 +84,7 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 	private static final long serialVersionUID = 8523973495636927870L;
 
 	/** logger for this applet */
-	private static final Logger log = Logger.getLogger(BriefcaseApplet.class.getName());
+	private final Logger log = Logger.getLogger(BriefcaseApplet.class.getName());
 
 	// So this runs first before JVM loads an L&F
 	static
@@ -128,7 +128,7 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 	 * Swing controls for the user interface
 	 */
 	/** status display control */
-	private JTextArea statusCtrl;
+	private JTextPane statusCtrl;
 	private JTextField dirPathCtrl;
 	private JButton chooserCtrl;
 	private JTextField formIdCtrl;
@@ -141,6 +141,7 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 	private JCheckBox recursiveCtrl;
 	private JButton executeCtrl;
 	
+	private final Dimension STATUS_CTRL_DIM = new Dimension(800,100);
 	private CookieHandler mgr;
 	/**************************************************************
 	 * The user's request values.
@@ -192,6 +193,8 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 				activityState = ActivityState.DONE;
 				// update UI...
 				statusCtrl.setText(getStatus());
+				statusCtrl.setMinimumSize(STATUS_CTRL_DIM);
+				statusCtrl.setPreferredSize(STATUS_CTRL_DIM);
 				EventQueue.invokeLater(new Runnable() {
 					@Override
 					public void run() {
@@ -215,22 +218,30 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 	 * @return string summarizing the current processing status.
 	 */
 	public synchronized String getStatus() {
+		String text = null;
 		switch (activityState) {
 		case IDLE:
-			return "Idle - fill in a request and hit `Retrieve`";
+			text = "Idle - fill in a request and hit `Retrieve`";
+			break;
 		case WORKING:
-			return "Working...";
+			text = "Working...";
+			break;
 		case FETCHING:
-			return "Fetching (" + Integer.toString(count) + ":" + Integer.toString(tries) 
+			text = "Fetching (" + Integer.toString(count) + ":" + Integer.toString(tries) 
 					+ ") - " + currentUrl;
+			break;
 		case DONE:
 			if ( fetchStatus ) {
-				return "Outcome = SUCCESS";
+				text = "Outcome = SUCCESS";
 			} else {
-				return "Outcome = FAILURE: " + eFetchFailure.getMessage();
+				text = "Outcome = FAILURE: " + eFetchFailure.getMessage();
 			}
+			break;
+		default:
+			text = "Bad State - please close all browser windows.";
 		}
-		return "Bad State - please close all browser windows.";
+		return "<html><span style=\"font-family: arial; font-size: 120%; color: blue;\">" +
+			text + "</span></html>";
 	}
 
 	/**
@@ -270,9 +281,12 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 		Container pane = getContentPane();
 		Font f = pane.getFont();
 		FontMetrics mf = pane.getFontMetrics(f);
-		Font fStatus = f.deriveFont(Font.PLAIN, (float) (mf.getHeight() * 1.5));
 		pane.setLayout(new GridBagLayout());
 
+		// This line of code is needed to avoid a NullPointerException
+		// http://kr.forums.oracle.com/forums/thread.jspa?threadID=1997861
+		new ParserDelegator() ;
+		 
 		GridBagConstraints c = new GridBagConstraints();
 		c.gridx = GridBagConstraints.LINE_START;
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -293,20 +307,19 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 		JLabel label;
 		label = new JLabel("<html><font size=\"+2\"><b>ODK Briefcase Applet </b></font><font size=\"3\">Version " + CsvDownload.APP_VERSION + "</font></html>", JLabel.LEFT);
 		addUI(label,c);
-		statusCtrl = new JTextArea(4,0);
-		statusCtrl.setText(getStatus());
+		statusCtrl = new JTextPane();
+		statusCtrl.setContentType("text/html");
 		statusCtrl.setEditable(false);
-		statusCtrl.setLineWrap(true);
-		statusCtrl.setWrapStyleWord(false);
-		statusCtrl.setFont(fStatus);
-		statusCtrl.setForeground(Color.BLUE);
-	    Border border = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
-	    Border margin = new EmptyBorder(STATUS_TEXT_INSET,STATUS_TEXT_INSET,
-	    								STATUS_TEXT_INSET,STATUS_TEXT_INSET);
-	    statusCtrl.setBorder(new CompoundBorder(border, margin));
+		statusCtrl.setText(getStatus());
+		statusCtrl.setMinimumSize(STATUS_CTRL_DIM);
+		statusCtrl.setPreferredSize(STATUS_CTRL_DIM);
 		GridBagConstraints cc = (GridBagConstraints) c.clone();
 		cc.fill = GridBagConstraints.BOTH;
-		addUI(statusCtrl,cc);
+		JScrollPane scrollable = new JScrollPane(statusCtrl);
+	    Border border = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
+	    scrollable.setBorder(border);
+	    scrollable.setMinimumSize(STATUS_CTRL_DIM);
+	    addUI(scrollable,cc);
 		label = new JLabel("Download directory in which to store the data files:");
 		addUI(label,c);
         Box b = Box.createHorizontalBox();
@@ -547,8 +560,14 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 	 * @param value
 	 */
 	private void errorDialog(String error, String value) {
-		String msgError = error.substring(0,1).toUpperCase() + error.substring(1) + ". " + value;
-		JOptionPane.showMessageDialog(this, msgError, error,
+		String msgError = "<html>" + error.substring(0,1).toUpperCase() + error.substring(1) + ". " + value + "</html>";
+
+		JTextPane msgElement = new JTextPane();
+		msgElement.setContentType("text/html"); // lets Java know it will be HTML                  
+		msgElement.setEditable(false);
+		msgElement.setText(msgError);		
+
+		JOptionPane.showMessageDialog(this, msgElement, error,
 										JOptionPane.ERROR_MESSAGE);
 	}
 	
@@ -557,6 +576,7 @@ public class BriefcaseApplet extends JApplet implements ActionListener, CsvDownl
 	 */
 	public void stop() {
 		executor.shutdownNow();
+		this.getContentPane().removeAll();
 		super.stop();
 	}
 }

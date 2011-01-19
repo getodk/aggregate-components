@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
@@ -40,6 +41,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 
 /**
  * The implementation of the Briefcase functionality which uses ODK
@@ -51,6 +53,10 @@ import org.apache.http.params.HttpParams;
  */
 public class FormUpload {
 	
+	private static final String BODY_CLOSE = "</body>";
+
+	private static final String BODY_OPEN = "<body>";
+
 	/**
 	 * Notification interface to inform our creator what 
 	 * URL we are currently fetching data from. 
@@ -284,25 +290,41 @@ public class FormUpload {
 			// prepare response and return uploaded
 		    HttpResponse response = null;
 	        response = httpclient.execute(httppost);
-		
+	        String body = "";
+	        if ( response != null ) {
+	        	HttpEntity responseEntity = response.getEntity();
+	        	if ( responseEntity != null ) {
+	        		String fullResponseBody = EntityUtils.toString(responseEntity);
+	        		body = fullResponseBody;
+			        int idx = fullResponseBody.indexOf(BODY_OPEN);
+			        if ( idx != -1 ) {
+			        	body = fullResponseBody.substring(idx+BODY_OPEN.length());
+				        body = body.substring(0,body.indexOf(BODY_CLOSE));
+			        }
+	        	}
+	        }
 		    // check response.
-		    // TODO: This isn't handled correctly.
+		    int responseCode = response.getStatusLine().getStatusCode();
+		    Logger.getLogger(FormUpload.class.getName()).info(
+		    			"Response code:" + Integer.toString(responseCode));
+		
+		    // verify that your response is 201
+		    if (responseCode != 201) {
+		        throw new IllegalStateException(response.getStatusLine().getReasonPhrase() + body);
+		    }
+
 		    String serverLocation = null;
 		    Header[] h = response.getHeaders("Location");
 		    if (h != null && h.length > 0) {
 		        serverLocation = h[0].getValue();
 		    } else {
-		        // something should be done here...
 		        throw new IllegalStateException("Location header was absent");
 		    }
-		    int responseCode = response.getStatusLine().getStatusCode();
-		    Logger.getLogger(FormUpload.class.getName()).info(
-		    			"Response code:" + Integer.toString(responseCode));
-		
+
 		    // verify that your response came from a known server
-		    if (!serverUrl.contains(serverLocation) || responseCode != 201) {
-		        throw new IllegalStateException("Failed to receive success response during upload: " +
-		        		Integer.toString(responseCode));
+		    if (!serverUrl.contains(serverLocation)) {
+		        throw new IllegalStateException("Response `Location` (" + serverLocation +
+		        		") does not match request URL: " + serverUrl);
 		    }
 		    
 		    if ( remaining.isEmpty() ) break;

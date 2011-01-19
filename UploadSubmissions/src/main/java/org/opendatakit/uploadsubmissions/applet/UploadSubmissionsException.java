@@ -31,17 +31,24 @@ public class UploadSubmissionsException extends Exception {
 
 	private static String buildMessage(List<SubmissionResult> results) {
 		StringBuilder b = new StringBuilder();
-		b.append("Details\n");
+		b.append("Details<br/>");
 		boolean failuresPresent = false;
 		for ( SubmissionResult result : results ) {
-			b.append(result.getFile().getName()); b.append(" - Outcome: ");
+			b.append(UploadApplet.SPAN_OPEN);
+			b.append("Submission: <b>");
+			b.append(result.getFile().getName());
+			b.append("</b> Outcome: ");
 			if ( result.isSuccess() ) {
 				b.append("Success!\n");
 			} else {
 				failuresPresent = true;
-				b.append(result.getFailureReason()); b.append("\n");
+				b.append(result.getFailureReason());
 			}
+			b.append("</span><br/>"); 
+			b.append(UploadApplet.SPAN_CLOSE);
 		}
-		return (failuresPresent ? "Success\n" : "Failure\n") + b.toString();
+		final String output = (failuresPresent ? "<b>FAILURE(S)</b><br/>" : 
+							"<b>COMPLETE SUCCESS</b><br/>") + b.toString();
+		return output;
 	}
 }

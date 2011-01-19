@@ -19,18 +19,19 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 import org.opendatakit.uploadsubmissions.utils.DeleteDirectory;
 import org.opendatakit.uploadsubmissions.utils.IHttpClientFactory;
 
@@ -67,7 +68,10 @@ public class Submission
 	}
 	
 	public static final String FORM_PART_XML_SUBMISSION_FILE = "xml_submission_file";
-	
+
+	private static final String BODY_CLOSE = "</body>";
+	private static final String BODY_OPEN = "<body>";
+
 	private final IHttpClientFactory _factory;
 	private final HttpParams _httpParams;
 	private final URL _aggregateURL;
@@ -96,33 +100,58 @@ public class Submission
 
         // prepare response and return uploaded
         HttpResponse response = null;
+        String body = "";
         try 
         {
         	// TODO: expand for multi-part submissions
         	HttpClient httpClient = _factory.getHttpClient(_httpParams);
     		HttpPost httppost = buildSubmissionPost(_aggregateURL, _submissionDir);
             response = httpClient.execute(httppost);
+
+            // check response.
+            if ( response == null ) {
+                // something should be done here...
+            	_logger.severe("HttpResponse is null");
+            	result.setSuccess(false);
+            	result.setFailureReason("HttpResponse is null");
+            	return result;
+            }
+
+            HttpEntity entity = response.getEntity();
+            if ( entity == null ) {
+            	body = "";
+            } else {
+	            String fullResponseBody = EntityUtils.toString(entity);
+	            body = fullResponseBody;
+	            int idx = fullResponseBody.indexOf(BODY_OPEN);
+	            if ( idx != -1 ) {
+	               	body = fullResponseBody.substring(idx+BODY_OPEN.length());
+	                body = body.substring(0,body.indexOf(BODY_CLOSE));
+	            }
+            }
             httpClient.getConnectionManager().shutdown();
         } 
         catch (Exception e)
         {
-        	_logger.severe(Arrays.toString(e.getStackTrace()));
-        	_logger.severe(e.toString());
+        	e.printStackTrace();
         	result.setSuccess(false);
         	result.setFailureReason(e.getMessage());
         	return result;
         }
-
-        // check response.
-        if ( response == null ) {
-            // something should be done here...
-        	_logger.severe("HttpResponse is null");
-        	result.setSuccess(false);
-        	result.setFailureReason("HttpResponse is null");
-        	return result;
-        }
         
-        // TODO: This isn't handled correctly.
+        // check response.
+        int responseCode = response.getStatusLine().getStatusCode();
+        _logger.info("Response code:" + responseCode);
+
+        // verify that your response is 201
+	    if (responseCode != 201) {
+        	result.setSuccess(false);
+        	result.setFailureReason(
+        			"<b><em>" + response.getStatusLine().getReasonPhrase() +
+        			"</em></b><br/>" + body);
+        	return result;
+	    }
+
         String serverLocation = null;
         Header[] h = response.getHeaders("Location");
         if (h != null && h.length > 0) {
@@ -135,23 +164,11 @@ public class Submission
         	return result;
         }
 
-        int responseCode = response.getStatusLine().getStatusCode();
-        _logger.severe("Response code:" + responseCode);
-
-        // verify that your response came from a known server
-        if ( serverLocation != null &&
-        	!_aggregateURL.toString().contains(serverLocation) ) {
+	    // verify that your response came from a known server
+	    if (!_aggregateURL.toString().contains(serverLocation)) {
         	result.setSuccess(false);
-        	result.setFailureReason("Location header did not match " +
-        							_aggregateURL.toString());
-        	return result;
-        }
-        
-        if ( responseCode != 201 ) {
-        	result.setSuccess(false);
-        	result.setFailureReason("StatusCode (" +
-        			Integer.toString(responseCode) +
-        			") is not 201");
+	        result.setFailureReason("Response `Location` (" + serverLocation +
+	        		") does not match request URL: " + _aggregateURL.toString());
         	return result;
         }
         
