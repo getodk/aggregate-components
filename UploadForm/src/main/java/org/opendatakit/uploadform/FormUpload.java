@@ -18,6 +18,7 @@ package org.opendatakit.uploadform;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.CookieHandler;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -117,6 +118,8 @@ public class FormUpload {
 
 	/** the base URL of the server. e.g., http://localhost:8888/App/ */
 	private final String serverUrl;
+	/** cookie manager */
+	private final CookieHandler mgr;
 	/** xform filename */
 	private final File xformFilename;
 	/** xform media directory */
@@ -124,6 +127,7 @@ public class FormUpload {
 	/** callback for reporting activity to the ui layer */
 	private final ActionListener uiNotify;
 	
+	private final Logger logger = Logger.getLogger(FormUpload.class.getName());
 
 	/**
 	 * Formatter for directory-of-file-related messages.
@@ -153,6 +157,7 @@ public class FormUpload {
 	 * Throws an exception if the directory structure rooted at the
 	 * destinationDirectoryName cannot be created or accessed or if the manifest
 	 * file within that directory structure exists or cannot be created.
+	 * @param mgr 
 	 * 
 	 * @param serverUrl
 	 * @param xformFullFilename
@@ -160,11 +165,11 @@ public class FormUpload {
 	 * @throws IllegalArgumentException
 	 */
 	public FormUpload(final String serverUrlArg,
-			final String xformFullFilename,
+			CookieHandler mgr, final String xformFullFilename,
 			ActionListener uiNotifyArg ) {
 
 		uiNotify = uiNotifyArg; 
-		
+		this.mgr = mgr;
 		String workingServerUrl;
 		// ensure that serverUrl looks like a http string and ends in slash
 		if (!serverUrlArg.endsWith(SLASH)) {
@@ -241,6 +246,22 @@ public class FormUpload {
 	    HttpConnectionParams.setConnectionTimeout(params, CONNECTION_TIMEOUT);
 	    HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT);
 	    HttpClientParams.setRedirecting(params, false);
+
+	    // find the applicable cookies...
+	    List<String> cookies = null;
+	    try {
+			Map<String,List<String>> rh = new HashMap<String,List<String>> ();
+			Map<String,List<String>> cookieStrings = mgr.get(new URL(serverUrl).toURI(), rh);
+			for ( String s : cookieStrings.keySet() ) {
+				logger.info("cookieHandler has key name: " + s);
+			}
+			cookies = cookieStrings.get("Cookie");
+			if ( cookies == null ) {
+				cookies = new ArrayList<String>();
+			}
+		} catch ( Exception eIgnore) {
+			cookies = new ArrayList<String>();
+		}
 	
 	    int postCount = 1;
 	    List<File> current = xformMediaFileList;
@@ -251,7 +272,12 @@ public class FormUpload {
 		    long messageSize = 0L;
 		    List<File> remaining = new ArrayList<File>();
 		    HttpPost httppost = new HttpPost(serverUrl);
-		
+
+		    // add cookies
+		    for ( String c : cookies ) {
+		    	httppost.setHeader("Cookie", c);
+		    }
+
 		    // mime post
 		    MultipartEntity entity = new MultipartEntity();
 		    // the xform itself...

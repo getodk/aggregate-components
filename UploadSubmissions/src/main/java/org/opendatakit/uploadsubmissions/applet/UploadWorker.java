@@ -2,9 +2,12 @@ package org.opendatakit.uploadsubmissions.applet;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.net.CookieHandler;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.apache.http.client.params.HttpClientParams;
@@ -34,14 +37,16 @@ public class UploadWorker {
 		public void beforePostUrl( String submissionName, int tries, int count ); 
 	}
 
-	private static final Logger _logger = Logger.getLogger(UploadWorker.class.getName());
+	private final Logger _logger = Logger.getLogger(UploadWorker.class.getName());
 
 	private final ActionListener uiNotify;
 	private final URL submissionURL;
+	private final CookieHandler mgr;
 	
-	public UploadWorker( URL submissionURL, ActionListener uiNotify ) {
+	public UploadWorker( URL submissionURL, CookieHandler mgr, ActionListener uiNotify ) {
 		this.uiNotify = uiNotify;
 		this.submissionURL = submissionURL;
+		this.mgr = mgr;
 	}
 	
 	public void doWork(IHttpClientFactory factory, File submissionsParentDir) throws UploadSubmissionsException {
@@ -60,6 +65,22 @@ public class UploadWorker {
 	    HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT);
 	    HttpClientParams.setRedirecting(params, false);
 	    
+	    // find the applicable cookies...
+	    List<String> cookies = null;
+	    try {
+			Map<String,List<String>> rh = new HashMap<String,List<String>> ();
+			Map<String,List<String>> cookieStrings = mgr.get(submissionURL.toURI(), rh);
+			for ( String s : cookieStrings.keySet() ) {
+				_logger.info("cookieHandler has key name: " + s);
+			}
+			cookies = cookieStrings.get("Cookie");
+			if ( cookies == null ) {
+				cookies = new ArrayList<String>();
+			}
+		} catch ( Exception eIgnore) {
+			cookies = new ArrayList<String>();
+		}
+
 	    List<SubmissionResult> results = new ArrayList<SubmissionResult>();
 	    
 	    int count = 0;
@@ -70,7 +91,7 @@ public class UploadWorker {
         	try {
 				uiNotify.beforePostUrl("Submitting " + submissionFolder.getName(), 1, count);
 				
-				Submission submission = new Submission(factory, params, submissionURL, submissionFolder);
+				Submission submission = new Submission(factory, params, submissionURL, cookies, submissionFolder);
         	
         		SubmissionResult result = submission.submitAndDeleteLocalCopy();
 

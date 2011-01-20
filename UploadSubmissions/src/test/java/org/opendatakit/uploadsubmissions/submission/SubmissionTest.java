@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 
 import org.apache.http.HttpEntity;
@@ -58,7 +59,7 @@ public class SubmissionTest
 	@Before
 	public void setup() throws URISyntaxException, MalformedURLException
 	{
-		_submission = new Submission(null, null, null, null);
+		_submission = new Submission(null, null, null, new ArrayList<String>(), null);
 	}
 	
 	@Test
@@ -90,7 +91,7 @@ public class SubmissionTest
 			
 			URL url = new URL("http://nowhere.com/submission");
 			File submissionDir = TestUtilities.buildSingleSubmission("submission", "submission.xml", "pic1.jpg");
-			Submission submission = new Submission(factory, params, url, submissionDir);
+			Submission submission = new Submission(factory, params, url, new ArrayList<String>(), submissionDir);
 			SubmissionResult result = submission.submitAndDeleteLocalCopy();
 			if (response != null)
 			{

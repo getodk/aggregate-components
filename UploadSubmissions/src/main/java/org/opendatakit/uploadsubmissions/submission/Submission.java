@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -76,6 +77,7 @@ public class Submission
 	private final HttpParams _httpParams;
 	private final URL _aggregateURL;
 	private final File _submissionDir;
+	private List<String> _cookies;
 	private Logger _logger = Logger.getLogger(Submission.class.getName());
 
 	/**
@@ -84,13 +86,15 @@ public class Submission
 	 * 
 	 * @param httpParams configuration for the HttpClient we will be creating...
 	 * @param aggregateURL
+	 * @param cookies 
 	 * @param submissionDir
 	 */
-	public Submission(IHttpClientFactory factory, HttpParams httpParams, URL aggregateURL, File submissionDir)
+	public Submission(IHttpClientFactory factory, HttpParams httpParams, URL aggregateURL, List<String> cookies, File submissionDir)
 	{
 		_factory = factory;
 		_httpParams = httpParams;
 		_aggregateURL = aggregateURL;
+		_cookies = cookies;
 		_submissionDir = submissionDir;
 	}
 
@@ -106,6 +110,9 @@ public class Submission
         	// TODO: expand for multi-part submissions
         	HttpClient httpClient = _factory.getHttpClient(_httpParams);
     		HttpPost httppost = buildSubmissionPost(_aggregateURL, _submissionDir);
+    		for ( String c : _cookies ) {
+    			httppost.setHeader("Cookie", c);
+    		}
             response = httpClient.execute(httppost);
 
             // check response.

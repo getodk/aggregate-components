@@ -364,7 +364,7 @@ public class UploadApplet extends JApplet implements
 				_logger.severe("no authentication cookie!");
 			}
 			
-			worker = new UploadWorker(_submissionURL, this);
+			worker = new UploadWorker(_submissionURL, mgr, this);
 			
 			// launch worker...
 			workerFired = true;

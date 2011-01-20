@@ -419,7 +419,7 @@ public class UploadFormApplet extends JApplet implements ActionListener, FormUpl
 					return;
 				}
 
-				worker = new FormUpload(candidateUrl, destDir, this);
+				worker = new FormUpload(candidateUrl, mgr, destDir, this);
 				
 				// launch worker...
 				workerFired = true;

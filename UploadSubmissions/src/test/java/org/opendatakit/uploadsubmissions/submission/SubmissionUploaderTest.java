@@ -21,6 +21,9 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -76,7 +79,17 @@ public class SubmissionUploaderTest implements ActionListener {
 	        }
 	        
 			TestUtilities factory = new TestUtilities(responses);
-			UploadWorker uploader = new UploadWorker(server, this);
+			
+			CookieHandler mgr = CookieHandler.getDefault();
+			if ( mgr == null ) {
+				_logger.severe("No default CookieManager -- creating our own!");
+				mgr = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
+				CookieHandler.setDefault(mgr);
+			} else {
+				_logger.info("Found a default CookieManager -- using it!");
+			}
+
+			UploadWorker uploader = new UploadWorker(server, mgr, this);
 			
 			uploader.doWork(factory, submissionsParentDir);
 
@@ -133,7 +146,17 @@ public class SubmissionUploaderTest implements ActionListener {
 		List<HttpResponse> responses = buildSubmissionResultSet(serverUrl, submissionsParentDir, successProb);
 
 		TestUtilities factory = new TestUtilities(responses);
-		UploadWorker uploader = new UploadWorker(serverUrl, this);
+		
+		CookieHandler mgr = CookieHandler.getDefault();
+		if ( mgr == null ) {
+			_logger.severe("No default CookieManager -- creating our own!");
+			mgr = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
+			CookieHandler.setDefault(mgr);
+		} else {
+			_logger.info("Found a default CookieManager -- using it!");
+		}
+
+		UploadWorker uploader = new UploadWorker(serverUrl, mgr, this);
 
 		try {
 			uploader.doWork(factory, submissionsParentDir);
