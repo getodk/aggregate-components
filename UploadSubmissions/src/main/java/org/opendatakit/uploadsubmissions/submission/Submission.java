@@ -71,7 +71,8 @@ public class Submission
 	public static final String FORM_PART_XML_SUBMISSION_FILE = "xml_submission_file";
 
 	private static final String BODY_CLOSE = "</body>";
-	private static final String BODY_OPEN = "<body>";
+	private static final String BODY_OPEN_START = "<body";
+	private static final String BODY_OPEN_END = ">";
 
 	private final IHttpClientFactory _factory;
 	private final HttpParams _httpParams;
@@ -130,9 +131,10 @@ public class Submission
             } else {
 	            String fullResponseBody = EntityUtils.toString(entity);
 	            body = fullResponseBody;
-	            int idx = fullResponseBody.indexOf(BODY_OPEN);
+	            int idx = fullResponseBody.indexOf(BODY_OPEN_START);
 	            if ( idx != -1 ) {
-	               	body = fullResponseBody.substring(idx+BODY_OPEN.length());
+	            	idx = fullResponseBody.indexOf(BODY_OPEN_END,idx);
+	               	body = fullResponseBody.substring(idx+BODY_OPEN_END.length());
 	                body = body.substring(0,body.indexOf(BODY_CLOSE));
 	            }
             }

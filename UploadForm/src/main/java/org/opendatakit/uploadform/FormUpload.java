@@ -56,7 +56,8 @@ public class FormUpload {
 	
 	private static final String BODY_CLOSE = "</body>";
 
-	private static final String BODY_OPEN = "<body>";
+	private static final String BODY_OPEN_START = "<body";
+	private static final String BODY_OPEN_END = ">";
 
 	/**
 	 * Notification interface to inform our creator what 
@@ -322,11 +323,12 @@ public class FormUpload {
 	        	if ( responseEntity != null ) {
 	        		String fullResponseBody = EntityUtils.toString(responseEntity);
 	        		body = fullResponseBody;
-			        int idx = fullResponseBody.indexOf(BODY_OPEN);
-			        if ( idx != -1 ) {
-			        	body = fullResponseBody.substring(idx+BODY_OPEN.length());
-				        body = body.substring(0,body.indexOf(BODY_CLOSE));
-			        }
+		            int idx = fullResponseBody.indexOf(BODY_OPEN_START);
+		            if ( idx != -1 ) {
+		            	idx = fullResponseBody.indexOf(BODY_OPEN_END,idx);
+		               	body = fullResponseBody.substring(idx+BODY_OPEN_END.length());
+		                body = body.substring(0,body.indexOf(BODY_CLOSE));
+		            }
 	        	}
 	        }
 		    // check response.
