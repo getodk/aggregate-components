@@ -220,11 +220,9 @@ public class GaeManagedClientConnection implements ManagedClientConnection {
 		// Build and issue the URLFetch request here.
 		URLFetchService service = URLFetchServiceFactory.getURLFetchService();
 		
-		Boolean redirect = HttpClientParams.isRedirecting(params);
-		Boolean authenticate = HttpClientParams.isAuthenticating(params);
-		if ( authenticate ) {
-			throw new IllegalStateException("Unable to handle authentication automatically");
-		}
+		boolean redirect = HttpClientParams.isRedirecting(params);
+		boolean authenticate = HttpClientParams.isAuthenticating(params);
+		// TODO: verify that authentication is handled by URLFetchService...
 		
 		// default is to throw an exception on a overly-large request
 		// follow redirects (e.g., to https), and to validate server
