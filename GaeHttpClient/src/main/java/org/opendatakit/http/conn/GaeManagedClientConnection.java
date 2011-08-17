@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import org.apache.http.Header;
 import org.apache.http.HttpConnectionMetrics;
@@ -63,6 +64,8 @@ import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
  */
 public class GaeManagedClientConnection implements ManagedClientConnection {
 
+	private static final Logger logger = Logger.getLogger(GaeManagedClientConnection.class.getName());
+	
 	/** The state object associated with this connection */
 	private Object state;
 	
@@ -240,15 +243,24 @@ public class GaeManagedClientConnection implements ManagedClientConnection {
 		// set a deadline if we have a wait-for-continue limit
 		// in an expectContinue situation 
 		// or a timeout value set on the connection.
-		int msWaitForContinue = request.getParams().getIntParameter(
+		HttpParams params = request.getParams();
+		int deadline = 0;
+		int msWaitForContinue = params.getIntParameter(
                 					CoreProtocolPNames.WAIT_FOR_CONTINUE, 2000);
 		if ( expectContinueHeaders == null ) {
 			msWaitForContinue = 0;
 		}
+		int soTimeout = org.apache.http.params.HttpConnectionParams.getSoTimeout(params);
+		int connTimeout = org.apache.http.params.HttpConnectionParams.getConnectionTimeout(params);
+		if ( soTimeout <= 0 || connTimeout <= 0  ) {
+			deadline = 0; // wait forever...
+		} else {
+			int maxDelay = Math.max( Math.max(timeoutMilliseconds, msWaitForContinue), connTimeout);
+			deadline = soTimeout + maxDelay;
+		}
 		
-		int deadline = (timeoutMilliseconds > msWaitForContinue) ?
-				timeoutMilliseconds : msWaitForContinue;
 		if ( deadline > 0 ) {
+			logger.info("URLFetch timeout (socket + connection) (ms): " + deadline);
 			f.setDeadline(new Double(0.001 * (double) deadline));
 		}
 		f.validateCertificate();
