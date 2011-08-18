@@ -21,8 +21,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpConnectionMetrics;
 import org.apache.http.HttpEntity;
@@ -64,7 +65,7 @@ import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
  */
 public class GaeManagedClientConnection implements ManagedClientConnection {
 
-	private static final Logger logger = Logger.getLogger(GaeManagedClientConnection.class.getName());
+    private static final Log logger = LogFactory.getLog(GaeManagedClientConnection.class);
 	
 	/** The state object associated with this connection */
 	private Object state;
