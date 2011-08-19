@@ -2,6 +2,7 @@ package org.opendatakit.briefcase.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,7 +13,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +28,7 @@ import org.apache.http.protocol.HttpContext;
 import org.bushe.swing.event.EventBus;
 import org.javarosa.xform.parse.XFormParser;
 import org.kxml2.io.KXmlParser;
+import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.opendatakit.briefcase.model.FormStatus;
@@ -44,6 +48,8 @@ public class ServerFormListFetcher {
 
     private static final String NAMESPACE_OPENROSA_ORG_XFORMS_XFORMS_LIST =
         "http://openrosa.org/xforms/xformsList";
+    
+    private static final String NAMESPACE_OPENDATAKIT_ORG_SUBMISSIONS = "http://opendatakit.org/submissions";
 
     private static final String BAD_OPENROSA_FORMLIST = 
     		"The server has not provided an available-forms document compliant with the OpenRosa version 1.0 standard.";
@@ -56,6 +62,8 @@ public class ServerFormListFetcher {
 	private static final CharSequence HTTP_CONTENT_TYPE_TEXT_XML = "text/xml";
 
 	private static final CharSequence HTTP_CONTENT_TYPE_APPLICATION_XML = "application/xml";
+
+	private static final int MAX_ENTRIES = 2;
 
 	ServerConnectionInfo serverInfo;
 
@@ -71,6 +79,30 @@ public class ServerFormListFetcher {
 		}
 	};
 	
+	public  static class SubmissionListException extends Exception {
+		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8707375089373674335L;
+
+		SubmissionListException(String message) {
+			super(message);
+		}
+	}
+	
+	public  static class SubmissionDownloadException extends Exception {
+		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8717375089373674335L;
+
+		SubmissionDownloadException(String message) {
+			super(message);
+		}
+	}
+
 	public static class DownloadException extends Exception {
 		/**
 		 * 
@@ -102,69 +134,6 @@ public class ServerFormListFetcher {
             this.isOpenRosaResponse = isOpenRosaResponse;
         }
     }
-
-    /**
-     * Class for returning the details about the forms available for download
-     * and any errors that might be returned during the retrieval attempt.
-     * 
-     * @author mitchellsundt@gmail.com
-     *
-     */
-    public static final class FormDetails {
-        public final String stringValue;
-
-        public final String formName;
-        public final String formId;
-        public final Integer modelVersion;
-        public final Integer uiVersion;
-        public final String description;
-        public final String downloadUrl;
-        public final String manifestUrl;
-
-
-        /**
-         * Download error constructor.
-         * 
-         * @param stringValue
-         */
-        public FormDetails(String stringValue) {
-            this.stringValue = stringValue;
-
-            formName = null;
-            formId = null;
-            modelVersion = null;
-            uiVersion = null;
-            description = null;
-            downloadUrl = null;
-            manifestUrl = null;
-        }
-
-
-        /**
-         * Successful download constructor.  
-         * Only formName and downloadUrl are guaranteed to be non-null.
-         * 
-         * @param formName  not null
-         * @param formId
-         * @param modelVersion
-         * @param uiVersion
-         * @param description
-         * @param downloadUrl
-         * @param manifestUrl
-         */
-        public FormDetails(String formName, String formId, Integer modelVersion, Integer uiVersion,
-                String description, String downloadUrl, String manifestUrl) {
-            this.stringValue = null;
-            this.formName = formName;
-            this.formId = formId;
-            this.modelVersion = modelVersion;
-            this.uiVersion = uiVersion;
-            this.description = description;
-            this.downloadUrl = downloadUrl;
-            this.manifestUrl = manifestUrl;
-        }
-    }
-
 
     private boolean isXformsListNamespacedElement(Element e) {
         return e.getNamespace().equalsIgnoreCase(NAMESPACE_OPENROSA_ORG_XFORMS_XFORMS_LIST);
@@ -348,19 +317,29 @@ public class ServerFormListFetcher {
         	fs.setStatusString("Fetching form definition");
             EventBus.publish(new FormStatusEvent(fs));
             try {
-                File dl = downloadFile(briefcaseDir, fd.getFormName(), fd.getDownloadUrl());
+            	
+            	File dl = this.getFormDefinitionFile(briefcaseDir, fd.getFormName());
+            	commonDownloadFile(dl, fd.getDownloadUrl());
                 
                 if (fd.getManifestUrl() != null) {
-                    String error = downloadManifestAndMediaFiles(new File(dl.getParentFile(), fd.getFormName() + "-media"), fs);
+                	File mediaDir = this.getMediaDirectory(briefcaseDir, fd.getFormName());
+                    String error = downloadManifestAndMediaFiles(mediaDir, fs);
                     if (error != null) {
                     	fs.setStatusString("Error fetching form definition: " + error);
                         EventBus.publish(new FormStatusEvent(fs));
                         continue;
                     }
                 }
+                fs.setStatusString("preparing to retrieve instance data");
+    			EventBus.publish(new FormStatusEvent(fs));
 
+    			File formInstancesDir = this.getFormInstancesDirectory(briefcaseDir, fd.getFormName());
+    			
                 // TODO: pull down data files...
-                fs.setFormDefinition(new LocalFormDefinition(dl));
+    			LocalFormDefinition lfd = new LocalFormDefinition(dl);
+    			downloadDataFiles(formInstancesDir, lfd, fs);
+    			
+                fs.setFormDefinition(lfd);
             } catch (SocketTimeoutException se) {
                 se.printStackTrace();
                 fs.setStatusString("Communications to the server timed out. Detailed message: "
@@ -380,7 +359,253 @@ public class ServerFormListFetcher {
         }
     }
 
-    /**
+
+	private void downloadDataFiles(File formInstancesDir, LocalFormDefinition lfd, FormStatus fs) throws SubmissionListException, SubmissionDownloadException {
+		
+    	RemoteFormDefinition fd = (RemoteFormDefinition) fs.getFormDefinition();
+		
+    	String baseUrl = serverInfo.getUrl() + "/view/submissionList";
+    	
+        HttpContext localContext = serverInfo.getHttpContext();
+
+        HttpClient httpclient = serverInfo.getHttpClient();
+
+        String oldWebsafeCursorString = "not-empty";
+        String websafeCursorString = "";
+        for (;!oldWebsafeCursorString.equals(websafeCursorString);) {
+	        Map<String,String> params = new HashMap<String,String>();
+	        params.put("numEntries", Integer.toString(MAX_ENTRIES));
+	        params.put("formId", fd.getFormId());
+	        params.put("cursor", websafeCursorString);
+	        String fullUrl = WebUtils.createLinkWithProperties(baseUrl, params);
+	        oldWebsafeCursorString = websafeCursorString; // remember what we had...
+	        DocumentFetchResult result = getXmlDocument(fullUrl, localContext,
+	                httpclient, "Fetch of submission download chunk failed.  Detailed error: ", 
+	                			"Fetch of submission download chunk failed.");
+	        if (result.errorMessage != null) {
+	            throw new SubmissionListException(result.errorMessage);
+	        }
+
+	        // and parse the document...
+	        List<String> uriList = new ArrayList<String>();
+            // Attempt parsing
+            Element idChunkElement = result.doc.getRootElement();
+            if (!idChunkElement.getName().equals("idChunk")) {
+            	String msg = "Parsing submissionList reply -- root element is not <idChunk> :"
+                    + idChunkElement.getName();
+            	logger.error(msg);
+            	throw new SubmissionListException(msg);
+            }
+            String namespace = idChunkElement.getNamespace();
+            if (!namespace.equalsIgnoreCase(NAMESPACE_OPENDATAKIT_ORG_SUBMISSIONS) ) {
+            	String msg = "Parsing submissionList reply -- root element namespace is incorrect:"
+                        + namespace;
+            	logger.error(msg);
+            	throw new SubmissionListException(msg);
+            }
+            int nElements = idChunkElement.getChildCount();
+            for (int i = 0; i < nElements; ++i) {
+                if (idChunkElement.getType(i) != Element.ELEMENT) {
+                    // e.g., whitespace (text)
+                    continue;
+                }
+                Element subElement = (Element) idChunkElement.getElement(i);
+                namespace = subElement.getNamespace();
+	            if (!namespace.equalsIgnoreCase(NAMESPACE_OPENDATAKIT_ORG_SUBMISSIONS) ) {
+                    // someone else's extension?
+                    continue;
+                }
+                String name = subElement.getName();
+                if ( name.equalsIgnoreCase("idList")) {
+                	// parse the idList
+    	            int nIdElements = subElement.getChildCount();
+    	            for (int j = 0; j < nIdElements; ++j) {
+    	                if (subElement.getType(j) != Element.ELEMENT) {
+    	                    // e.g., whitespace (text)
+    	                    continue;
+    	                }
+    	                Element idElement = (Element) subElement.getElement(j);
+    	                namespace = idElement.getNamespace();
+    		            if (!namespace.equalsIgnoreCase(NAMESPACE_OPENDATAKIT_ORG_SUBMISSIONS) ) {
+    	                    // someone else's extension?
+    	                    continue;
+    	                }
+    	                name = idElement.getName();
+    	                if ( name.equalsIgnoreCase("id")) {
+    	                	// gather the uri
+    	                	String uri = XFormParser.getXMLText(idElement, true);
+    	                	if (uri != null) {
+    	                		uriList.add(uri);
+                            }
+    	                } else {
+    	                	logger.warn("Unrecognized tag inside idList: " + name);
+    	                }
+    	            }
+                } else if ( name.equalsIgnoreCase("resumptionCursor")) {
+                	// gather the resumptionCursor
+                	websafeCursorString = XFormParser.getXMLText(subElement, true);
+                	if (websafeCursorString == null) {
+                		websafeCursorString = "";
+                    }
+                } else {
+                	logger.warn("Unrecognized tag inside idChunk: " + name);
+                }
+            }
+            
+            // TODO: download all the uris in the uriList
+            for ( String uri : uriList ) {
+            	try {
+					downloadSubmission(formInstancesDir, lfd, fs, uri);
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new SubmissionListException("Unexpected exception: " + e.getMessage());
+				}
+            }
+        }
+	}
+
+	private static class Attachment {
+		final String downloadUrl;
+		final String filename;
+		
+		Attachment(String filename, String downloadUrl) {
+			this.downloadUrl = downloadUrl;
+			this.filename = filename;
+		}
+	}
+
+	private void downloadSubmission(File formInstancesDir, LocalFormDefinition lfd, FormStatus fs, String uri) throws Exception {
+		// TODO Auto-generated method stub
+		String formId = lfd.getSubmissionKey(uri);
+		
+    	String baseUrl = serverInfo.getUrl() + "/view/downloadSubmission";
+    	
+        HttpContext localContext = serverInfo.getHttpContext();
+
+        HttpClient httpclient = serverInfo.getHttpClient();
+
+        Map<String,String> params = new HashMap<String,String>();
+        params.put("formId", formId);
+        String fullUrl = WebUtils.createLinkWithProperties(baseUrl, params);
+        DocumentFetchResult result = getXmlDocument(fullUrl, localContext,
+                httpclient, "Fetch of a submission failed.  Detailed error: ", 
+                			"Fetch of a submission failed.");
+
+        if (result.errorMessage != null) {
+            throw new SubmissionDownloadException(result.errorMessage);
+        }
+
+        // and parse the document...
+        List<Attachment> attachmentList = new ArrayList<Attachment>();
+        Element rootSubmissionElement = null;
+        String instanceID = null;
+        
+        // Attempt parsing
+        Element submissionElement = result.doc.getRootElement();
+        if (!submissionElement.getName().equals("submission")) {
+        	String msg = "Parsing downloadSubmission reply -- root element is not <submission> :"
+                + submissionElement.getName();
+        	logger.error(msg);
+        	throw new SubmissionDownloadException(msg);
+        }
+        String namespace = submissionElement.getNamespace();
+        if (!namespace.equalsIgnoreCase(NAMESPACE_OPENDATAKIT_ORG_SUBMISSIONS) ) {
+        	String msg = "Parsing downloadSubmission reply -- root element namespace is incorrect:"
+                    + namespace;
+        	logger.error(msg);
+        	throw new SubmissionDownloadException(msg);
+        }
+        int nElements = submissionElement.getChildCount();
+        for (int i = 0; i < nElements; ++i) {
+            if (submissionElement.getType(i) != Element.ELEMENT) {
+                // e.g., whitespace (text)
+                continue;
+            }
+            Element subElement = (Element) submissionElement.getElement(i);
+            namespace = subElement.getNamespace();
+            if (!namespace.equalsIgnoreCase(NAMESPACE_OPENDATAKIT_ORG_SUBMISSIONS) ) {
+                // someone else's extension?
+                continue;
+            }
+            String name = subElement.getName();
+            if ( name.equalsIgnoreCase("data")) {
+            	// find the root submission element and get its instanceID attribute
+            	int nIdElements = subElement.getChildCount();
+	            for (int j = 0; j < nIdElements; ++j) {
+	                if (subElement.getType(j) != Element.ELEMENT) {
+	                    // e.g., whitespace (text)
+	                    continue;
+	                }
+	                rootSubmissionElement = (Element) subElement.getElement(j);
+	                break;
+	            }
+	            if ( rootSubmissionElement == null ) {
+	            	throw new SubmissionDownloadException("no submission body found in submissionDownload response");
+	            }
+
+	            instanceID = rootSubmissionElement.getAttributeValue(null, "instanceID");
+            	if ( instanceID == null ) {
+            		throw new SubmissionDownloadException("instanceID attribute value is null");
+            	}
+            } else if ( name.equalsIgnoreCase("media")) {
+	            int nIdElements = subElement.getChildCount();
+	            String filename = null;
+	            String downloadUrl = null;
+	            for (int j = 0; j < nIdElements; ++j) {
+	                if (subElement.getType(j) != Element.ELEMENT) {
+	                    // e.g., whitespace (text)
+	                    continue;
+	                }
+	                Element mediaSubElement = (Element) subElement.getElement(j);
+	                name = mediaSubElement.getName();
+	                if ( name.equalsIgnoreCase("filename")) {
+	                	filename = XFormParser.getXMLText(mediaSubElement, true);
+	                } else if ( name.equalsIgnoreCase("url")) {
+	                	downloadUrl = XFormParser.getXMLText(mediaSubElement, true);
+	                }
+	            }
+	            attachmentList.add(new Attachment(filename, downloadUrl));
+            } else {
+            	logger.warn("Unrecognized tag inside submission: " + name);
+            }
+        }
+        
+        if ( rootSubmissionElement == null ) {
+        	throw new SubmissionDownloadException("No submission body found");
+        }
+    	if ( instanceID == null ) {
+    		throw new SubmissionDownloadException("instanceID attribute value is null");
+    	}
+        String msg = "Fetched instanceID=" + instanceID;
+        logger.error(msg);
+
+        // create instance directory...
+        String instanceDirName = asFilesystemSafeName(instanceID);
+        File instanceDir = new File(formInstancesDir, instanceDirName);
+        if ( !instanceDir.mkdir() ) {
+        	throw new SubmissionDownloadException("unable to create instance dir");
+        }
+        
+        // fetch attachments
+        for ( Attachment a : attachmentList ) {
+        	commonDownloadFile(new File(instanceDir, a.filename), a.downloadUrl);
+        }
+        // write submission file
+        File submissionFile = new File(instanceDir, "submission.xml");
+        FileWriter fo = new FileWriter(submissionFile);
+    	KXmlSerializer serializer = new KXmlSerializer();
+
+        serializer.setOutput(fo);
+    	// setting the response content type emits the xml header.
+    	// just write the body here...
+        rootSubmissionElement.setPrefix(null, NAMESPACE_OPENDATAKIT_ORG_SUBMISSIONS);
+        rootSubmissionElement.write(serializer);
+        serializer.flush();
+        serializer.endDocument();
+	}
+
+
+	/**
      * Common method for returning a parsed xml document given a url and the http context and client
      * objects involved in the web connection.
      * 
@@ -389,7 +614,7 @@ public class ServerFormListFetcher {
      * @param httpclient
      * @return
      */
-    private DocumentFetchResult getXmlDocument(String urlString, HttpContext localContext,
+	private DocumentFetchResult getXmlDocument(String urlString, HttpContext localContext,
             HttpClient httpclient, String fetch_doc_failed, String fetch_doc_failed_no_detail) {
 
         URI u = null;
@@ -547,14 +772,6 @@ public class ServerFormListFetcher {
     	fs.setStatusString("Fetching form manifest");
         EventBus.publish(new FormStatusEvent(fs));
 
-        if ( !mediaDir.exists() ) {
-        	if ( !mediaDir.mkdirs() ) {
-        		String errString = "Unable to create directory " + mediaDir.getAbsolutePath();
-        		fs.setStatusString(errString);
-        		EventBus.publish(new FormStatusEvent(fs));
-        		return errString;
-        	}
-        }
         List<MediaFile> files = new ArrayList<MediaFile>();
         // get shared HttpContext so that authentication and cookies are retained.
         HttpContext localContext = serverInfo.getHttpContext();
@@ -762,28 +979,51 @@ public class ServerFormListFetcher {
         commonDownloadFile(mediaFile, m.downloadUrl);
     }
 
-
-    private File downloadFile(File briefcaseDir, String formName, String url) throws Exception {
-
-        // clean up friendly form name...
+    private String asFilesystemSafeName(String formName ) {
         String rootName = formName.replaceAll("[^\\p{L}\\p{Digit}]", " ");
         rootName = rootName.replaceAll("\\p{javaWhitespace}+", " ");
         rootName = rootName.trim();
+        return rootName;
+    }
+    
+    private File getFormDirectory( File briefcaseDir, String formName ) throws DownloadException {
+        // clean up friendly form name...
+        String rootName = asFilesystemSafeName(formName);
         File scratch = FormFileUtils.getScratchFormsPath(briefcaseDir);
         File formPath = new File(scratch, rootName);
         if ( !formPath.exists() && !formPath.mkdirs() ) {
-        	throw new DownloadException("unable to create directory");
+        	throw new DownloadException("unable to create directory: " + formPath.getAbsolutePath());
         }
+    	return formPath;
+    }
+    
+    private File getFormDefinitionFile( File briefcaseDir, String formName ) throws DownloadException {
+        String rootName = asFilesystemSafeName(formName);
+        File formPath = getFormDirectory(briefcaseDir, formName);
         File formDefnFile = new File(formPath, rootName + ".xml");
-        File formMediaDir = new File(formPath, rootName + "-media");
-        if ( formDefnFile.exists() || formMediaDir.exists() ) {
-        	throw new DownloadException("form definition and/or media directory already exists");
-        }
-
-        commonDownloadFile(formDefnFile, url);
-
+        
         return formDefnFile;
     }
+    
+    private File getMediaDirectory( File briefcaseDir, String formName ) throws DownloadException {
+        String rootName = asFilesystemSafeName(formName);
+        File formPath = getFormDirectory(briefcaseDir, formName);
+        File mediaDir = new File(formPath, rootName + "-media");
+        if ( !mediaDir.exists() && !mediaDir.mkdirs() ) {
+        	throw new DownloadException("unable to create directory: " + mediaDir.getAbsolutePath());
+        }
 
+    	return mediaDir;
+    }
+
+    private File getFormInstancesDirectory(File briefcaseDir, String formName) throws DownloadException {
+        File formPath = getFormDirectory(briefcaseDir, formName);
+        File instancesDir = new File(formPath, "instances");
+        if ( !instancesDir.exists() && !instancesDir.mkdirs() ) {
+        	throw new DownloadException("unable to create directory: " + instancesDir.getAbsolutePath());
+        }
+
+        return instancesDir;
+	}
 
 }

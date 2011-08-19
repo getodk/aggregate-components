@@ -641,6 +641,14 @@ public class JavaRosaWrapper {
 	public XFormParameters getSubmissionElementDefn() {
 		return submissionElementDefn;
 	}
+	
+	public String getSubmissionKey(String uri) {
+		return submissionElementDefn.formId +
+		"[@version=" + submissionElementDefn.modelVersion +
+		" and @uiVersion=" + submissionElementDefn.uiVersion +
+		"]/" + submissionElement.getName() + 
+		"[@key=" + uri + "]";
+	}
 
 	public boolean isEncryptedForm() {
 		return isEncryptedForm;

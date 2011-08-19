@@ -61,6 +61,9 @@ public class LocalFormDefinition implements IFormDefinition {
 		return formDefn.getMD5Hash();
 	}
 
+	public String getSubmissionKey(String uri) {
+		return formDefn.getSubmissionKey(uri);
+	}
 	@Override
 	public LocationType getFormLocation() {
 		return LocationType.LOCAL;
