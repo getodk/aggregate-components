@@ -49,10 +49,18 @@ class BriefcaseFileChooser extends JFileChooser {
 			super.approveSelection();
 		}
 	}
-
-	BriefcaseFileChooser(Container parentWindow) {
+	
+	@SuppressWarnings("unused")
+	private BriefcaseFileChooser(Container parentWindow) {
+		super();
+		this.parentWindow = parentWindow;
+	}
+	
+	BriefcaseFileChooser(Container parentWindow, boolean asOpenDialog) {
 		super();
 		this.parentWindow = parentWindow;
 		setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		setDialogType(JFileChooser.SAVE_DIALOG); // allow creating file
+		setApproveButtonText(asOpenDialog ? "Open" : "Save");
 	}
 }

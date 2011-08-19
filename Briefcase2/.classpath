@@ -13,5 +13,6 @@
 	<classpathentry kind="lib" path="lib/kxml2-2.3.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.0.1.jar"/>
 	<classpathentry kind="lib" path="forms-1.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/eventbus-1.4.jar" sourcepath="C:/Users/user/Documentsss/eventbus-1.4/eventbus-1.4-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -46,7 +46,7 @@ public class ServerConnectionDialog extends JDialog implements ActionListener {
 	public ServerConnectionDialog(ServerConnectionInfo oldInfo, boolean asTarget) {
 		serverInfo = oldInfo;
 		this.asTarget = asTarget;
-		setModalityType(ModalityType.DOCUMENT_MODAL);
+		setModalityType(ModalityType.APPLICATION_MODAL);
 		setBounds(100, 100, 450, 222);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));

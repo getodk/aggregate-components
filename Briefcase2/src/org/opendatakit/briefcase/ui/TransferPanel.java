@@ -23,9 +23,11 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
+import org.bushe.swing.event.annotation.EventSubscriber;
 import org.opendatakit.briefcase.model.EndPointType;
-import org.opendatakit.briefcase.model.FormDefinition;
+import org.opendatakit.briefcase.model.LocalFormDefinition;
 import org.opendatakit.briefcase.model.FormStatus;
+import org.opendatakit.briefcase.model.RetrieveAvailableFormsFailedEvent;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
 import org.opendatakit.briefcase.util.FormFileUtils;
 import org.opendatakit.briefcase.util.TransferAction;
@@ -107,8 +109,7 @@ public class TransferPanel extends JPanel {
 		    EndPointType selection = (strSelection != null) ? EndPointType.fromString(strSelection) : null;
 
 		    if ( selection != null ) {
-		        if ( EndPointType.AGGREGATE_0_9_X_CHOICE.equals(selection) ||
-		        		EndPointType.AGGREGATE_1_0_CHOICE.equals(selection) ) {
+		        if ( EndPointType.AGGREGATE_1_0_CHOICE.equals(selection) ) {
 		        	lblDestination.setText("URL:");
 		        	txtDestinationName.setText("");
 		        	txtDestinationName.setEditable(false);
@@ -123,12 +124,7 @@ public class TransferPanel extends JPanel {
 		        	btnDestinationAction.setText("Choose...");
 		        	btnDestinationAction.setVisible(false);
 		        } else {
-		        	lblDestination.setText("Directory:");
-		        	txtDestinationName.setText("");
-		        	txtDestinationName.setEditable(true);
-		        	txtDestinationName.setVisible(true);
-		        	btnDestinationAction.setText("Choose...");
-		        	btnDestinationAction.setVisible(true);
+		        	throw new IllegalStateException("unexpected case");
 		        }
 			}
 		}
@@ -164,13 +160,7 @@ public class TransferPanel extends JPanel {
 					TransferPanel.this.updateFormStatuses();
 		    	}
 		    } else {
-		    	// briefcase...
-		    	BriefcaseFileChooser fc = new BriefcaseFileChooser(TransferPanel.this);
-		    	int retVal = fc.showOpenDialog(TransferPanel.this);
-		    	if ( retVal == JFileChooser.APPROVE_OPTION ) {
-		    		txtOriginName.setText(fc.getSelectedFile().getAbsolutePath());
-					TransferPanel.this.updateFormStatuses();
-		    	}
+		    	throw new IllegalStateException("unexpected case");
 		    }
 		}
 		
@@ -187,29 +177,23 @@ public class TransferPanel extends JPanel {
 			String strSelection = (String)listDestinationDataSink.getSelectedItem();
 			EndPointType selection = (strSelection != null) ? EndPointType.fromString(strSelection) : null;
 			
-			if ( EndPointType.AGGREGATE_0_9_X_CHOICE.equals(selection) ||
-					EndPointType.AGGREGATE_1_0_CHOICE.equals(selection) ) {
+			if ( EndPointType.AGGREGATE_1_0_CHOICE.equals(selection) ) {
 		    	// need to show (modal) connect dialog...
 		    	ServerConnectionDialog d = new ServerConnectionDialog(destinationServerInfo, true);
 		    	d.setVisible(true);
 		    	if ( d.isSuccessful() ) {
-		    		destinationServerInfo = d.getServerInfo();
-		    		txtDestinationName.setText(destinationServerInfo.getUrl());
+		    		ServerConnectionInfo info = d.getServerInfo();
+		    		if ( info.isOpenRosaServer() ) {
+			    		destinationServerInfo = d.getServerInfo();
+			    		txtDestinationName.setText(destinationServerInfo.getUrl());
+		    		} else {
+						JOptionPane.showMessageDialog(TransferPanel.this, 
+								"Server is not an ODK Aggregate 1.0 server", 
+								"Invalid Server URL", JOptionPane.ERROR_MESSAGE);
+		    		}
 		    	}
-		    } else if ( EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.equals(selection) ) {
-		    	// odkCollect...
-		    	ODKCollectFileChooser fc = new ODKCollectFileChooser(TransferPanel.this);
-		    	int retVal = fc.showSaveDialog(TransferPanel.this);
-		    	if ( retVal == JFileChooser.APPROVE_OPTION ) {
-		    		txtDestinationName.setText(fc.getSelectedFile().getAbsolutePath());
-		    	}
-		    } else {
-		    	// briefcase...
-		    	BriefcaseFileChooser fc = new BriefcaseFileChooser(TransferPanel.this);
-		    	int retVal = fc.showSaveDialog(TransferPanel.this);
-		    	if ( retVal == JFileChooser.APPROVE_OPTION ) {
-		    		txtDestinationName.setText(fc.getSelectedFile().getAbsolutePath());
-		    	}
+	        } else {
+	        	throw new IllegalStateException("unexpected case");
 		    }
 		}
 		
@@ -236,16 +220,10 @@ public class TransferPanel extends JPanel {
 						EndPointType.AGGREGATE_1_0_CHOICE.equals(originSelection) ) {
 					
 					if ( EndPointType.AGGREGATE_1_0_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferServerViaToServer( originServerInfo, destinationServerInfo, new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferServerViaToODK( originServerInfo, new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
+						TransferAction.transferServerViaToServer( originServerInfo, destinationServerInfo, new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms() );
 					}
 					else if ( EndPointType.BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferServerViaToBriefcase( originServerInfo, new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferServerViaToBriefcase( originServerInfo, new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
+						TransferAction.transferServerViaToBriefcase( originServerInfo, new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms() );
 					}
 					else {
 						throw new IllegalStateException("unhandled case");
@@ -254,16 +232,10 @@ public class TransferPanel extends JPanel {
 			    } else if ( EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.equals(originSelection) ) {
 					
 					if ( EndPointType.AGGREGATE_1_0_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferODKViaToServer( new File(txtOriginName.getText()), destinationServerInfo, new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferODKViaToODK( new File(txtOriginName.getText()), new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
+						TransferAction.transferODKViaToServer( new File(txtOriginName.getText()), destinationServerInfo, new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms() );
 					}
 					else if ( EndPointType.BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferODKViaToBriefcase( new File(txtOriginName.getText()), new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferODKViaToBriefcase( new File(txtOriginName.getText()), new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
+						TransferAction.transferODKViaToBriefcase( new File(txtOriginName.getText()), new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms() );
 					}
 					else {
 						throw new IllegalStateException("unhandled case");
@@ -271,33 +243,10 @@ public class TransferPanel extends JPanel {
 			    } else if ( EndPointType.BRIEFCASE_CHOICE.equals(originSelection) ) {
 					
 					if ( EndPointType.AGGREGATE_1_0_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToServer( new File(txtBriefcaseDir.getText()), destinationServerInfo, new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToODK( new File(txtBriefcaseDir.getText()), new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
+						TransferAction.transferBriefcaseViaToServer( new File(txtBriefcaseDir.getText()), destinationServerInfo, new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms() );
 					}
 					else if ( EndPointType.BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToBriefcase( new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToBriefcase( new File(txtBriefcaseDir.getText()), new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else {
-						throw new IllegalStateException("unhandled case");
-					}
-				} else if ( EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.equals(originSelection) ) {
-					
-					if ( EndPointType.AGGREGATE_1_0_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToServer( new File(txtOriginName.getText()), destinationServerInfo, new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToODK( new File(txtOriginName.getText()), new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToBriefcase( new File(txtOriginName.getText()), new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
-					}
-					else if ( EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.equals(destinationSelection) ) {
-						TransferAction.transferBriefcaseViaToBriefcase( new File(txtOriginName.getText()), new File(txtDestinationName.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms(), formTransferTable );
+						TransferAction.transferBriefcaseViaToBriefcase( new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), new File(txtBriefcaseDir.getText()), formTransferTable.getSelectedForms() );
 					}
 					else {
 						throw new IllegalStateException("unhandled case");
@@ -309,6 +258,8 @@ public class TransferPanel extends JPanel {
 				JOptionPane.showMessageDialog(TransferPanel.this, 
 						"Briefcase action failed: " + ex.getMessage(),
 						"Briefcase Action Failed", JOptionPane.ERROR_MESSAGE);
+			} finally {
+				btnTransfer.setEnabled(true);
 			}
 		}
 	}
@@ -327,8 +278,7 @@ public class TransferPanel extends JPanel {
 					EndPointType.AGGREGATE_0_9_X_CHOICE.toString(), 
 					EndPointType.AGGREGATE_1_0_CHOICE.toString(), 
 					EndPointType.BRIEFCASE_CHOICE.toString(), 
-					EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.toString(), 
-					EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.toString()});
+					EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.toString()});
 		listOriginDataSource.addActionListener(new OriginSourceListener());
 		
 		lblOrigin = new JLabel("Origin:");
@@ -356,9 +306,7 @@ public class TransferPanel extends JPanel {
 		
 		listDestinationDataSink = new JComboBox(new String[] {
 				EndPointType.AGGREGATE_1_0_CHOICE.toString(), 
-				EndPointType.BRIEFCASE_CHOICE.toString(),
-				EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.toString(),
-				EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.toString()});
+				EndPointType.BRIEFCASE_CHOICE.toString()});
 		
 		listDestinationDataSink.addActionListener(new DestinationSinkListener());
 		
@@ -479,24 +427,33 @@ public class TransferPanel extends JPanel {
 	     if ( selection != null ) {
 	        if ( EndPointType.AGGREGATE_0_9_X_CHOICE.equals(selection) ||
 	        		EndPointType.AGGREGATE_1_0_CHOICE.equals(selection) ) {
-	        	// TODO: fetch list of forms from Aggregate instance...
+	        	// clear the list of forms first...
+	    	    formTransferTable.setFormStatusList(statuses);
+	        	TransferAction.retrieveAvailableFormsFromServer(originServerInfo);
+	        	// list will be communicated back via the RetrieveAvailableFormsSucceededEvent
 	        } else if ( EndPointType.BRIEFCASE_CHOICE.equals(selection) ) {
-	        	List<FormDefinition> forms = FormFileUtils.getBriefcaseFormList(txtBriefcaseDir.getText());
-	        	for ( FormDefinition f : forms ) {
+	        	List<LocalFormDefinition> forms = FormFileUtils.getBriefcaseFormList(txtBriefcaseDir.getText());
+	        	for ( LocalFormDefinition f : forms ) {
 	        		statuses.add(new FormStatus(f));
 	        	}
+	    	    formTransferTable.setFormStatusList(statuses);
 	        } else if ( EndPointType.MOUNTED_ODK_COLLECT_DEVICE_CHOICE.equals(selection) ) {
-	        	List<FormDefinition> forms = FormFileUtils.getODKFormList(txtOriginName.getText());
-	        	for ( FormDefinition f : forms ) {
+	        	List<LocalFormDefinition> forms = FormFileUtils.getODKFormList(txtOriginName.getText());
+	        	for ( LocalFormDefinition f : forms ) {
 	        		statuses.add(new FormStatus(f));
 	        	}
-	        } else if ( EndPointType.OTHER_LOCAL_BRIEFCASE_CHOICE.equals(selection) ) {
-	        	List<FormDefinition> forms = FormFileUtils.getBriefcaseFormList(txtOriginName.getText());
-	        	for ( FormDefinition f : forms ) {
-	        		statuses.add(new FormStatus(f));
-	        	}
+	    	    formTransferTable.setFormStatusList(statuses);
+	        } else {
+	        	throw new IllegalStateException("unexpected case");
 	        }
 		}
-	    formTransferTable.setFormStatusList(statuses);
 	}
+	
+	@EventSubscriber(eventClass=RetrieveAvailableFormsFailedEvent.class)
+	public void formsAvailableFromServer(RetrieveAvailableFormsFailedEvent event) {
+		JOptionPane.showMessageDialog(TransferPanel.this, 
+				"Accessing the server failed with error: " +  event.getReason(), 
+				"Accessing Server Failed", JOptionPane.ERROR_MESSAGE);
+	}
+
 }

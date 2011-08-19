@@ -12,7 +12,11 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
+import org.bushe.swing.event.annotation.AnnotationProcessor;
+import org.bushe.swing.event.annotation.EventSubscriber;
 import org.opendatakit.briefcase.model.FormStatus;
+import org.opendatakit.briefcase.model.FormStatusEvent;
+import org.opendatakit.briefcase.model.RetrieveAvailableFormsSucceededEvent;
 
 public class FormTransferTable extends JTable {
 
@@ -37,6 +41,8 @@ public class FormTransferTable extends JTable {
 	    
 		public FormTransferTableModel(JButton btnSelectOrClearAllForms,
 				JButton btnTransfer) {
+			AnnotationProcessor.process(this);//if not using AOP
+
 			this.btnSelectOrClearAllForms = btnSelectOrClearAllForms;
 			this.btnTransfer = btnTransfer;
 			// initially the transfer button is disabled.
@@ -158,11 +164,24 @@ public class FormTransferTable extends JTable {
         		throw new IllegalStateException("unexpected column choice");
         	}
 		}
+
+		@EventSubscriber(eventClass=FormStatusEvent.class)
+		public void fireStatusChange(FormStatusEvent fse) {
+			FormStatus fs = fse.getStatus();
+			for ( int rowIndex = 0 ; rowIndex < formStatuses.size() ; ++rowIndex ) {
+				FormStatus status = formStatuses.get(rowIndex);
+				if ( status.equals(fs) ) {
+					fireTableRowsUpdated(rowIndex, rowIndex);
+					return;
+				}
+			}
+		}
 		
 	}
 
 	public FormTransferTable(JButton btnSelectOrClearAllForms, JButton btnTransfer) {
 		super(new FormTransferTableModel(btnSelectOrClearAllForms, btnTransfer));
+		AnnotationProcessor.process(this);//if not using AOP
 		TableColumnModel columns = this.getColumnModel();
 		// determine width of "Selected" column header
         TableCellRenderer headerRenderer = this.getTableHeader().getDefaultRenderer();
@@ -183,6 +202,11 @@ public class FormTransferTable extends JTable {
 	public void setFormStatusList(List<FormStatus> statuses) {
 		FormTransferTableModel model = (FormTransferTableModel) this.dataModel;
 		model.setFormStatusList(statuses);
+	}
+
+	@EventSubscriber(eventClass=RetrieveAvailableFormsSucceededEvent.class)
+	public void formsAvailableFromServer(RetrieveAvailableFormsSucceededEvent event) {
+		setFormStatusList(event.getFormsToTransfer());
 	}
 	
 	public List<FormStatus> getSelectedForms() {

@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.briefcase.model.FormDefinition;
+import org.opendatakit.briefcase.model.LocalFormDefinition;
 import org.opendatakit.briefcase.util.JavaRosaWrapper.BadFormDefinition;
 
 public class FormFileUtils {
@@ -26,8 +26,8 @@ public class FormFileUtils {
 	private static final boolean isBriefcaseFolder(File pathname, boolean strict) {
 		String[] contents = pathname.list();
 		int len = (contents == null) ? 0 : contents.length;
-		File foi = new File( pathname, "scratch");
-		File fof = new File( pathname, "forms");
+		File foi = getScratchFormsPath( pathname);
+		File fof = getStableFormsPath( pathname);
 		return pathname.exists() && 
 			((len == 0) || 
 			((len == 1) && (foi.exists() || fof.exists())) ||
@@ -60,17 +60,17 @@ public class FormFileUtils {
 				
 	}
 	
-	public static final List<FormDefinition> getBriefcaseFormList(String briefcaseDirectory ) {
-		List<FormDefinition> formsList = new ArrayList<FormDefinition>();
+	public static final List<LocalFormDefinition> getBriefcaseFormList(String briefcaseDirectory ) {
+		List<LocalFormDefinition> formsList = new ArrayList<LocalFormDefinition>();
 		File briefcase = new File(briefcaseDirectory);
-		File forms = new File(briefcase, "forms");
+		File forms = getStableFormsPath(briefcase);
 		if ( forms.exists() ) {
 			File[] formDirs = forms.listFiles();
 			for ( File f : formDirs ) {
 				if ( f.isDirectory() ) {
 					try {
 						File formFile = new File(f, f.getName() + ".xml");
-						formsList.add(new FormDefinition(formFile));
+						formsList.add(new LocalFormDefinition(formFile));
 					} catch (BadFormDefinition e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -84,8 +84,8 @@ public class FormFileUtils {
 		return formsList;
 	}
 	
-	public static final List<FormDefinition> getODKFormList(String odkDeviceDirectory ) {
-		List<FormDefinition> formsList = new ArrayList<FormDefinition>();
+	public static final List<LocalFormDefinition> getODKFormList(String odkDeviceDirectory ) {
+		List<LocalFormDefinition> formsList = new ArrayList<LocalFormDefinition>();
 		File sdcard = new File(odkDeviceDirectory);
 		File odk = new File(sdcard, "odk");
 		File forms = new File(odk, "forms");
@@ -94,7 +94,7 @@ public class FormFileUtils {
 			for ( File f : formDirs ) {
 				if ( f.isFile() && f.getName().endsWith(".xml") ) {
 					try {
-						formsList.add(new FormDefinition(f));
+						formsList.add(new LocalFormDefinition(f));
 					} catch (BadFormDefinition e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -104,7 +104,15 @@ public class FormFileUtils {
 		}
 		return formsList;
 	}
+	
+	public static File getScratchFormsPath(File briefcaseDir) {
+		return new File(briefcaseDir, "scratch");
+	}
 
+	public static File getStableFormsPath(File briefcaseDir) {
+		return new File(briefcaseDir, "forms");
+	}
+	
 	public static String getInstanceFilePath(File instanceDir) {
     	File instance = new File(instanceDir, instanceDir.getName() + ".xml");
     	return instance.getAbsolutePath();

@@ -50,8 +50,8 @@ public class MainWindow {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 	    	// briefcase...
-	    	BriefcaseFileChooser fc = new BriefcaseFileChooser(MainWindow.this.frame);
-	    	int retVal = fc.showOpenDialog(MainWindow.this.frame);
+	    	BriefcaseFileChooser fc = new BriefcaseFileChooser(MainWindow.this.frame, true);
+	    	int retVal = fc.showDialog(MainWindow.this.frame, null);
 	    	if ( retVal == JFileChooser.APPROVE_OPTION ) {
 	    		txtBriefcaseDir.setText(fc.getSelectedFile().getAbsolutePath());
 				transformPanel.setEnabled(true);

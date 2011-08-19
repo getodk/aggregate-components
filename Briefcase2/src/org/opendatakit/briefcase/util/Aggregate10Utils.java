@@ -26,7 +26,10 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.protocol.HttpContext;
+import org.kxml2.io.KXmlParser;
+import org.kxml2.kdom.Document;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.xmlpull.v1.XmlPullParser;
 
 import eu.medsea.mimeutil.MimeUtil;
 
@@ -56,7 +59,102 @@ public class Aggregate10Utils {
 		return outcome;
 	}
 
+	public static interface ServerFormListStreamHandler {
+		void readStream(ServerConnectionInfo serverInfo, InputStream requestStream) throws IOException;
+	}
+	
+	private static class FlushStream implements ServerFormListStreamHandler {
+
+		FlushStream() {};
+		
+		@Override
+		public void readStream(ServerConnectionInfo serverInfo,
+				InputStream requestStream) throws IOException {
+            // simply flush the stream -- not interested in parsing it.
+            final long count = 1024L;
+            while (requestStream.skip(count) == count)
+                ;
+            requestStream.close();
+		}
+		
+	}
+	
+	private static class ProcessFormsListStream implements ServerFormListStreamHandler {
+
+		private ServerConnectionInfo serverInfo = null;
+		private boolean successful = false;
+		private Document parsedDoc = null;
+		
+		ProcessFormsListStream() {
+		}
+		
+		@Override
+		public void readStream(ServerConnectionInfo serverInfo,
+				InputStream requestStream) throws IOException {
+			// TODO Auto-generated method stub
+			this.serverInfo = serverInfo;
+            // parse response
+            Document doc = null;
+            InputStreamReader isr = null;
+            try {
+                isr = new InputStreamReader(requestStream, "UTF-8");
+                doc = new Document();
+                KXmlParser parser = new KXmlParser();
+                parser.setInput(isr);
+                parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
+                doc.parse(parser);
+                parsedDoc = doc;
+                successful = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.severe("Parsing failed with " + e.getMessage());
+            } finally {
+	            final long count = 1024L;
+	            while (requestStream.skip(count) == count)
+	                ;
+                if (isr != null) {
+                    try {
+                        isr.close();
+                    } catch (Exception e) {
+                        // no-op
+                    }
+                }
+                try {
+                	requestStream.close();
+                } catch (Exception e) {
+                    // no-op
+                }
+			}
+		}
+		
+		public ServerConnectionInfo getServerInfo() {
+			return serverInfo;
+		}
+
+		public Document getParsedDoc() {
+			return parsedDoc;
+		}
+
+		public boolean isSuccessful() {
+			return successful;
+		}
+	}
+	public static final Document retrieveAvailableFormsFromServer( ServerConnectionInfo serverInfo ) {
+		ProcessFormsListStream actor = new ProcessFormsListStream();
+		fetchFormList( serverInfo, actor);
+		if ( actor.isSuccessful() ) {
+			return actor.getParsedDoc();
+		} else {
+			return null;
+		}
+	}
+	
+	
 	public static final void testServerDownloadConnection( ServerConnectionInfo serverInfo ) {
+		fetchFormList( serverInfo, new FlushStream());
+	}
+	
+	private static final void fetchFormList( ServerConnectionInfo serverInfo, ServerFormListStreamHandler handler ) {
 		outcome = new ServerConnectionOutcome();
 		
         String urlString = serverInfo.getUrl();
@@ -84,7 +182,7 @@ public class Aggregate10Utils {
 
         HttpClient httpClient = serverInfo.getHttpClient();
         if ( httpClient == null ) {
-        	httpClient = WebUtils.createHttpClient(5000);
+        	httpClient = WebUtils.createHttpClient(20000);
         	serverInfo.setHttpClient(httpClient);
         }
         
@@ -96,7 +194,7 @@ public class Aggregate10Utils {
         }
 
         {
-            // we need to issue a head request
+            // we need to issue a get request
             HttpGet httpGet = WebUtils.createOpenRosaHttpGet(u);
 
             // prepare response
@@ -136,13 +234,9 @@ public class Aggregate10Utils {
                     }
 
                     try {
-                        // don't really care about the stream...
-                        InputStream is = response.getEntity().getContent();
-                        // read to end of stream...
-                        final long count = 1024L;
-                        while (is.skip(count) == count)
-                            ;
-                        is.close();
+                        // stream contains form list -- pass that to stream handler.
+                    	// That should read all bytes from the stream and close it.
+                    	handler.readStream(serverInfo, response.getEntity().getContent());
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (Exception e) {
