@@ -23,6 +23,35 @@ public class TransferToServer implements ITransferToDestAction {
 	@Override
 	public void doAction() throws IOException {
 		// TODO Auto-generated method stub
-		
+		for ( FormStatus formToTransfer : formsToTransfer ) {
+			String cleanFormFileName = TransferAction.cleanFormName(formToTransfer.getFormName());
+
+			File briefcaseParentFormDestDir = new File(briefcaseDir, "forms");
+			if ( !briefcaseParentFormDestDir.exists() ) {
+				if ( !briefcaseParentFormDestDir.mkdir() ) {
+					throw new IOException("form directory could not be created");
+				}
+			}
+			File briefcaseFormDestDir = new File(briefcaseParentFormDestDir, cleanFormFileName);
+			if ( !briefcaseFormDestDir.exists() ) {
+				formToTransfer.setStatusString("Folder does not exist");
+				continue;
+			}
+			
+			File briefcaseFormDefFile = new File(briefcaseFormDestDir, cleanFormFileName + ".xml");
+			File briefcaseFormMediaDir = new File(briefcaseFormDestDir, cleanFormFileName + "-media");
+			
+			Aggregate10Utils.uploadFormToServerConnection( destServerInfo, briefcaseFormDefFile, briefcaseFormMediaDir );
+			
+			File briefcaseFormInstancesDir = new File(briefcaseFormDestDir, "instances");
+			File[] briefcaseInstances = briefcaseFormInstancesDir.listFiles();
+			for ( File briefcaseInstance : briefcaseInstances ) {
+				if ( !briefcaseInstance.isDirectory() || briefcaseInstance.getName().startsWith(".") ) {
+					formToTransfer.setStatusString("instance directory skipped: " + briefcaseInstance.getName());
+					continue;
+				}
+				Aggregate10Utils.submitInstanceToServerConnection(destServerInfo, briefcaseInstance);
+			}
+		}
 	}
 }

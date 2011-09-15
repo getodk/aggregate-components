@@ -45,8 +45,8 @@ public class ServerConnectionInfo {
 		return httpContext;
 	}
 
-	public HttpContext setHttpContext(HttpContext httpContext) {
-		return httpContext;
+	public void setHttpContext(HttpContext httpContext) {
+		this.httpContext = httpContext;
 	}
 
 	public boolean isOpenRosaServer() {

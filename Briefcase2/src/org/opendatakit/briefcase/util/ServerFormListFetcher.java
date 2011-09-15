@@ -466,10 +466,12 @@ public class ServerFormListFetcher {
 
 	private static class Attachment {
 		final String downloadUrl;
+		final String hash;
 		final String filename;
 		
-		Attachment(String filename, String downloadUrl) {
+		Attachment(String filename, String hash, String downloadUrl) {
 			this.downloadUrl = downloadUrl;
+			this.hash = hash;
 			this.filename = filename;
 		}
 	}
@@ -547,9 +549,10 @@ public class ServerFormListFetcher {
             	if ( instanceID == null ) {
             		throw new SubmissionDownloadException("instanceID attribute value is null");
             	}
-            } else if ( name.equalsIgnoreCase("media")) {
+            } else if ( name.equalsIgnoreCase("mediaFile")) {
 	            int nIdElements = subElement.getChildCount();
 	            String filename = null;
+	            String hash = null;
 	            String downloadUrl = null;
 	            for (int j = 0; j < nIdElements; ++j) {
 	                if (subElement.getType(j) != Element.ELEMENT) {
@@ -560,11 +563,13 @@ public class ServerFormListFetcher {
 	                name = mediaSubElement.getName();
 	                if ( name.equalsIgnoreCase("filename")) {
 	                	filename = XFormParser.getXMLText(mediaSubElement, true);
-	                } else if ( name.equalsIgnoreCase("url")) {
+	                } else if ( name.equalsIgnoreCase("hash")) {
+	                	hash = XFormParser.getXMLText(mediaSubElement, true);
+	                } else if ( name.equalsIgnoreCase("downloadUrl")) {
 	                	downloadUrl = XFormParser.getXMLText(mediaSubElement, true);
 	                }
 	            }
-	            attachmentList.add(new Attachment(filename, downloadUrl));
+	            attachmentList.add(new Attachment(filename, hash, downloadUrl));
             } else {
             	logger.warn("Unrecognized tag inside submission: " + name);
             }
@@ -602,6 +607,7 @@ public class ServerFormListFetcher {
         rootSubmissionElement.write(serializer);
         serializer.flush();
         serializer.endDocument();
+        fo.close();
 	}
 
 

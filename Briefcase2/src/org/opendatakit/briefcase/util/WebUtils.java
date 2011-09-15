@@ -37,6 +37,7 @@ import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.DateUtils;
 import org.apache.http.params.BasicHttpParams;
@@ -173,8 +174,7 @@ public final class WebUtils {
 		localContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
 
 		// and establish a credentials provider...
-		CredentialsProvider credsProvider = new AgingCredentialsProvider(
-				7 * 60 * 1000);
+		CredentialsProvider credsProvider = new BasicCredentialsProvider();
 		localContext.setAttribute(ClientContext.CREDS_PROVIDER, credsProvider);
 
 		return localContext;
