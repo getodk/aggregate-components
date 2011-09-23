@@ -26,7 +26,7 @@ public class BriefcasePreferences {
 
   public static String getBriefcaseDirectoryProperty() {
     return getApplicationPreferences().get(BriefcasePreferences.BRIEFCASE_DIR_PROPERTY, 
-        System.getProperty("user.home") + System.getProperty("file.separator") + "briefcase");
+        System.getProperty("user.home") + System.getProperty("file.separator") + "ODK Briefcase");
   }
 
   private static final String BRIEFCASE_DIR_PROPERTY = "briefcaseDir";
