@@ -1,39 +1,59 @@
+/*
+ * Copyright (C) 2011 University of Washington.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package org.opendatakit.briefcase.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
 
 public class TransferFromServer implements ITransferFromSourceAction {
-	
-	ServerConnectionInfo originServerInfo; 
-	File briefcaseDir;
-	List<FormStatus> formsToTransfer;
-	
-	public TransferFromServer(
-			ServerConnectionInfo originServerInfo, 
-			File briefcaseDir, List<FormStatus> formsToTransfer) {
-		this.originServerInfo = originServerInfo;
-		this.briefcaseDir = briefcaseDir;
-		this.formsToTransfer = formsToTransfer;
-	}
 
-	@Override
-	public void doAction() throws IOException {
-		
-		// the scratch directory is cleared before fetching the list of
-		// forms and their definitions down to the local machine.
-		File scratch = CommonUtils.clearBriefcaseScratch(briefcaseDir);
-		ServerFormListFetcher fetcher =	new ServerFormListFetcher(originServerInfo);
-		fetcher.downloadFiles(briefcaseDir, formsToTransfer);
-	}
+  ServerConnectionInfo originServerInfo;
+  File briefcaseDir;
+  List<FormStatus> formsToTransfer;
+  boolean toScratch;
 
-	@Override
-	public boolean isSourceDeletable() {
-		return false;
-	}
-	
+  public TransferFromServer(ServerConnectionInfo originServerInfo, File briefcaseDir,
+      List<FormStatus> formsToTransfer, boolean toScratch) {
+    this.originServerInfo = originServerInfo;
+    this.briefcaseDir = briefcaseDir;
+    this.formsToTransfer = formsToTransfer;
+    this.toScratch = toScratch;
+  }
+
+  @Override
+  public boolean doAction() {
+    
+    ServerFetcher fetcher = new ServerFetcher(originServerInfo);
+    File destinationFolder;
+    if (toScratch) {
+      destinationFolder = FileSystemUtils.getScratchFolder(briefcaseDir);
+    } else {
+      destinationFolder = FileSystemUtils.getFormsFolder(briefcaseDir);
+    }
+    
+    return fetcher.downloadFormAndSubmissionFiles(destinationFolder, formsToTransfer);
+  }
+
+  @Override
+  public boolean isSourceDeletable() {
+    return false;
+  }
+
 }

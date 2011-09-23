@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2011 University of Washington.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package org.opendatakit.briefcase.util;
 
 /*
@@ -34,6 +50,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.AuthPolicy;
+import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
@@ -80,7 +97,9 @@ public final class WebUtils {
 	public static final void clearAllCredentials(HttpContext localContext) {
 		CredentialsProvider credsProvider = (CredentialsProvider) localContext
 				.getAttribute(ClientContext.CREDS_PROVIDER);
-		credsProvider.clear();
+		if ( credsProvider != null ) {
+		  credsProvider.clear();
+		}
 	}
 
 	public static final boolean hasCredentials(HttpContext localContext,
@@ -101,8 +120,8 @@ public final class WebUtils {
 	}
 
 	public static final void addCredentials(HttpContext localContext,
-			String userEmail, String password, String host) {
-		Credentials c = new UsernamePasswordCredentials(userEmail, password);
+			String userEmail, char[] password, String host) {
+		Credentials c = new UsernamePasswordCredentials(userEmail, new String(password));
 		addCredentials(localContext, c, host);
 	}
 
@@ -160,7 +179,10 @@ public final class WebUtils {
 
 		// setup client
 		HttpClient httpclient = new DefaultHttpClient(params);
-		return httpclient;
+      httpclient.getParams().setParameter(ClientPNames.MAX_REDIRECTS, 1);
+      httpclient.getParams().setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true);
+
+      return httpclient;
 	}
 
 	public static HttpContext createHttpContext() {

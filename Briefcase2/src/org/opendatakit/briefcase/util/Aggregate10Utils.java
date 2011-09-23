@@ -1,206 +1,182 @@
+/*
+ * Copyright (C) 2011 University of Washington.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package org.opendatakit.briefcase.util;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.protocol.HttpContext;
+import org.bushe.swing.event.EventBus;
 import org.kxml2.io.KXmlParser;
-import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
+import org.opendatakit.briefcase.model.FormStatus;
+import org.opendatakit.briefcase.model.FormStatusEvent;
+import org.opendatakit.briefcase.model.MetadataUpdateException;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.opendatakit.briefcase.model.TransmissionException;
+import org.opendatakit.briefcase.model.XmlDocumentFetchException;
+import org.opendatakit.briefcase.util.ServerUploader.SubmissionResponseAction;
 import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
 public class Aggregate10Utils {
 
-  private static final Logger log = Logger.getLogger(Aggregate10Utils.class.getName());
-  public static final String NAMESPACE_ODK = "http://www.opendatakit.org/xforms";
+  private static final int SERVER_CONNECTION_TIMEOUT = 30000;
 
-  public static final String FORM_ID_ATTRIBUTE_NAME = "id";
-  public static final String MODEL_VERSION_ATTRIBUTE_NAME = "version";
-  public static final String UI_VERSION_ATTRIBUTE_NAME = "uiVersion";
-  public static final String INSTANCE_ID_ATTRIBUTE_NAME = "instanceID";
-  public static final String SUBMISSION_DATE_ATTRIBUTE_NAME = "submissionDate";
-  public static final String IS_COMPLETE_ATTRIBUTE_NAME = "isComplete";
-  public static final String MARKED_AS_COMPLETE_DATE_ATTRIBUTE_NAME = "markedAsCompleteDate";
+  static final Logger log = Logger.getLogger(Aggregate10Utils.class.getName());
 
-  public static class ServerConnectionOutcome {
-    boolean isSuccessful = false;
-    boolean isCompleteTransfer = false;
-    String errorMessage = "Unknown Error";
+  private static final CharSequence HTTP_CONTENT_TYPE_TEXT_XML = "text/xml";
 
-    public boolean isSuccessful() {
-      return isSuccessful;
-    }
+  private static final CharSequence HTTP_CONTENT_TYPE_APPLICATION_XML = "application/xml";
 
-    public boolean isCompleteTransfer() {
-      return isCompleteTransfer;
-    }
+  private static final String FETCH_FAILED_DETAILED_REASON = "Fetch of %1$s failed. Detailed reason: ";
 
-    public String getErrorMessage() {
-      return errorMessage;
+  public static interface ResponseAction {
+    void doAction(DocumentFetchResult result) throws MetadataUpdateException;
+  }
+
+  public static class DocumentFetchResult {
+    public final Document doc;
+    public final boolean isOpenRosaResponse;
+
+    DocumentFetchResult(Document doc, boolean isOpenRosaResponse) {
+      this.doc = doc;
+      this.isOpenRosaResponse = isOpenRosaResponse;
     }
   }
 
-  private static ServerConnectionOutcome outcome;
+  /**
+   * Common routine to download a document from the downloadUrl and save the
+   * contents in the file 'f'. Shared by media file download and form file
+   * download.
+   * 
+   * @param f
+   * @param downloadUrl
+   * @throws URISyntaxException
+   * @throws IOException
+   * @throws ClientProtocolException
+   * @throws TransmissionException
+   */
+  public static void commonDownloadFile(ServerConnectionInfo serverInfo, File f, String downloadUrl)
+      throws URISyntaxException, ClientProtocolException, IOException, TransmissionException {
 
-  public static final ServerConnectionOutcome getOutcome() {
-    return outcome;
-  }
-
-  public static interface ServerXmlStreamHandler {
-    /**
-     * Process the response stream for a request.  May throw exceptions if a processing error occurs.
-     * 
-     * @param serverInfo
-     * @param responseStream
-     * @return true if processing was successful.  false otherwise (outcome contains error message).
-     * @throws IOException
-     * @throws XmlPullParserException
-     */
-    boolean readStream(ServerConnectionInfo serverInfo, InputStream responseStream) throws IOException,
-        XmlPullParserException;
-  }
-
-  private static class FlushStream implements ServerXmlStreamHandler {
-
-    FlushStream() {
-    };
-
-    @Override
-    public boolean readStream(ServerConnectionInfo serverInfo, InputStream requestStream)
-        throws IOException {
-      // simply flush the stream -- not interested in parsing it.
-      final long count = 1024L;
-      while (requestStream.skip(count) == count)
-        ;
-      requestStream.close();
-      return true;
+    // OK. We need to download it because we either:
+    // (1) don't have it
+    // (2) don't know if it is changed because the hash is not md5
+    // (3) know it is changed
+    URI u = null;
+    try {
+      URL uurl = new URL(downloadUrl);
+      u = uurl.toURI();
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+      throw e;
     }
 
-  }
+    // get shared HttpContext so that authentication and cookies are retained.
+    HttpContext localContext = serverInfo.getHttpContext();
 
-  private static class ProcessXmlStream implements ServerXmlStreamHandler {
+    HttpClient httpclient = serverInfo.getHttpClient();
 
-    private ServerConnectionInfo serverInfo = null;
-    private boolean successful = false;
-    private Document parsedDoc = null;
+    // set up request...
+    HttpGet req = WebUtils.createOpenRosaHttpGet(u);
 
-    ProcessXmlStream() {
-    }
+    HttpResponse response = null;
+    // try
+    {
+      response = httpclient.execute(req, localContext);
+      int statusCode = response.getStatusLine().getStatusCode();
 
-    @Override
-    public boolean readStream(ServerConnectionInfo serverInfo, InputStream requestStream)
-        throws IOException, XmlPullParserException {
-      // TODO Auto-generated method stub
-      this.serverInfo = serverInfo;
-      // parse response
-      Document doc = null;
-      InputStreamReader isr = null;
+      if (statusCode != 200) {
+        String errMsg = String.format(FETCH_FAILED_DETAILED_REASON, f.getAbsolutePath())
+            + response.getStatusLine().getReasonPhrase() + " (" + statusCode + ")";
+        log.severe(errMsg);
+        throw new TransmissionException(errMsg);
+      }
+
+      // write connection to file
+      InputStream is = null;
+      OutputStream os = null;
       try {
-        isr = new InputStreamReader(requestStream, "UTF-8");
-        doc = new Document();
-        KXmlParser parser = new KXmlParser();
-        parser.setInput(isr);
-        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-        doc.parse(parser);
-        parsedDoc = doc;
-        successful = true;
-      } catch (IOException e) {
-        e.printStackTrace();
-        log.severe("Parsing failed with IO exception " + e.getMessage());
-        throw e;
-      } catch (XmlPullParserException e) {
-        e.printStackTrace();
-        log.severe("Parsing failed with " + e.getMessage());
-        throw e;
+        is = response.getEntity().getContent();
+        os = new FileOutputStream(f);
+        byte buf[] = new byte[1024];
+        int len;
+        while ((len = is.read(buf)) > 0) {
+          os.write(buf, 0, len);
+        }
+        os.flush();
       } finally {
-        final long count = 1024L;
-        while (requestStream.skip(count) == count)
-          ;
-        if (isr != null) {
+        if (os != null) {
           try {
-            isr.close();
+            os.close();
           } catch (Exception e) {
-            // no-op
           }
         }
-        try {
-          requestStream.close();
-        } catch (Exception e) {
-          // no-op
+        if (is != null) {
+          try {
+            is.close();
+          } catch (Exception e) {
+          }
         }
       }
-      return true;
-    }
 
-    public ServerConnectionInfo getServerInfo() {
-      return serverInfo;
-    }
-
-    public Document getParsedDoc() {
-      return parsedDoc;
-    }
-
-    public boolean isSuccessful() {
-      return successful;
-    }
-    
-    protected void setIsSuccessful(boolean value) {
-      successful = value;
-    }
-  }
-  
-  public static final Document retrieveAvailableFormsFromServer(ServerConnectionInfo serverInfo) {
-    ProcessXmlStream actor = new ProcessXmlStream();
-    fetchFormList(serverInfo, actor);
-    if (actor.isSuccessful()) {
-      return actor.getParsedDoc();
-    } else {
-      return null;
     }
   }
 
-  public static final void testServerDownloadConnection(ServerConnectionInfo serverInfo) {
-    fetchFormList(serverInfo, new FlushStream());
-  }
-
-  private static final void fetchFormList(ServerConnectionInfo serverInfo,
-      ServerXmlStreamHandler handler) {
-    outcome = new ServerConnectionOutcome();
-
-    String urlString = serverInfo.getUrl();
-    if (urlString.endsWith("/")) {
-      urlString = urlString + "formList";
-    } else {
-      urlString = urlString + "/formList";
-    }
+  /**
+   * Common method for returning a parsed xml document given a url and the http
+   * context and client objects involved in the web connection. The document is
+   * the body of the response entity and should be xml.
+   * 
+   * @param urlString
+   * @param localContext
+   * @param httpclient
+   * @return
+   */
+  public static final DocumentFetchResult getXmlDocument(String urlString,
+      ServerConnectionInfo serverInfo, boolean alwaysResetCredentials, String fetch_doc_failed,
+      String fetch_doc_failed_no_detail, ResponseAction action) throws XmlDocumentFetchException {
 
     URI u = null;
     try {
@@ -208,21 +184,21 @@ public class Aggregate10Utils {
       u = url.toURI();
     } catch (MalformedURLException e) {
       e.printStackTrace();
-      outcome.errorMessage = "Invalid url: " + urlString + ".\nFailed with error: "
+      String msg = fetch_doc_failed + "Invalid url: " + urlString + ".\nFailed with error: "
           + e.getMessage();
-      log.severe(outcome.errorMessage);
-      return;
+      log.severe(msg);
+      throw new XmlDocumentFetchException(msg);
     } catch (URISyntaxException e) {
       e.printStackTrace();
-      outcome.errorMessage = "Invalid uri: " + urlString + ".\nFailed with error: "
+      String msg = fetch_doc_failed + "Invalid uri: " + urlString + ".\nFailed with error: "
           + e.getMessage();
-      log.severe(outcome.errorMessage);
-      return;
+      log.severe(msg);
+      throw new XmlDocumentFetchException(msg);
     }
 
     HttpClient httpClient = serverInfo.getHttpClient();
     if (httpClient == null) {
-      httpClient = WebUtils.createHttpClient(20000);
+      httpClient = WebUtils.createHttpClient(SERVER_CONNECTION_TIMEOUT);
       serverInfo.setHttpClient(httpClient);
     }
 
@@ -233,64 +209,87 @@ public class Aggregate10Utils {
       serverInfo.setHttpContext(localContext);
     }
 
-    WebUtils.clearAllCredentials(localContext);
-    WebUtils.addCredentials(localContext, serverInfo.getUsername(), serverInfo.getPassword(),
-        u.getHost());
+    // set up request...
+    HttpGet req = WebUtils.createOpenRosaHttpGet(u);
 
-    {
-      // we need to issue a get request
-      HttpGet httpGet = WebUtils.createOpenRosaHttpGet(u);
+    int[] validStatusList = { 200 };
 
-      // prepare response
-      HttpResponse response = null;
-      try {
-        response = httpClient.execute(httpGet, localContext);
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode == 200) {
-          Header[] openRosaVersions = response.getHeaders(WebUtils.OPEN_ROSA_VERSION_HEADER);
-          if (openRosaVersions != null && openRosaVersions.length != 0) {
-            serverInfo.setOpenRosaServer(true);
-          }
-          Header[] locations = response.getHeaders("Location");
-          if (locations != null && locations.length == 1) {
-            try {
-              URL url = new URL(locations[0].getValue());
-              URI uNew = url.toURI();
-              if (u.getHost().equalsIgnoreCase(uNew.getHost())) {
-                // trust the server to tell us a new location
-                // ... and possibly to use https instead.
-                String fullUrl = url.toExternalForm();
-                int idx = fullUrl.lastIndexOf("/");
-                serverInfo.setUrl(fullUrl.substring(0, idx));
-              } else {
-                // Don't follow a redirection attempt to a different host.
-                // We can't tell if this is a spoof or not.
-                outcome.errorMessage = "Unexpected redirection attempt to a different host: "
-                    + uNew.toString();
-                log.severe(outcome.errorMessage);
-                return;
-              }
-            } catch (Exception e) {
-              e.printStackTrace();
-              outcome.errorMessage = "Unexpected exception: " + e.getMessage();
-              return;
-            }
-          }
+    return httpRetrieveXmlDocument(req, validStatusList, serverInfo, alwaysResetCredentials,
+        fetch_doc_failed, fetch_doc_failed_no_detail, action);
+  }
 
-          try {
-            // stream contains form list -- pass that to stream handler.
-            // That should read all bytes from the stream and close it.
-            if ( !handler.readStream(serverInfo, response.getEntity().getContent()) ) {
-              // errors already set...
-              return;
-            }
-          } catch (IOException e) {
-            e.printStackTrace();
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        } else {
-          // something is wrong...
+  /**
+   * Common method for returning a parsed xml document given a url and the http
+   * context and client objects involved in the web connection. The document is
+   * the body of the response entity and should be xml.
+   * 
+   * @param urlString
+   * @param localContext
+   * @param httpclient
+   * @return
+   */
+  private static final DocumentFetchResult httpRetrieveXmlDocument(HttpUriRequest request,
+      int[] validStatusList, ServerConnectionInfo serverInfo, boolean alwaysResetCredentials,
+      String fetch_doc_failed, String fetch_doc_failed_no_detail, ResponseAction action)
+      throws XmlDocumentFetchException {
+
+    HttpClient httpClient = serverInfo.getHttpClient();
+
+    // get shared HttpContext so that authentication and cookies are retained.
+    HttpContext localContext = serverInfo.getHttpContext();
+
+    URI u = request.getURI();
+
+    if (serverInfo.getUsername() != null && serverInfo.getUsername().length() != 0) {
+      if (alwaysResetCredentials
+          || !WebUtils.hasCredentials(localContext, serverInfo.getUsername(), u.getHost())) {
+        WebUtils.clearAllCredentials(localContext);
+        WebUtils.addCredentials(localContext, serverInfo.getUsername(), serverInfo.getPassword(),
+            u.getHost());
+      }
+    } else {
+      WebUtils.clearAllCredentials(localContext);
+    }
+
+    HttpResponse response = null;
+    try {
+      response = httpClient.execute(request, localContext);
+      int statusCode = response.getStatusLine().getStatusCode();
+
+      HttpEntity entity = response.getEntity();
+      String lcContentType = (entity == null) ? null : entity.getContentType().getValue()
+          .toLowerCase();
+
+      XmlDocumentFetchException ex = null;
+      boolean statusCodeValid = false;
+      for (int i : validStatusList) {
+        if (i == statusCode) {
+          statusCodeValid = true;
+          break;
+        }
+      }
+      // if anything is amiss, ex will be non-null after this cascade.
+
+      if (!statusCodeValid) {
+        String webError = response.getStatusLine().getReasonPhrase() + " (" + statusCode + ")";
+
+        ex = new XmlDocumentFetchException(fetch_doc_failed + webError
+            + " while accessing: " + u.toString()
+            + "\nPlease verify that the URL, your user credentials and your permissions are all correct.");
+      } else if (entity == null) {
+        log.severe("No entity body returned from: " + u.toString() + " is not text/xml");
+        ex = new XmlDocumentFetchException(fetch_doc_failed + " Server unexpectedly returned no content while accessing: " + u.toString());
+      } else if (!(lcContentType.contains(HTTP_CONTENT_TYPE_TEXT_XML) || lcContentType
+          .contains(HTTP_CONTENT_TYPE_APPLICATION_XML))) {
+        log.severe("ContentType: " + entity.getContentType().getValue() + "returned from: "
+            + u.toString() + " is not text/xml");
+        ex = new XmlDocumentFetchException(fetch_doc_failed + "A non-XML document was returned while accessing: " + u.toString()
+            + "\nA network login screen may be interfering with the transmission to the server.");
+      }
+
+      if (ex != null) {
+        if (entity != null) {
+          // something is amiss -- read and discard any response body.
           try {
             // don't really care about the stream...
             InputStream is = response.getEntity().getContent();
@@ -299,41 +298,135 @@ public class Aggregate10Utils {
             while (is.skip(count) == count)
               ;
             is.close();
-          } catch (IOException e) {
-            e.printStackTrace();
           } catch (Exception e) {
             e.printStackTrace();
           }
-          log.warning("Status code on Get request: " + statusCode);
-          outcome.errorMessage = "A network login screen may be interfering"
-              + " with the transmission to the server. Status code: "
-              + Integer.toString(statusCode);
-          return;
         }
-      } catch (ClientProtocolException e) {
-        e.printStackTrace();
-        outcome.errorMessage = "Unexpected protocol exception: " + e.getMessage();
-        return;
+        // and throw the exception...
+        throw ex;
+      }
+
+      // parse the xml document...
+      Document doc = null;
+      try {
+        InputStream is = null;
+        InputStreamReader isr = null;
+        try {
+          is = entity.getContent();
+          isr = new InputStreamReader(is, "UTF-8");
+          doc = new Document();
+          KXmlParser parser = new KXmlParser();
+          parser.setInput(isr);
+          parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
+          doc.parse(parser);
+          isr.close();
+        } finally {
+          if (isr != null) {
+            try {
+              isr.close();
+            } catch (Exception e) {
+              // no-op
+            }
+          }
+          if (is != null) {
+            try {
+              is.close();
+            } catch (Exception e) {
+              // no-op
+            }
+          }
+        }
       } catch (Exception e) {
         e.printStackTrace();
-        outcome.errorMessage = "Unexpected exception: " + e.getMessage();
-        return;
+        log.severe("Parsing failed with " + e.getMessage());
+        throw new XmlDocumentFetchException(fetch_doc_failed + " while accessing: " + u.toString());
       }
-    }
-    // At this point, we may have updated the uri to use https.
-    // This occurs only if the Location header keeps the host name
-    // the same. If it specifies a different host name, we error
-    // out.
-    //
-    // And we may have set authentication cookies in our
-    // cookiestore (referenced by localContext) that will enable
-    // authenticated publication to the server.
-    //
-    outcome.isSuccessful = true;
-  }
 
-  public static final void testServerUploadConnection(ServerConnectionInfo serverInfo) {
-    testServerConnection(serverInfo, "submission");
+      // examine header fields...
+
+      // is it an OpenRosa server?
+      boolean isOR = false;
+      Header[] fields = response.getHeaders(WebUtils.OPEN_ROSA_VERSION_HEADER);
+      if (fields != null && fields.length >= 1) {
+        isOR = true;
+        boolean versionMatch = false;
+        boolean first = true;
+        StringBuilder b = new StringBuilder();
+        for (Header h : fields) {
+          if (WebUtils.OPEN_ROSA_VERSION.equals(h.getValue())) {
+            versionMatch = true;
+            break;
+          }
+          if (!first) {
+            b.append("; ");
+          }
+          first = false;
+          b.append(h.getValue());
+        }
+        if (!versionMatch) {
+          log.warning(WebUtils.OPEN_ROSA_VERSION_HEADER + " unrecognized version(s): "
+              + b.toString());
+        }
+      }
+
+      // what about location?
+      Header[] locations = response.getHeaders("Location");
+      if (locations != null && locations.length == 1) {
+        try {
+          URL url = new URL(locations[0].getValue());
+          URI uNew = url.toURI();
+          if (u.getHost().equalsIgnoreCase(uNew.getHost())) {
+            // trust the server to tell us a new location
+            // ... and possibly to use https instead.
+            String fullUrl = url.toExternalForm();
+            int idx = fullUrl.lastIndexOf("/");
+            serverInfo.setUrl(fullUrl.substring(0, idx));
+          } else {
+            // Don't follow a redirection attempt to a different host.
+            // We can't tell if this is a spoof or not.
+            String msg = fetch_doc_failed + "Unexpected redirection attempt to a different host: "
+                + uNew.toString();
+            log.severe(msg);
+            throw new XmlDocumentFetchException(msg);
+          }
+        } catch (MalformedURLException e) {
+          e.printStackTrace();
+          String msg = fetch_doc_failed + "Unexpected exception: " + e.getMessage();
+          log.severe(msg);
+          throw new XmlDocumentFetchException(msg);
+        } catch (URISyntaxException e) {
+          e.printStackTrace();
+          String msg = fetch_doc_failed + "Unexpected exception: " + e.getMessage();
+          log.severe(msg);
+          throw new XmlDocumentFetchException(msg);
+        }
+      }
+      DocumentFetchResult result = new DocumentFetchResult(doc, isOR);
+      if (action != null) {
+        action.doAction(result);
+      }
+      return result;
+    } catch (ClientProtocolException e) {
+      e.printStackTrace();
+      String msg = fetch_doc_failed + "Unexpected exception: " + e.getMessage();
+      log.severe(msg);
+      throw new XmlDocumentFetchException(msg);
+    } catch (IOException e) {
+      e.printStackTrace();
+      String msg;
+      if ( e instanceof UnknownHostException ) {
+        msg = fetch_doc_failed + "Unknown host: " + e.getMessage();
+      } else {
+        msg = fetch_doc_failed + "Unexpected " + e.getClass().getName() + ": " + e.getMessage();
+      }
+      log.severe(msg);
+      throw new XmlDocumentFetchException(msg);
+    } catch (MetadataUpdateException e) {
+      e.printStackTrace();
+      String msg = fetch_doc_failed + "Unexpected exception: " + e.getMessage();
+      log.severe(msg);
+      throw new XmlDocumentFetchException(msg);
+    }
   }
 
   /**
@@ -342,11 +435,11 @@ public class Aggregate10Utils {
    * 
    * @param serverInfo
    * @param actionAddr
-   * @return null on failure; otherwise, the confirmed URI of this action.
+   * @return the confirmed URI of this action.
+   * @throws TransmissionException
    */
-  public static URI testServerConnection(ServerConnectionInfo serverInfo, String actionAddr) {
-
-    outcome = new ServerConnectionOutcome();
+  public static URI testServerConnectionWithHeadRequest(ServerConnectionInfo serverInfo,
+      String actionAddr) throws TransmissionException {
 
     String urlString = serverInfo.getUrl();
     if (urlString.endsWith("/")) {
@@ -361,21 +454,21 @@ public class Aggregate10Utils {
       u = url.toURI();
     } catch (MalformedURLException e) {
       e.printStackTrace();
-      outcome.errorMessage = "Invalid url: " + urlString + "for " + actionAddr
-          + ".\nFailed with error: " + e.getMessage();
-      log.severe(outcome.errorMessage);
-      return null;
+      String msg = "Invalid url: " + urlString + "for " + actionAddr + ".\nFailed with error: "
+          + e.getMessage();
+      log.severe(msg);
+      throw new TransmissionException(msg);
     } catch (URISyntaxException e) {
       e.printStackTrace();
-      outcome.errorMessage = "Invalid uri: " + urlString + "for " + actionAddr
-          + ".\nFailed with error: " + e.getMessage();
-      log.severe(outcome.errorMessage);
-      return null;
+      String msg = "Invalid uri: " + urlString + "for " + actionAddr + ".\nFailed with error: "
+          + e.getMessage();
+      log.severe(msg);
+      throw new TransmissionException(msg);
     }
 
     HttpClient httpClient = serverInfo.getHttpClient();
     if (httpClient == null) {
-      httpClient = WebUtils.createHttpClient(5000);
+      httpClient = WebUtils.createHttpClient(SERVER_CONNECTION_TIMEOUT);
       serverInfo.setHttpClient(httpClient);
     }
 
@@ -417,12 +510,6 @@ public class Aggregate10Utils {
                 // This occurs only if the Location header keeps the host name
                 // the same. If it specifies a different host name, we error
                 // out.
-                //
-                // And we may have set authentication cookies in our
-                // cookiestore (referenced by localContext) that will enable
-                // authenticated publication to the server.
-                //
-                outcome.isSuccessful = true;
                 return u;
               } else {
                 // Don't follow a redirection attempt to a different host.
@@ -430,27 +517,24 @@ public class Aggregate10Utils {
                 String msg = "Starting url: " + u.toString()
                     + " unexpected redirection attempt to a different host: " + uNew.toString();
                 log.severe(msg);
-                outcome.errorMessage = msg;
-                return null;
+                throw new TransmissionException(msg);
               }
             } catch (Exception e) {
               e.printStackTrace();
               String msg = "Starting url: " + u.toString() + " unexpected exception: "
                   + e.getLocalizedMessage();
               log.severe(msg);
-              outcome.errorMessage = msg;
-              return null;
+              throw new TransmissionException(msg);
             }
           } else {
             String msg = "The url: " + u.toString()
                 + " is not Aggregate 1.0 - status code on Head request: " + statusCode;
             log.severe(msg);
-            outcome.errorMessage = msg;
-            return null;
+            throw new TransmissionException(msg);
           }
         } else {
           // may be a server that does not handle HEAD requests
-          if ( response.getEntity() != null ) {
+          if (response.getEntity() != null) {
             try {
               // don't really care about the stream...
               InputStream is = response.getEntity().getContent();
@@ -468,95 +552,29 @@ public class Aggregate10Utils {
           String msg = "The username or password may be incorrect or the url: " + u.toString()
               + " is not Aggregate 1.0 - status code on Head request: " + statusCode;
           log.severe(msg);
-          outcome.errorMessage = msg;
-          return null;
+          throw new TransmissionException(msg);
         }
       } catch (ClientProtocolException e) {
         e.printStackTrace();
         String msg = "Starting url: " + u.toString() + " unexpected exception: "
             + e.getLocalizedMessage();
         log.severe(msg);
-        outcome.errorMessage = msg;
-        return null;
+        throw new TransmissionException(msg);
       } catch (Exception e) {
         e.printStackTrace();
         String msg = "Starting url: " + u.toString() + " unexpected exception: "
             + e.getLocalizedMessage();
         log.severe(msg);
-        outcome.errorMessage = msg;
-        return null;
+        throw new TransmissionException(msg);
       }
     }
   }
 
-  public static class UploadOutcome {
-    public final boolean isSuccessful;
-    public final boolean notAllFilesUploaded;
-    public final String instanceDir;
-    public final String errorMessage;
+  static final boolean uploadFilesToServer(ServerConnectionInfo serverInfo, URI u,
+      String distinguishedFileTagName, File file, List<File> files,
+      SubmissionResponseAction action, FormStatus formToTransfer) {
 
-    /**
-     * Successful full upload.
-     * 
-     * @param instanceDir
-     */
-    public UploadOutcome(String instanceDir) {
-      isSuccessful = true;
-      notAllFilesUploaded = false;
-      this.instanceDir = instanceDir;
-      errorMessage = null;
-    }
-
-    /**
-     * Successful, but, because the server is not an OpenRosa-compliant server,
-     * we only uploaded media files and there are other non-media attachments
-     * that we omitted uploading.
-     * 
-     * @param instanceDir
-     * @param ignored
-     */
-    public UploadOutcome(String instanceDir, boolean ignored) {
-      isSuccessful = true;
-      notAllFilesUploaded = true;
-      this.instanceDir = instanceDir;
-      errorMessage = null;
-    }
-
-    /**
-     * Error during the upload to the indicated URI. The localized mesage
-     * describing the error is in the message parameter.
-     * 
-     * @param instanceDir
-     * @param uri
-     * @param message
-     */
-    public UploadOutcome(String instanceDir, String uri, String message) {
-      isSuccessful = false;
-      notAllFilesUploaded = true;
-      this.instanceDir = instanceDir;
-      errorMessage = message + " while sending to " + uri;
-    }
-
-    /**
-     * Error during the upload to the indicated URI. The localized mesage
-     * describing the error is in the message parameter.
-     * 
-     * @param instanceDir
-     * @param uri
-     * @param message
-     */
-    public UploadOutcome(String instanceDir, URI uri, String message) {
-      isSuccessful = false;
-      notAllFilesUploaded = true;
-      this.instanceDir = instanceDir;
-      errorMessage = message + " while sending to " + uri.toString();
-    }
-  }
-
-  private static final Document uploadFilesToServer(ServerConnectionInfo serverInfo, URI u,
-      String distinguishedFileTagName, File file, List<File> files, ProcessXmlStream handler) {
-
-    Document doc = null; // the last response document from the server
+    boolean allSuccessful = true;
 
     boolean first = true; // handles case where there are no media files
     int j = 0;
@@ -638,7 +656,8 @@ public class Aggregate10Utils {
               StringBody sb = new StringBody("yes", Charset.forName("UTF-8"));
               entity.addPart("*isIncomplete*", sb);
             } catch (Exception e) {
-              e.printStackTrace(); // never happens...
+              e.printStackTrace();
+              throw new IllegalStateException("never happens");
             }
             ++j; // advance over the last attachment added...
             break;
@@ -648,313 +667,19 @@ public class Aggregate10Utils {
 
       httppost.setEntity(entity);
 
-      // prepare response and return uploaded
-      HttpResponse response = null;
+      int[] validStatusList = { 201 };
+
       try {
-        response = serverInfo.getHttpClient().execute(httppost, serverInfo.getHttpContext());
-        int responseCode = response.getStatusLine().getStatusCode();
-        log.info("Response code:" + responseCode);
-        // verify that the response was a 201 or 202.
-        // If it wasn't, the submission has failed.
-        if (responseCode != 201 && responseCode != 202) {
-          String msg = "POST did not return a 201 or 202 status code: " + responseCode;
-          log.severe(msg);
-          outcome.errorMessage = msg;
-          return null;
-        }
-        // stream contains form list -- pass that to stream handler.
-        // That should read all bytes from the stream and close it.
-        if ( !handler.readStream(serverInfo, response.getEntity().getContent()) ) {
-          // errors already set...
-          return null;
-        }
-        doc = handler.getParsedDoc();
-      } catch (Exception e) {
+        httpRetrieveXmlDocument(httppost, validStatusList, serverInfo, false,
+            "POST failed: ", "POST failed.", action);
+      } catch (XmlDocumentFetchException e) {
         e.printStackTrace();
-        String msg = "POST unexpected exception: " + e.getMessage();
-        log.severe(msg);
-        outcome.errorMessage = msg;
-        return null;
+        allSuccessful = false;
+        formToTransfer.setStatusString("UPLOAD FAILED: " + e.getMessage(), false);
+        EventBus.publish(new FormStatusEvent(formToTransfer));
       }
     }
 
-    // ok, all the parts of the submission were sent...
-    // If it wasn't, the submission has failed and returned before this.
-    outcome.errorMessage = "";
-    outcome.isCompleteTransfer = true;
-    outcome.isSuccessful = true;
-    return doc;
-  }
-
-  public static final void submitInstanceToServerConnection(ServerConnectionInfo serverInfo,
-      File instanceDirectory) {
-
-    outcome = new ServerConnectionOutcome();
-
-    URI u = testServerConnection(serverInfo, "submission");
-    if (u == null)
-      return;
-
-    // We have the actual server URL in u, possibly redirected to https.
-    // We know we are talking to the server because the head request
-    // succeeded and had a Location header field.
-
-    // try to send instance
-    // get instance file
-    File file = new File(instanceDirectory, "submission.xml");
-
-    String submissionFile = file.getName();
-
-    if (!file.exists()) {
-      String msg = "Submission file not found: " + file.getAbsolutePath();
-      log.severe(msg);
-      outcome.errorMessage = msg;
-      return;
-    }
-
-    // find all files in parent directory
-    File[] allFiles = instanceDirectory.listFiles();
-
-    // clean up the list, removing anything that is suspicious
-    // or that we won't attempt to upload. For OpenRosa servers,
-    // we'll upload just about everything...
-    List<File> files = new ArrayList<File>();
-    for (File f : allFiles) {
-      String fileName = f.getName();
-      if (fileName.startsWith(".")) {
-        // potential Apple file attributes file -- ignore it
-        continue;
-      }
-      if (fileName.equals(submissionFile)) {
-        continue; // this is always added
-      } else {
-        files.add(f);
-      }
-    }
-
-    ProcessXmlStream actor = new ProcessXmlSubmissionResponseStream(file);
-
-    uploadFilesToServer(serverInfo, u, "xml_submission_file", file, files, actor);
-    return;
-  }
-
-  public static class ProcessXmlSubmissionResponseStream extends ProcessXmlStream {
-
-    private final File submissionFile;
-    
-    ProcessXmlSubmissionResponseStream(File submissionFile) {
-      super();
-      this.submissionFile = submissionFile;
-    }
-  
-    @Override
-    public boolean readStream(ServerConnectionInfo serverInfo, InputStream requestStream)
-        throws IOException, XmlPullParserException {
-      super.readStream(serverInfo, requestStream);
-      
-      if ( !isSuccessful() ) {
-        return false;
-      }
-      
-      Document doc = getParsedDoc();
-      Element root = doc.getRootElement();
-      Element metadata = root.getElement(NAMESPACE_ODK, "submissionMetadata");
-      
-      // and get the instanceID and submissionDate from the metadata.
-      // we need to put that back into the instance file if not already present
-      String instanceID = metadata.getAttributeValue("", INSTANCE_ID_ATTRIBUTE_NAME);
-      String submissionDate = metadata.getAttributeValue("", SUBMISSION_DATE_ATTRIBUTE_NAME);
-      
-      // read the original document...
-      Document originalDoc = null;
-      try {
-        FileInputStream fs = new FileInputStream(submissionFile);
-        InputStreamReader fr = new InputStreamReader(fs, "UTF-8");
-        originalDoc = new Document();
-        KXmlParser parser = new KXmlParser();
-        parser.setInput(fr);
-        parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-        originalDoc.parse(parser);
-        fr.close();
-        fs.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-        String msg = "Original submission file could not be opened " + submissionFile.getAbsolutePath();
-        log.severe(msg);
-        outcome.errorMessage = msg;
-        setIsSuccessful(false);
-        return false;
-      } catch (XmlPullParserException e) {
-        e.printStackTrace();
-        String msg = "Original submission file could not be parsed as XML file " + submissionFile.getAbsolutePath();
-        log.severe(msg);
-        outcome.errorMessage = msg;
-        setIsSuccessful(false);
-        return false;
-      }
-
-      // determine whether it has the attributes already added.
-      // if they are already there, they better match the values returned by Aggregate 1.0
-      boolean hasInstanceID = false;
-      boolean hasSubmissionDate = false;
-      root = originalDoc.getRootElement();
-      for ( int i = 0 ; i < root.getAttributeCount() ; ++i ) {
-        String name = root.getAttributeName(i);
-        if ( name.equals(INSTANCE_ID_ATTRIBUTE_NAME) ) {
-          if ( !root.getAttributeValue(i).equals(instanceID) ) {
-            String msg = "Original submission file's instanceID does not match that on server! " + submissionFile.getAbsolutePath();
-            log.severe(msg);
-            outcome.errorMessage = msg;
-            setIsSuccessful(false);
-            return false;
-          } else {
-            hasInstanceID = true;
-          }
-        }
-        
-        if ( name.equals(SUBMISSION_DATE_ATTRIBUTE_NAME) ) {
-          if ( !root.getAttributeValue(i).equals(submissionDate) ) {
-            String msg = "Original submission file's submissionDate does not match that on server! " + submissionFile.getAbsolutePath();
-            log.severe(msg);
-            outcome.errorMessage = msg;
-            setIsSuccessful(false);
-            return false;
-          } else {
-            hasSubmissionDate = true;
-          }
-        }
-      }
-    
-      if ( hasInstanceID && hasSubmissionDate ) {
-        log.info("submission already has instanceID and submissionDate attributes: " + submissionFile.getAbsolutePath());
-        outcome.isSuccessful = true;
-        return true;
-      }
-      
-      if ( !hasInstanceID ) {
-        root.setAttribute("", INSTANCE_ID_ATTRIBUTE_NAME, instanceID);
-      }
-      if ( !hasSubmissionDate ) {
-        root.setAttribute("", SUBMISSION_DATE_ATTRIBUTE_NAME, submissionDate);
-      }
-
-      // write the file out...
-      File revisedFile = new File( submissionFile.getParentFile(), "." + submissionFile.getName());
-      try {
-        FileOutputStream fos = new FileOutputStream(revisedFile, false);
-        
-        KXmlSerializer serializer = new KXmlSerializer();
-        serializer.setOutput(fos, "UTF-8");
-        originalDoc.write(serializer);
-        serializer.flush();
-        fos.close();
-        
-        // and swap files...
-        boolean restoreTemp = false;
-        File temp = new File( submissionFile.getParentFile(), ".back." + submissionFile.getName() );
-        
-        try {
-          if ( temp.exists() ) {
-            if ( !temp.delete() ) {
-              String msg = "Unable to remove temporary submission backup file " + temp.getAbsolutePath();
-              log.severe(msg);
-              outcome.errorMessage = msg;
-              setIsSuccessful(false);
-              return false;
-            }
-          }
-          if ( !submissionFile.renameTo(temp) ) {
-            String msg = "Unable to rename submission to temporary submission backup file " + temp.getAbsolutePath();
-            log.severe(msg);
-            outcome.errorMessage = msg;
-            setIsSuccessful(false);
-            return false;
-          }
-          
-          // recovery is possible...
-          restoreTemp = true;
-          
-          if ( !revisedFile.renameTo(submissionFile) ) {
-            String msg = "Original submission file could not be updated " + submissionFile.getAbsolutePath();
-            log.severe(msg);
-            outcome.errorMessage = msg;
-            setIsSuccessful(false);
-            return false;
-          }
-          
-          // we're successful...
-          restoreTemp = false;
-        } finally {
-          if ( restoreTemp ) {
-            if ( !temp.renameTo(submissionFile) ) {
-              String msg = "Unable to restore submission from temporary submission backup file " + temp.getAbsolutePath();
-              log.severe(msg);
-              outcome.errorMessage = msg;
-              setIsSuccessful(false);
-              return false;
-            }
-          }
-        }
-      } catch (FileNotFoundException e) {
-        e.printStackTrace();
-        String msg = "Temporary submission file could not be opened " + revisedFile.getAbsolutePath();
-        log.severe(msg);
-        outcome.errorMessage = msg;
-        setIsSuccessful(false);
-        return false;
-      } catch (IOException e) {
-        e.printStackTrace();
-        String msg = "Temporary submission file could not be written " + revisedFile.getAbsolutePath();
-        log.severe(msg);
-        outcome.errorMessage = msg;
-        setIsSuccessful(false);
-        return false;
-      }
-      
-      return true;
-    }
-  }
-
-  public static void uploadFormToServerConnection(ServerConnectionInfo serverInfo,
-      File briefcaseFormDefFile, File briefcaseFormMediaDir) {
-    // very similar to upload submissions...
-
-    outcome = new ServerConnectionOutcome();
-
-    URI u = testServerConnection(serverInfo, "formUpload");
-
-    // We have the actual server URL in u, possibly redirected to https.
-    // We know we are talking to the server because the head request
-    // succeeded and had a Location header field.
-
-    // try to send form...
-    if (!briefcaseFormDefFile.exists()) {
-      String msg = "Form definition file not found: " + briefcaseFormDefFile.getAbsolutePath();
-      log.severe(msg);
-      outcome.errorMessage = msg;
-      return;
-    }
-
-    // find all files in parent directory
-    File[] allFiles = briefcaseFormMediaDir.listFiles();
-
-    // clean up the list, removing anything that is suspicious
-    // or that we won't attempt to upload. For OpenRosa servers,
-    // we'll upload just about everything...
-    List<File> files = new ArrayList<File>();
-    if ( allFiles != null ) {
-      for (File f : allFiles) {
-        String fileName = f.getName();
-        if (fileName.startsWith(".")) {
-          // potential Apple file attributes file -- ignore it
-          continue;
-        }
-        files.add(f);
-      }
-    }
-
-    ProcessXmlStream actor = new ProcessXmlStream();
-
-    uploadFilesToServer(serverInfo, u, "form_def_file", briefcaseFormDefFile, files, actor);
+    return allSuccessful;
   }
 }

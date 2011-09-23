@@ -16,15 +16,14 @@
 
 package org.opendatakit.briefcase.model;
 
-public class TransferProgressEvent {
-  private final String text;
+public class ParsingException extends Exception {
 
-  public TransferProgressEvent(String text) {
-    this.text = text;
+  /**
+   * 
+   */
+  private static final long serialVersionUID = -2463850446028219296L;
+
+  public ParsingException(String message) {
+    super(message);
   }
-
-  public String getText() {
-    return text;
-  }
-
 }

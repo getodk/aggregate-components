@@ -1,0 +1,235 @@
+/*
+ * Copyright (C) 2011 University of Washington.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package org.opendatakit.briefcase.util;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.bushe.swing.event.EventBus;
+import org.opendatakit.briefcase.model.FormStatus;
+import org.opendatakit.briefcase.model.FormStatusEvent;
+import org.opendatakit.briefcase.model.MetadataUpdateException;
+import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.opendatakit.briefcase.model.TransmissionException;
+import org.opendatakit.briefcase.util.Aggregate10Utils.DocumentFetchResult;
+
+public class ServerUploader {
+
+  private static final Log logger = LogFactory.getLog(ServerUploader.class);
+
+  ServerConnectionInfo serverInfo;
+
+  ServerUploader(ServerConnectionInfo serverInfo) {
+    this.serverInfo = serverInfo;
+  }
+
+  public static class SubmissionResponseAction implements Aggregate10Utils.ResponseAction {
+
+    private final File file;
+    private String instanceID = null;
+    
+    SubmissionResponseAction(File file) {
+      this.file = file;
+    }
+    
+    @Override
+    public void doAction(DocumentFetchResult result) throws MetadataUpdateException {
+      instanceID = XmlManipulationUtils.updateSubmissionMetadata(file, result.doc);
+    }
+    
+    public void afterUpload(FormStatus formToTransfer) {
+      if ( instanceID == null ) return;
+      
+      File instanceDir = file.getParentFile();
+      File instancesParentDir = instanceDir.getParentFile();
+      
+      File newInstanceDir = FileSystemUtils.getFormSubmissionDirectory(instancesParentDir, instanceID);
+      if ( !newInstanceDir.equals(instanceDir) ) {
+        try {
+          FileUtils.moveDirectory(instanceDir, newInstanceDir);
+          String msg = "NOTE: Renaming submission directory: " + instanceDir.getName() + " to: " + newInstanceDir.getName();
+          formToTransfer.setStatusString(msg, true);
+          EventBus.publish(new FormStatusEvent(formToTransfer));
+        } catch (IOException e) {
+          e.printStackTrace();
+          String msg = "WARNING: Submission directory could not be renamed: " + instanceDir.getName();
+          formToTransfer.setStatusString(msg, true);
+          EventBus.publish(new FormStatusEvent(formToTransfer));
+        }
+      }
+    }
+    
+  }
+  
+  public boolean uploadFormAndSubmissionFiles(File briefcaseFormsDir,
+                      List<FormStatus> formsToTransfer) {
+    
+    boolean allSuccessful = true;
+    
+    for (FormStatus formToTransfer : formsToTransfer) {
+
+      String formName = formToTransfer.getFormName();
+      File briefcaseFormDefFile = FileSystemUtils.getFormDefinitionFileIfExists(
+          briefcaseFormsDir, formName);
+      if (briefcaseFormDefFile == null) {
+        formToTransfer.setStatusString("Form does not exist", true);
+        continue;
+      }
+      File briefcaseFormMediaDir = FileSystemUtils.getMediaDirectoryIfExists(
+          briefcaseFormsDir, formName);
+
+      allSuccessful = allSuccessful & // do not short-circuit!!!
+        uploadForm(formToTransfer, briefcaseFormDefFile, briefcaseFormMediaDir);
+
+      List<File> briefcaseInstances = FileSystemUtils.getFormSubmissionDirectories(
+          briefcaseFormsDir, formName);
+
+      URI u = getUploadSubmissionUri(formToTransfer);
+      if ( u == null ) {
+        // error already logged...
+        continue;
+      }
+      
+      for (File briefcaseInstance : briefcaseInstances) {
+        allSuccessful = allSuccessful & // do not short-circuit!!! 
+          uploadSubmission(formToTransfer, u, briefcaseInstance);
+      }
+    }
+    return allSuccessful;
+  }
+  
+  private boolean uploadForm(FormStatus formToTransfer, File briefcaseFormDefFile, File briefcaseFormMediaDir) {
+    // very similar to upload submissions...
+  
+    URI u;
+    try {
+      u = Aggregate10Utils.testServerConnectionWithHeadRequest(serverInfo, "formUpload");
+    } catch (TransmissionException e) {
+      formToTransfer.setStatusString(e.getMessage(), false);
+      EventBus.publish(new FormStatusEvent(formToTransfer));
+      return false;
+    }
+  
+    // We have the actual server URL in u, possibly redirected to https.
+    // We know we are talking to the server because the head request
+    // succeeded and had a Location header field.
+  
+    // try to send form...
+    if (!briefcaseFormDefFile.exists()) {
+      String msg = "Form definition file not found: " + briefcaseFormDefFile.getAbsolutePath();
+      formToTransfer.setStatusString(msg, false);
+      EventBus.publish(new FormStatusEvent(formToTransfer));
+      return false;
+    }
+  
+    // find all files in parent directory
+    File[] allFiles = null;
+    if ( briefcaseFormMediaDir != null ) {
+      allFiles = briefcaseFormMediaDir.listFiles();
+    }
+  
+    // clean up the list, removing anything that is suspicious
+    // or that we won't attempt to upload. For OpenRosa servers,
+    // we'll upload just about everything...
+    List<File> files = new ArrayList<File>();
+    if ( allFiles != null ) {
+      for (File f : allFiles) {
+        String fileName = f.getName();
+        if (fileName.startsWith(".")) {
+          // potential Apple file attributes file -- ignore it
+          continue;
+        }
+        files.add(f);
+      }
+    }
+  
+    return Aggregate10Utils.uploadFilesToServer(serverInfo, u, "form_def_file", briefcaseFormDefFile, files, null, formToTransfer);
+  }
+
+  private URI getUploadSubmissionUri(FormStatus formToTransfer) {
+    URI u;
+    try {
+      // Get the actual server URL in u, possibly redirected to https.
+      // We know we are talking to the server because the head request
+      // succeeded and had a Location header field.
+      u = Aggregate10Utils.testServerConnectionWithHeadRequest(serverInfo, "submission");
+    } catch (TransmissionException e) {
+      formToTransfer.setStatusString(e.getMessage(), false);
+      EventBus.publish(new FormStatusEvent(formToTransfer));
+      return null;
+    }
+    return u;
+  }
+  
+  private final boolean uploadSubmission(FormStatus formToTransfer, URI u, File instanceDirectory) {
+  
+    // We have the actual server URL in u, possibly redirected to https.
+    // We know we are talking to the server because the head request
+    // succeeded and had a Location header field.
+  
+    // try to send instance
+    // get instance file
+    File file = new File(instanceDirectory, "submission.xml");
+  
+    String submissionFile = file.getName();
+  
+    if (!file.exists()) {
+      String msg = "Submission file not found: " + file.getAbsolutePath();
+      formToTransfer.setStatusString(msg, false);
+      EventBus.publish(new FormStatusEvent(formToTransfer));
+      return false;
+    }
+  
+    // find all files in parent directory
+    File[] allFiles = instanceDirectory.listFiles();
+  
+    // clean up the list, removing anything that is suspicious
+    // or that we won't attempt to upload. For OpenRosa servers,
+    // we'll upload just about everything...
+    List<File> files = new ArrayList<File>();
+    for (File f : allFiles) {
+      String fileName = f.getName();
+      if (fileName.startsWith(".")) {
+        // potential Apple file attributes file -- ignore it
+        continue;
+      }
+      if (fileName.equals(submissionFile)) {
+        continue; // this is always added
+      } else {
+        files.add(f);
+      }
+    }
+    SubmissionResponseAction action = new SubmissionResponseAction(file);
+    
+    boolean outcome = Aggregate10Utils.uploadFilesToServer(serverInfo, u, "xml_submission_file", file, files, action, formToTransfer);
+    
+    // and try to rename the instance directory to be its instanceID
+    action.afterUpload(formToTransfer);
+    return outcome;
+  }
+
+  public static final void testServerUploadConnection(ServerConnectionInfo serverInfo) throws TransmissionException {
+    Aggregate10Utils.testServerConnectionWithHeadRequest(serverInfo, "submission");
+  }
+
+}

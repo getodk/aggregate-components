@@ -74,7 +74,8 @@ public class GaeManagedClientConnection implements ManagedClientConnection {
 	private HttpRoute route;
 	
 	/** The context for the open() request (unused) */
-	private HttpContext context = null;
+	@SuppressWarnings("unused")
+   private HttpContext context = null;
 	
 	/** The parameters on the open() request */
 	private HttpParams params = null;
@@ -225,7 +226,8 @@ public class GaeManagedClientConnection implements ManagedClientConnection {
 		URLFetchService service = URLFetchServiceFactory.getURLFetchService();
 		
 		boolean redirect = HttpClientParams.isRedirecting(params);
-		boolean authenticate = HttpClientParams.isAuthenticating(params);
+		@SuppressWarnings("unused")
+      boolean authenticate = HttpClientParams.isAuthenticating(params);
 		// TODO: verify that authentication is handled by URLFetchService...
 		
 		// default is to throw an exception on a overly-large request

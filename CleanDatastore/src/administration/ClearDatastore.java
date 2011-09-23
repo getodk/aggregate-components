@@ -63,7 +63,7 @@ public class ClearDatastore
             String appname) throws IOException
     {
         RemoteApiOptions options = new RemoteApiOptions().server(
-                appname + ".appspot.com", 443).credentials(username, password);
+                appname + ".appspot.com", 80).credentials(username, password);
 
         RemoteApiInstaller installer = new RemoteApiInstaller();
         installer.install(options);
