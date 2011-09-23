@@ -41,6 +41,7 @@ import org.opendatakit.briefcase.model.BriefcasePreferences;
 import org.opendatakit.briefcase.util.FileSystemUtils;
 
 public class MainWindow {
+  private static final String BRIEFCASE_VERSION = "ODK Briefcase - Preview";
 
   private JFrame frame;
   private JTextField txtBriefcaseDir;
@@ -60,6 +61,7 @@ public class MainWindow {
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
           MainWindow window = new MainWindow();
+          window.frame.setTitle(BRIEFCASE_VERSION);
           window.frame.setVisible(true);
         } catch (Exception e) {
           e.printStackTrace();
