@@ -19,8 +19,6 @@ package org.opendatakit.briefcase.ui;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -79,7 +77,7 @@ public class MainWindow {
         Object[] options = { "Yes, empty scratch workspace", "No, resume." };
         outcome = JOptionPane.showOptionDialog(frame,
             "Remove temporary files and start with an empty scratch workspace?",
-            "Scratch workspace was not cleared on last exit", JOptionPane.YES_NO_OPTION,
+            "ODK Briefcase scratch workspace was not cleared on last exit", JOptionPane.YES_NO_OPTION,
             JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
       }
       if (outcome == 0) {
@@ -179,35 +177,10 @@ public class MainWindow {
     JLabel lblBriefcaseDirectory = new JLabel("Briefcase Directory");
 
     txtBriefcaseDir = new JTextField();
+    txtBriefcaseDir.setFocusable(false);
+    txtBriefcaseDir.setEditable(false);
     txtBriefcaseDir.setColumns(10);
     txtBriefcaseDir.setText(BriefcasePreferences.getBriefcaseDirectoryProperty());
-    txtBriefcaseDir.addFocusListener(new FocusListener() {
-
-      @Override
-      public void focusGained(FocusEvent e) {
-        // don't care...
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        String briefcaseDir = txtBriefcaseDir.getText();
-        if (briefcaseDir != null && briefcaseDir.length() != 0) {
-          File f = new File(briefcaseDir);
-          if (BriefcaseFileChooser.testAndMessageBadBriefcaseFolder(f, frame)) {
-            BriefcasePreferences.setBriefcaseDirectoryProperty(briefcaseDir);
-            establishUserBriefcaseScratchSpace();
-            transformPanel.setEnabled(true);
-            transferPanel.setEnabled(true);
-          } else {
-            transformPanel.setEnabled(false);
-            transferPanel.setEnabled(false);
-          }
-        } else {
-          transformPanel.setEnabled(false);
-          transferPanel.setEnabled(false);
-        }
-      }
-    });
 
     btnChoose = new JButton("Choose...");
     btnChoose.addActionListener(new FolderActionListener());

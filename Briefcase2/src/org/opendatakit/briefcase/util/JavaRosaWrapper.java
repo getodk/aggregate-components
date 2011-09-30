@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -396,25 +393,6 @@ public class JavaRosaWrapper {
 
 	private void setNodesetStringLength(String nodeset, Integer length) {
 		stringLengths.put(nodeset, length);
-	}
-
-	private Integer getNodesetStringLength(TreeElement e) {
-		List<String> path = new ArrayList<String>();
-		while (e != null && e.getName() != null) {
-			path.add(e.getName());
-			e = e.getParent();
-		}
-		Collections.reverse(path);
-
-		StringBuilder b = new StringBuilder();
-		for (String s : path) {
-			b.append("/");
-			b.append(s);
-		}
-
-		String nodeset = b.toString();
-		Integer len = stringLengths.get(nodeset);
-		return len;
 	}
 
 	/**

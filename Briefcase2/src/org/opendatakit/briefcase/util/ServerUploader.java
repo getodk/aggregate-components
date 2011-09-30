@@ -23,19 +23,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.bushe.swing.event.EventBus;
 import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.FormStatusEvent;
 import org.opendatakit.briefcase.model.MetadataUpdateException;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
 import org.opendatakit.briefcase.model.TransmissionException;
-import org.opendatakit.briefcase.util.Aggregate10Utils.DocumentFetchResult;
+import org.opendatakit.briefcase.util.AggregateUtils.DocumentFetchResult;
 
 public class ServerUploader {
-
-  private static final Log logger = LogFactory.getLog(ServerUploader.class);
 
   ServerConnectionInfo serverInfo;
 
@@ -43,7 +39,7 @@ public class ServerUploader {
     this.serverInfo = serverInfo;
   }
 
-  public static class SubmissionResponseAction implements Aggregate10Utils.ResponseAction {
+  public static class SubmissionResponseAction implements AggregateUtils.ResponseAction {
 
     private final File file;
     private String instanceID = null;
@@ -123,7 +119,7 @@ public class ServerUploader {
   
     URI u;
     try {
-      u = Aggregate10Utils.testServerConnectionWithHeadRequest(serverInfo, "formUpload");
+      u = AggregateUtils.testServerConnectionWithHeadRequest(serverInfo, "formUpload");
     } catch (TransmissionException e) {
       formToTransfer.setStatusString(e.getMessage(), false);
       EventBus.publish(new FormStatusEvent(formToTransfer));
@@ -163,7 +159,7 @@ public class ServerUploader {
       }
     }
   
-    return Aggregate10Utils.uploadFilesToServer(serverInfo, u, "form_def_file", briefcaseFormDefFile, files, null, formToTransfer);
+    return AggregateUtils.uploadFilesToServer(serverInfo, u, "form_def_file", briefcaseFormDefFile, files, null, formToTransfer);
   }
 
   private URI getUploadSubmissionUri(FormStatus formToTransfer) {
@@ -172,7 +168,7 @@ public class ServerUploader {
       // Get the actual server URL in u, possibly redirected to https.
       // We know we are talking to the server because the head request
       // succeeded and had a Location header field.
-      u = Aggregate10Utils.testServerConnectionWithHeadRequest(serverInfo, "submission");
+      u = AggregateUtils.testServerConnectionWithHeadRequest(serverInfo, "submission");
     } catch (TransmissionException e) {
       formToTransfer.setStatusString(e.getMessage(), false);
       EventBus.publish(new FormStatusEvent(formToTransfer));
@@ -221,7 +217,7 @@ public class ServerUploader {
     }
     SubmissionResponseAction action = new SubmissionResponseAction(file);
     
-    boolean outcome = Aggregate10Utils.uploadFilesToServer(serverInfo, u, "xml_submission_file", file, files, action, formToTransfer);
+    boolean outcome = AggregateUtils.uploadFilesToServer(serverInfo, u, "xml_submission_file", file, files, action, formToTransfer);
     
     // and try to rename the instance directory to be its instanceID
     action.afterUpload(formToTransfer);
@@ -229,7 +225,7 @@ public class ServerUploader {
   }
 
   public static final void testServerUploadConnection(ServerConnectionInfo serverInfo) throws TransmissionException {
-    Aggregate10Utils.testServerConnectionWithHeadRequest(serverInfo, "submission");
+    AggregateUtils.testServerConnectionWithHeadRequest(serverInfo, "submission");
   }
 
 }

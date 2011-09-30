@@ -161,8 +161,16 @@ public class TransferPanel extends JPanel {
       EndPointType selection = (strSelection != null) ? EndPointType.fromString(strSelection)
           : null;
 
-      if (EndPointType.AGGREGATE_0_9_X_CHOICE.equals(selection)
-          || EndPointType.AGGREGATE_1_0_CHOICE.equals(selection)) {
+      if (EndPointType.AGGREGATE_0_9_X_CHOICE.equals(selection)) {
+        // need to show (modal) connect dialog...
+        LegacyServerConnectionDialog d = new LegacyServerConnectionDialog(originServerInfo, false);
+        d.setVisible(true);
+        if (d.isSuccessful()) {
+          originServerInfo = d.getServerInfo();
+          txtOriginName.setText(originServerInfo.getUrl());
+          TransferPanel.this.updateFormStatuses();
+        }
+      } else if (EndPointType.AGGREGATE_1_0_CHOICE.equals(selection)) {
         // need to show (modal) connect dialog...
         ServerConnectionDialog d = new ServerConnectionDialog(originServerInfo, false);
         d.setVisible(true);

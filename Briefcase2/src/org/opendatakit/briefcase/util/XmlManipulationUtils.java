@@ -23,6 +23,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +45,8 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 public class XmlManipulationUtils {
+
+  private static final String ODK_ID_PARAMETER_EQUALS = "odkId=";
 
   private static final Log logger = LogFactory.getLog(XmlManipulationUtils.class);
 
@@ -227,7 +231,22 @@ public class XmlManipulationUtils {
             formList.clear();
             throw new ParsingException(BAD_LEGACY_FORMLIST);
           }
-          formList.add(new RemoteFormDefinition(formName, null, null, null, downloadUrl, null));
+          // Since this is ODK Aggregate 0.9.8 or higher, we know that the formId is 
+          // given as a parameter of the URL...
+          String formId = null;
+          try {
+            URL url = new URL(downloadUrl);
+            String qs = url.getQuery();
+            if ( qs.startsWith(ODK_ID_PARAMETER_EQUALS) ) {
+              formId = qs.substring(ODK_ID_PARAMETER_EQUALS.length());
+            }
+          } catch (MalformedURLException e) {
+            e.printStackTrace();
+          }
+          if ( formId == null ) {
+            throw new ParsingException("Unable to extract formId from download URL of legacy 0.9.8 server");
+          }
+          formList.add(new RemoteFormDefinition(formName, formId, null, null, downloadUrl, null));
         }
       }
     }

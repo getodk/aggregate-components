@@ -117,7 +117,7 @@ public class ServerFetcher {
       try {
 
         File dl = FileSystemUtils.getFormDefinitionFile(briefcaseFormsDir, fd.getFormName());
-        Aggregate10Utils.commonDownloadFile(serverInfo, dl, fd.getDownloadUrl());
+        AggregateUtils.commonDownloadFile(serverInfo, dl, fd.getDownloadUrl());
 
         if (fd.getManifestUrl() != null) {
           File mediaDir = FileSystemUtils.getMediaDirectory(briefcaseFormsDir, fd.getFormName());
@@ -234,9 +234,9 @@ public class ServerFetcher {
       params.put("cursor", websafeCursorString);
       String fullUrl = WebUtils.createLinkWithProperties(baseUrl, params);
       oldWebsafeCursorString = websafeCursorString; // remember what we had...
-      Aggregate10Utils.DocumentFetchResult result;
+      AggregateUtils.DocumentFetchResult result;
       try {
-        result = Aggregate10Utils.getXmlDocument(fullUrl, serverInfo, false,
+        result = AggregateUtils.getXmlDocument(fullUrl, serverInfo, false,
             "Fetch of submission download chunk failed.  Detailed error: ",
             "Fetch of submission download chunk failed.", null);
       } catch (XmlDocumentFetchException e) {
@@ -295,9 +295,9 @@ public class ServerFetcher {
     Map<String, String> params = new HashMap<String, String>();
     params.put("formId", formId);
     String fullUrl = WebUtils.createLinkWithProperties(baseUrl, params);
-    Aggregate10Utils.DocumentFetchResult result;
+    AggregateUtils.DocumentFetchResult result;
     try {
-      result = Aggregate10Utils.getXmlDocument(fullUrl, serverInfo, false,
+      result = AggregateUtils.getXmlDocument(fullUrl, serverInfo, false,
           "Fetch of a submission failed.  Detailed error: ", "Fetch of a submission failed.", null);
     } catch (XmlDocumentFetchException e) {
       throw new SubmissionDownloadException(e.getMessage());
@@ -369,9 +369,9 @@ public class ServerFetcher {
     EventBus.publish(new FormStatusEvent(fs));
 
     List<MediaFile> files = new ArrayList<MediaFile>();
-    Aggregate10Utils.DocumentFetchResult result;
+    AggregateUtils.DocumentFetchResult result;
     try {
-      result = Aggregate10Utils.getXmlDocument(fd.getManifestUrl(), serverInfo, false,
+      result = AggregateUtils.getXmlDocument(fd.getManifestUrl(), serverInfo, false,
           "Fetch of manifest failed. Detailed reason: ", "Fetch of manifest failed ", null);
     } catch (XmlDocumentFetchException e) {
       return e.getMessage();
@@ -416,11 +416,11 @@ public class ServerFetcher {
       }
     }
 
-    Aggregate10Utils.commonDownloadFile(serverInfo, mediaFile, m.downloadUrl);
+    AggregateUtils.commonDownloadFile(serverInfo, mediaFile, m.downloadUrl);
   }
 
   public static final List<RemoteFormDefinition> retrieveAvailableFormsFromServer(ServerConnectionInfo serverInfo) throws XmlDocumentFetchException, ParsingException {
-    Aggregate10Utils.DocumentFetchResult result = fetchFormList(serverInfo, true);
+    AggregateUtils.DocumentFetchResult result = fetchFormList(serverInfo, true);
     List<RemoteFormDefinition> formDefs = XmlManipulationUtils.parseFormListResponse(result.isOpenRosaResponse, result.doc);
     return formDefs;
   }
@@ -433,7 +433,7 @@ public class ServerFetcher {
     }
   }
 
-  public static final Aggregate10Utils.DocumentFetchResult fetchFormList(ServerConnectionInfo serverInfo,
+  public static final AggregateUtils.DocumentFetchResult fetchFormList(ServerConnectionInfo serverInfo,
       boolean alwaysResetCredentials) throws XmlDocumentFetchException {
   
     String urlString = serverInfo.getUrl();
@@ -443,7 +443,7 @@ public class ServerFetcher {
       urlString = urlString + "/formList";
     }
   
-    Aggregate10Utils.DocumentFetchResult result = Aggregate10Utils.getXmlDocument(urlString, serverInfo, alwaysResetCredentials,
+    AggregateUtils.DocumentFetchResult result = AggregateUtils.getXmlDocument(urlString, serverInfo, alwaysResetCredentials,
           "Unable to fetch formList: ", "Unable to fetch formList.", null);
     return result;
   }

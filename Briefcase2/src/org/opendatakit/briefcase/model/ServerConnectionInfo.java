@@ -21,16 +21,27 @@ import org.apache.http.protocol.HttpContext;
 
 public class ServerConnectionInfo {
   private String url;
+  private final String token; // for legacy ODK Aggregate 0.9.8 access
   private final String username;
   private final char[] password;
-  boolean isOpenRosaServer = false;
-  HttpClient httpClient = null;
-  HttpContext httpContext = null;
+  private final boolean isOpenRosaServer;
+  private HttpClient httpClient = null;
+  private HttpContext httpContext = null;
 
   public ServerConnectionInfo(String url, String username, char[] cs) {
     this.url = url;
     this.username = username;
     this.password = cs;
+    this.token = null;
+    this.isOpenRosaServer = true;
+  }
+
+  public ServerConnectionInfo(String url, String token) {
+    this.url = url;
+    this.token = token;
+    this.username = null;
+    this.password = null;
+    this.isOpenRosaServer = false;
   }
 
   public String getUrl() {
@@ -41,6 +52,10 @@ public class ServerConnectionInfo {
     this.url = url;
   }
 
+  public String getToken() {
+    return token;
+  }
+  
   public String getUsername() {
     return username;
   }
@@ -67,9 +82,5 @@ public class ServerConnectionInfo {
 
   public boolean isOpenRosaServer() {
     return isOpenRosaServer;
-  }
-
-  public void setOpenRosaServer(boolean isOpenRosaServer) {
-    this.isOpenRosaServer = isOpenRosaServer;
   }
 }

@@ -52,19 +52,6 @@ public class TransferInProgressDialog extends JDialog implements ActionListener,
   private JButton cancelButton;
 
   /**
-   * Launch the application.
-   */
-  public static void main(String[] args) {
-    try {
-      TransferInProgressDialog dialog = new TransferInProgressDialog("Transfer in Progress...");
-      dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-      dialog.setVisible(true);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  /**
    * Create the dialog.
    */
   public TransferInProgressDialog(String label) {

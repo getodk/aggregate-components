@@ -56,11 +56,13 @@ import org.opendatakit.briefcase.model.XmlDocumentFetchException;
 import org.opendatakit.briefcase.util.ServerUploader.SubmissionResponseAction;
 import org.xmlpull.v1.XmlPullParser;
 
-public class Aggregate10Utils {
+public class AggregateUtils {
+
+  private static final String BRIEFCASE_APP_TOKEN_PARAMETER = "briefcaseAppToken";
 
   private static final int SERVER_CONNECTION_TIMEOUT = 30000;
 
-  static final Logger log = Logger.getLogger(Aggregate10Utils.class.getName());
+  static final Logger log = Logger.getLogger(AggregateUtils.class.getName());
 
   private static final CharSequence HTTP_CONTENT_TYPE_TEXT_XML = "text/xml";
 
@@ -94,7 +96,7 @@ public class Aggregate10Utils {
    * @throws ClientProtocolException
    * @throws TransmissionException
    */
-  public static void commonDownloadFile(ServerConnectionInfo serverInfo, File f, String downloadUrl)
+  public static final void commonDownloadFile(ServerConnectionInfo serverInfo, File f, String downloadUrl)
       throws URISyntaxException, ClientProtocolException, IOException, TransmissionException {
 
     // OK. We need to download it because we either:
@@ -120,6 +122,20 @@ public class Aggregate10Utils {
 
     // set up request...
     HttpGet req = WebUtils.createOpenRosaHttpGet(u);
+
+    if (serverInfo.getUsername() != null && serverInfo.getUsername().length() != 0) {
+      if (!WebUtils.hasCredentials(localContext, serverInfo.getUsername(), u.getHost())) {
+        WebUtils.clearAllCredentials(localContext);
+        WebUtils.addCredentials(localContext, serverInfo.getUsername(), serverInfo.getPassword(),
+            u.getHost());
+      }
+    } else {
+      WebUtils.clearAllCredentials(localContext);
+    }
+
+    if ( !serverInfo.isOpenRosaServer() ) {
+      req.addHeader(BRIEFCASE_APP_TOKEN_PARAMETER, serverInfo.getToken());
+    }
 
     HttpResponse response = null;
     // try
@@ -249,6 +265,10 @@ public class Aggregate10Utils {
       }
     } else {
       WebUtils.clearAllCredentials(localContext);
+    }
+
+    if ( !serverInfo.isOpenRosaServer() ) {
+      request.addHeader(BRIEFCASE_APP_TOKEN_PARAMETER, serverInfo.getToken());
     }
 
     HttpResponse response = null;
@@ -438,7 +458,7 @@ public class Aggregate10Utils {
    * @return the confirmed URI of this action.
    * @throws TransmissionException
    */
-  public static URI testServerConnectionWithHeadRequest(ServerConnectionInfo serverInfo,
+  public static final URI testServerConnectionWithHeadRequest(ServerConnectionInfo serverInfo,
       String actionAddr) throws TransmissionException {
 
     String urlString = serverInfo.getUrl();
@@ -479,14 +499,24 @@ public class Aggregate10Utils {
       serverInfo.setHttpContext(localContext);
     }
 
-    WebUtils.clearAllCredentials(localContext);
-    WebUtils.addCredentials(localContext, serverInfo.getUsername(), serverInfo.getPassword(),
-        u.getHost());
+    if (serverInfo.getUsername() != null && serverInfo.getUsername().length() != 0) {
+      if (!WebUtils.hasCredentials(localContext, serverInfo.getUsername(), u.getHost())) {
+        WebUtils.clearAllCredentials(localContext);
+        WebUtils.addCredentials(localContext, serverInfo.getUsername(), serverInfo.getPassword(),
+            u.getHost());
+      }
+    } else {
+      WebUtils.clearAllCredentials(localContext);
+    }
 
     {
       // we need to issue a head request
       HttpHead httpHead = WebUtils.createOpenRosaHttpHead(u);
 
+      if ( !serverInfo.isOpenRosaServer() ) {
+        httpHead.addHeader(BRIEFCASE_APP_TOKEN_PARAMETER, serverInfo.getToken());
+      }
+      
       // prepare response
       HttpResponse response = null;
       try {
@@ -495,7 +525,17 @@ public class Aggregate10Utils {
         if (statusCode == 204) {
           Header[] openRosaVersions = response.getHeaders(WebUtils.OPEN_ROSA_VERSION_HEADER);
           if (openRosaVersions != null && openRosaVersions.length != 0) {
-            serverInfo.setOpenRosaServer(true);
+            if ( !serverInfo.isOpenRosaServer() ) {
+              String msg = "Url: " + u.toString()
+                + " is for an ODK Aggregate 1.0 or higher (OpenRosa compliant) server!";
+              log.severe(msg);
+              throw new TransmissionException(msg);
+            }
+          } else if ( serverInfo.isOpenRosaServer() ) {
+            String msg = "Url: " + u.toString()
+              + " is for an ODK Aggregate 0.9x or earlier (non-OpenRosa compliant) server!";
+            log.severe(msg);
+            throw new TransmissionException(msg);
           }
           Header[] locations = response.getHeaders("Location");
           if (locations != null && locations.length == 1) {
@@ -570,7 +610,7 @@ public class Aggregate10Utils {
     }
   }
 
-  static final boolean uploadFilesToServer(ServerConnectionInfo serverInfo, URI u,
+  public static final boolean uploadFilesToServer(ServerConnectionInfo serverInfo, URI u,
       String distinguishedFileTagName, File file, List<File> files,
       SubmissionResponseAction action, FormStatus formToTransfer) {
 
