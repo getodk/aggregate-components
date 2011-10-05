@@ -17,41 +17,41 @@
 package org.opendatakit.briefcase.util;
 
 import java.io.File;
-import java.util.List;
 
 import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
 import org.opendatakit.briefcase.model.TerminationFuture;
 
-public class TransferToServer implements ITransferToDestAction {
+public class UploadToServer implements ITransferToDestAction {
+
   ServerConnectionInfo destServerInfo;
   TerminationFuture terminationFuture;
-  File briefcaseDir;
-  List<FormStatus> formsToTransfer;
-  boolean fromScratch;
-
-  public TransferToServer(ServerConnectionInfo destServerInfo, 
-      TerminationFuture terminationFuture, File briefcaseDir,
-      List<FormStatus> formsToTransfer, boolean fromScratch) {
-    this.destServerInfo = destServerInfo;
+  FormStatus status;
+  File formDef;
+  File formMediaDir;
+  
+  UploadToServer(ServerConnectionInfo destinationServerInfo, TerminationFuture terminationFuture, File formDefn, FormStatus status) {
+    this.destServerInfo = destinationServerInfo;
     this.terminationFuture = terminationFuture;
-    this.briefcaseDir = briefcaseDir;
-    this.formsToTransfer = formsToTransfer;
-    this.fromScratch = fromScratch;
+    this.status = status;
+    this.formDef = formDefn;
+    
+    String mediaName = formDefn.getName();
+    mediaName = mediaName.substring(0, mediaName.lastIndexOf(".")) + "-media";
+    File mediaDir = new File( formDefn.getParentFile(), mediaName);
+    if ( mediaDir.exists() ) {
+      this.formMediaDir = mediaDir;
+    } else {
+      this.formMediaDir = null;
+    }
   }
-
+  
   @Override
   public boolean doAction() {
-    File briefcaseFormsDir;
-    if (fromScratch) {
-      briefcaseFormsDir = FileSystemUtils.getScratchFolder(briefcaseDir);
-    } else {
-      briefcaseFormsDir = FileSystemUtils.getFormsFolder(briefcaseDir);
-    }
 
     ServerUploader uploader = new ServerUploader(destServerInfo, terminationFuture);
-    
-    return uploader.uploadFormAndSubmissionFiles( briefcaseFormsDir,
-                                                  formsToTransfer);
+
+    return uploader.uploadForm( status, formDef, formMediaDir);
   }
+
 }

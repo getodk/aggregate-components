@@ -29,6 +29,8 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bushe.swing.event.EventBus;
+import org.bushe.swing.event.annotation.AnnotationProcessor;
+import org.opendatakit.briefcase.model.DocumentDescription;
 import org.opendatakit.briefcase.model.FileSystemException;
 import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.FormStatusEvent;
@@ -36,6 +38,7 @@ import org.opendatakit.briefcase.model.LocalFormDefinition;
 import org.opendatakit.briefcase.model.ParsingException;
 import org.opendatakit.briefcase.model.RemoteFormDefinition;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.opendatakit.briefcase.model.TerminationFuture;
 import org.opendatakit.briefcase.model.TransmissionException;
 import org.opendatakit.briefcase.model.XmlDocumentFetchException;
 import org.opendatakit.briefcase.util.JavaRosaWrapper.BadFormDefinition;
@@ -49,6 +52,8 @@ public class ServerFetcher {
   private static final int MAX_ENTRIES = 100;
 
   ServerConnectionInfo serverInfo;
+
+  private TerminationFuture terminationFuture;
 
   public static class FormListException extends Exception {
 
@@ -97,8 +102,14 @@ public class ServerFetcher {
     }
   }
 
-  ServerFetcher(ServerConnectionInfo serverInfo) {
+  ServerFetcher(ServerConnectionInfo serverInfo, TerminationFuture future) {
+    AnnotationProcessor.process(this);// if not using AOP
     this.serverInfo = serverInfo;
+    this.terminationFuture = future;
+  }
+  
+  public boolean isCancelled() {
+    return terminationFuture.isCancelled();
   }
 
   public boolean downloadFormAndSubmissionFiles(File briefcaseFormsDir,
@@ -111,6 +122,13 @@ public class ServerFetcher {
 
     for (int i = 0; i < total; i++) {
       FormStatus fs = formsToTransfer.get(i);
+
+      if ( isCancelled() ) {
+        fs.setStatusString("aborted. Skipping fetch of form and submissions...", true);
+        EventBus.publish(new FormStatusEvent(fs));
+        return false;
+      }
+      
       RemoteFormDefinition fd = (RemoteFormDefinition) fs.getFormDefinition();
       fs.setStatusString("Fetching form definition", true);
       EventBus.publish(new FormStatusEvent(fs));
@@ -224,7 +242,12 @@ public class ServerFetcher {
     String oldWebsafeCursorString = "not-empty";
     String websafeCursorString = "";
     for (; !oldWebsafeCursorString.equals(websafeCursorString);) {
-      
+      if ( isCancelled() ) {
+        fs.setStatusString("aborting fetching submissions...", true);
+        EventBus.publish(new FormStatusEvent(fs));
+        return false;
+      }
+
       fs.setStatusString("retrieving next chunk of instances from server...", true);
       EventBus.publish(new FormStatusEvent(fs));
 
@@ -236,9 +259,10 @@ public class ServerFetcher {
       oldWebsafeCursorString = websafeCursorString; // remember what we had...
       AggregateUtils.DocumentFetchResult result;
       try {
-        result = AggregateUtils.getXmlDocument(fullUrl, serverInfo, false,
-            "Fetch of submission download chunk failed.  Detailed error: ",
-            "Fetch of submission download chunk failed.", null);
+        DocumentDescription submissionChunkDescription = new DocumentDescription("Fetch of submission download chunk failed.  Detailed error: ",
+            "Fetch of submission download chunk failed.", "submission download chunk",
+            terminationFuture);
+        result = AggregateUtils.getXmlDocument(fullUrl, serverInfo, false, submissionChunkDescription, null);
       } catch (XmlDocumentFetchException e) {
         fs.setStatusString("NOT ALL SUBMISSIONS RETRIEVED: Error fetching list of submissions: " + e.getMessage(), false);
         EventBus.publish(new FormStatusEvent(fs));
@@ -257,6 +281,12 @@ public class ServerFetcher {
 
       // TODO: download all the uris in the uriList
       for (String uri : chunk.uriList) {
+        if ( isCancelled() ) {
+          fs.setStatusString("aborting fetching submissions...", true);
+          EventBus.publish(new FormStatusEvent(fs));
+          return false;
+        }
+        
         try {
           fs.setStatusString("fetching instance " + count++ + " ...", true);
           EventBus.publish(new FormStatusEvent(fs));
@@ -289,6 +319,12 @@ public class ServerFetcher {
   private void downloadSubmission(File formInstancesDir, LocalFormDefinition lfd, FormStatus fs,
       String uri) throws Exception {
     String formId = lfd.getSubmissionKey(uri);
+    
+    if ( isCancelled() ) {
+      fs.setStatusString("aborting fetch of submission...", true);
+      EventBus.publish(new FormStatusEvent(fs));
+      throw new SubmissionDownloadException("Transfer cancelled by user.");
+    }
 
     String baseUrl = serverInfo.getUrl() + "/view/downloadSubmission";
 
@@ -297,8 +333,10 @@ public class ServerFetcher {
     String fullUrl = WebUtils.createLinkWithProperties(baseUrl, params);
     AggregateUtils.DocumentFetchResult result;
     try {
+      DocumentDescription submissionDescription = new DocumentDescription("Fetch of a submission failed.  Detailed error: ", 
+          "Fetch of a submission failed.", "submission", terminationFuture);
       result = AggregateUtils.getXmlDocument(fullUrl, serverInfo, false,
-          "Fetch of a submission failed.  Detailed error: ", "Fetch of a submission failed.", null);
+          submissionDescription, null);
     } catch (XmlDocumentFetchException e) {
       throw new SubmissionDownloadException(e.getMessage());
     }
@@ -321,7 +359,7 @@ public class ServerFetcher {
   
       // fetch attachments
       for (MediaFile m : submissionManifest.attachmentList) {
-        downloadMediaFileIfChanged(instanceDir, m);
+        downloadMediaFileIfChanged(instanceDir, m, fs);
       }
       
       // TODO: detect altered submission? Or just overwrite it?
@@ -338,7 +376,7 @@ public class ServerFetcher {
   
       // fetch attachments
       for (MediaFile m : submissionManifest.attachmentList) {
-        downloadMediaFileIfChanged(instanceDir, m);
+        downloadMediaFileIfChanged(instanceDir, m, fs);
       }
   
       // write submission file
@@ -371,8 +409,10 @@ public class ServerFetcher {
     List<MediaFile> files = new ArrayList<MediaFile>();
     AggregateUtils.DocumentFetchResult result;
     try {
+      DocumentDescription formManifestDescription = new DocumentDescription("Fetch of manifest failed. Detailed reason: ", 
+          "Fetch of manifest failed ", "form manifest", terminationFuture);
       result = AggregateUtils.getXmlDocument(fd.getManifestUrl(), serverInfo, false,
-          "Fetch of manifest failed. Detailed reason: ", "Fetch of manifest failed ", null);
+          formManifestDescription, null);
     } catch (XmlDocumentFetchException e) {
       return e.getMessage();
     }
@@ -392,7 +432,7 @@ public class ServerFetcher {
             files.size()), true);
         EventBus.publish(new FormStatusEvent(fs));
         try {
-          downloadMediaFileIfChanged(mediaDir, m);
+          downloadMediaFileIfChanged(mediaDir, m, fs);
         } catch (Exception e) {
           return e.getLocalizedMessage();
         }
@@ -401,7 +441,7 @@ public class ServerFetcher {
     return null;
   }
 
-  private void downloadMediaFileIfChanged(File mediaDir, MediaFile m) throws Exception {
+  private void downloadMediaFileIfChanged(File mediaDir, MediaFile m, FormStatus fs) throws Exception {
 
     File mediaFile = new File(mediaDir, m.filename);
 
@@ -415,26 +455,32 @@ public class ServerFetcher {
         mediaFile.delete();
       }
     }
+    
+    if ( isCancelled() ) {
+      fs.setStatusString("aborting fetch of media file...", true);
+      EventBus.publish(new FormStatusEvent(fs));
+      throw new TransmissionException("Transfer cancelled by user.");
+    }
 
     AggregateUtils.commonDownloadFile(serverInfo, mediaFile, m.downloadUrl);
   }
 
-  public static final List<RemoteFormDefinition> retrieveAvailableFormsFromServer(ServerConnectionInfo serverInfo) throws XmlDocumentFetchException, ParsingException {
-    AggregateUtils.DocumentFetchResult result = fetchFormList(serverInfo, true);
+  public static final List<RemoteFormDefinition> retrieveAvailableFormsFromServer(ServerConnectionInfo serverInfo, TerminationFuture terminationFuture) throws XmlDocumentFetchException, ParsingException {
+    AggregateUtils.DocumentFetchResult result = fetchFormList(serverInfo, true, terminationFuture);
     List<RemoteFormDefinition> formDefs = XmlManipulationUtils.parseFormListResponse(result.isOpenRosaResponse, result.doc);
     return formDefs;
   }
 
-  public static final void testServerDownloadConnection(ServerConnectionInfo serverInfo) throws TransmissionException {
+  public static final void testServerDownloadConnection(ServerConnectionInfo serverInfo, TerminationFuture terminationFuture) throws TransmissionException {
     try {
-      fetchFormList(serverInfo, true);
+      fetchFormList(serverInfo, true, terminationFuture);
     } catch (XmlDocumentFetchException e) {
       throw new TransmissionException(e.getMessage());
     }
   }
 
   public static final AggregateUtils.DocumentFetchResult fetchFormList(ServerConnectionInfo serverInfo,
-      boolean alwaysResetCredentials) throws XmlDocumentFetchException {
+      boolean alwaysResetCredentials, TerminationFuture terminationFuture) throws XmlDocumentFetchException {
   
     String urlString = serverInfo.getUrl();
     if (urlString.endsWith("/")) {
@@ -443,8 +489,12 @@ public class ServerFetcher {
       urlString = urlString + "/formList";
     }
   
+    DocumentDescription formListDescription = 
+      new DocumentDescription("Unable to fetch formList: ", 
+                             "Unable to fetch formList.", "form list",
+                             terminationFuture);
     AggregateUtils.DocumentFetchResult result = AggregateUtils.getXmlDocument(urlString, serverInfo, alwaysResetCredentials,
-          "Unable to fetch formList: ", "Unable to fetch formList.", null);
+                                                                                  formListDescription, null);
     return result;
   }
 }

@@ -36,17 +36,19 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 
 import org.opendatakit.briefcase.model.BriefcasePreferences;
+import org.opendatakit.briefcase.model.TerminationFuture;
 import org.opendatakit.briefcase.util.FileSystemUtils;
 
-public class MainWindow {
-  private static final String BRIEFCASE_VERSION = "ODK Briefcase - Preview";
+public class MainBriefcaseWindow {
+  private static final String BRIEFCASE_VERSION = "ODK Briefcase - " + BriefcasePreferences.VERSION;
 
   private JFrame frame;
   private JTextField txtBriefcaseDir;
   private JButton btnChoose;
   private TransferPanel transferPanel;
   private TransformPanel transformPanel;
-
+  private final TerminationFuture terminationFuture = new TerminationFuture();
+  
   /**
    * Launch the application.
    */
@@ -58,7 +60,7 @@ public class MainWindow {
           // Set System L&F
           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-          MainWindow window = new MainWindow();
+          MainBriefcaseWindow window = new MainBriefcaseWindow();
           window.frame.setTitle(BRIEFCASE_VERSION);
           window.frame.setVisible(true);
         } catch (Exception e) {
@@ -97,8 +99,8 @@ public class MainWindow {
     @Override
     public void actionPerformed(ActionEvent e) {
       // briefcase...
-      BriefcaseFileChooser fc = new BriefcaseFileChooser(MainWindow.this.frame, true);
-      int retVal = fc.showDialog(MainWindow.this.frame, null);
+      BriefcaseFolderChooser fc = new BriefcaseFolderChooser(MainBriefcaseWindow.this.frame, true);
+      int retVal = fc.showDialog(MainBriefcaseWindow.this.frame, null);
       if (retVal == JFileChooser.APPROVE_OPTION) {
         if (fc.getSelectedFile() != null) {
           String briefcasePath = fc.getSelectedFile().getAbsolutePath();
@@ -116,7 +118,7 @@ public class MainWindow {
   /**
    * Create the application.
    */
-  public MainWindow() {
+  public MainBriefcaseWindow() {
     initialize();
   }
 
@@ -217,7 +219,7 @@ public class MainWindow {
             .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 446, Short.MAX_VALUE)
             .addContainerGap()));
 
-    transferPanel = new TransferPanel();
+    transferPanel = new TransferPanel(terminationFuture);
     tabbedPane.addTab("Transfer", null, transferPanel, null);
 
     transformPanel = new TransformPanel();
@@ -226,7 +228,7 @@ public class MainWindow {
 
     // set the enabled/disabled status of the panels based upon validity of default briefcase directory.
     File f = new File( BriefcasePreferences.getBriefcaseDirectoryProperty());
-    if (BriefcaseFileChooser.testAndMessageBadBriefcaseFolder(f, frame)) {
+    if (BriefcaseFolderChooser.testAndMessageBadBriefcaseFolder(f, frame)) {
       establishUserBriefcaseScratchSpace();
       transformPanel.setEnabled(true);
       transferPanel.setEnabled(true);

@@ -95,8 +95,8 @@ public class JavaRosaWrapper {
 				element.setAttribute(NAMESPACE_ODK, "length", null);
 			}
 
-			log.info("Calling handle found value "
-					+ ((value == null) ? "null" : value));
+			//log.info("Calling handle found value "
+			//		+ ((value == null) ? "null" : value));
 
 			if (value != null) {
 				Integer iValue = Integer.valueOf(value);

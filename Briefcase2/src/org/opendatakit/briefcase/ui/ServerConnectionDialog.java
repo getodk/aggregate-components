@@ -17,6 +17,7 @@
 package org.opendatakit.briefcase.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,9 +35,9 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.border.EmptyBorder;
 
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
-import org.opendatakit.briefcase.model.TransmissionException;
-import org.opendatakit.briefcase.util.ServerFetcher;
-import org.opendatakit.briefcase.util.ServerUploader;
+import org.opendatakit.briefcase.model.TerminationFuture;
+import org.opendatakit.briefcase.model.TransferAbortEvent;
+import org.opendatakit.briefcase.util.ServerConnectionTest;
 
 public class ServerConnectionDialog extends JDialog implements ActionListener {
 
@@ -61,14 +62,16 @@ public class ServerConnectionDialog extends JDialog implements ActionListener {
   private JButton okButton;
 
   private JButton cancelButton;
+  
+  private TerminationFuture terminationFuture = new TerminationFuture();
 
   /**
    * Create the dialog.
    */
   public ServerConnectionDialog(ServerConnectionInfo oldInfo, boolean asTarget) {
+    super(null, "Aggregate v1.0 Server Connection", ModalityType.DOCUMENT_MODAL);
     serverInfo = oldInfo;
     this.asTarget = asTarget;
-    setModalityType(ModalityType.APPLICATION_MODAL);
     setBounds(100, 100, 450, 222);
     getContentPane().setLayout(new BorderLayout());
     contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -167,33 +170,41 @@ public class ServerConnectionDialog extends JDialog implements ActionListener {
   public void actionPerformed(ActionEvent e) {
     if (CONNECT.equals(e.getActionCommand())) {
       // do action...
-      ServerConnectionInfo info = new ServerConnectionInfo(textUrlField.getText(),
+      final ServerConnectionInfo info = new ServerConnectionInfo(textUrlField.getText(),
           textUsernameField.getText(), textPasswordField.getPassword());
 
       // TODO: check that we can connect to the server...
+      okButton.setEnabled(false);
+      cancelButton.setEnabled(false);
+      String errorString;
+
+      Cursor saved = getCursor();
       try {
-        okButton.setEnabled(false);
-        cancelButton.setEnabled(false);
-        
-        if (asTarget) {
-            ServerUploader.testServerUploadConnection(info);
-        } else {
-          ServerFetcher.testServerDownloadConnection(info);
-        }
-        serverInfo = info;
-        isSuccessful = true;
-        this.setVisible(false);
-      } catch (TransmissionException ex) {
-        JOptionPane.showMessageDialog(this, ex.getMessage(), "Invalid Server URL",
-            JOptionPane.ERROR_MESSAGE);
-        isSuccessful = false;
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        paint(getGraphics());
+        terminationFuture.reset();
+        ServerConnectionTest backgroundAction = new ServerConnectionTest(info, terminationFuture, asTarget);
+  
+        backgroundAction.run();
+        isSuccessful = backgroundAction.isSuccessful();
+        errorString = backgroundAction.getErrorReason();
       } finally {
+        setCursor(saved);
+      }
+      
+      if ( isSuccessful ) {
+        serverInfo = info;
+        this.setVisible(false);
+      } else {
+        JOptionPane.showMessageDialog(this, errorString, "Invalid Server URL",
+            JOptionPane.ERROR_MESSAGE);
         okButton.setEnabled(true);
         cancelButton.setEnabled(true);
       }
       
     } else {
       // cancel...
+      terminationFuture.markAsCancelled(new TransferAbortEvent("User cancels connection."));
       this.setVisible(false);
     }
   }

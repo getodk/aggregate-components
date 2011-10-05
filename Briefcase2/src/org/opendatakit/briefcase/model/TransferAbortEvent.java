@@ -17,7 +17,13 @@
 package org.opendatakit.briefcase.model;
 
 public class TransferAbortEvent {
+  private final String reason;
 
-  public TransferAbortEvent() {
+  public TransferAbortEvent(String reason) {
+    this.reason = reason;
+  }
+
+  public String getReason() {
+    return reason;
   }
 }

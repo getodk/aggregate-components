@@ -21,17 +21,22 @@ import java.util.List;
 
 import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.opendatakit.briefcase.model.TerminationFuture;
 
 public class TransferFromServer implements ITransferFromSourceAction {
 
-  ServerConnectionInfo originServerInfo;
-  File briefcaseDir;
-  List<FormStatus> formsToTransfer;
+  final ServerConnectionInfo originServerInfo;
+  final TerminationFuture terminationFuture;
+  final File briefcaseDir;
+  final List<FormStatus> formsToTransfer;
   boolean toScratch;
 
-  public TransferFromServer(ServerConnectionInfo originServerInfo, File briefcaseDir,
+  public TransferFromServer(ServerConnectionInfo originServerInfo, 
+      TerminationFuture terminationFuture,
+      File briefcaseDir,
       List<FormStatus> formsToTransfer, boolean toScratch) {
     this.originServerInfo = originServerInfo;
+    this.terminationFuture = terminationFuture;
     this.briefcaseDir = briefcaseDir;
     this.formsToTransfer = formsToTransfer;
     this.toScratch = toScratch;
@@ -40,7 +45,7 @@ public class TransferFromServer implements ITransferFromSourceAction {
   @Override
   public boolean doAction() {
     
-    ServerFetcher fetcher = new ServerFetcher(originServerInfo);
+    ServerFetcher fetcher = new ServerFetcher(originServerInfo, terminationFuture);
     File destinationFolder;
     if (toScratch) {
       destinationFolder = FileSystemUtils.getScratchFolder(briefcaseDir);

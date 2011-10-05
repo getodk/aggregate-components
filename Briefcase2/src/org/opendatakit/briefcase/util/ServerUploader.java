@@ -24,21 +24,31 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.bushe.swing.event.EventBus;
+import org.bushe.swing.event.annotation.AnnotationProcessor;
+import org.opendatakit.briefcase.model.DocumentDescription;
 import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.FormStatusEvent;
 import org.opendatakit.briefcase.model.MetadataUpdateException;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.opendatakit.briefcase.model.TerminationFuture;
 import org.opendatakit.briefcase.model.TransmissionException;
 import org.opendatakit.briefcase.util.AggregateUtils.DocumentFetchResult;
 
 public class ServerUploader {
 
-  ServerConnectionInfo serverInfo;
+  private final ServerConnectionInfo serverInfo;
+  private final TerminationFuture terminationFuture;
 
-  ServerUploader(ServerConnectionInfo serverInfo) {
+  ServerUploader(ServerConnectionInfo serverInfo, TerminationFuture terminationFuture) {
+    AnnotationProcessor.process(this);// if not using AOP
     this.serverInfo = serverInfo;
+    this.terminationFuture = terminationFuture;
   }
 
+  public boolean isCancelled() { 
+    return terminationFuture.isCancelled();
+  }
+  
   public static class SubmissionResponseAction implements AggregateUtils.ResponseAction {
 
     private final File file;
@@ -84,6 +94,12 @@ public class ServerUploader {
     
     for (FormStatus formToTransfer : formsToTransfer) {
 
+      if ( isCancelled() ) {
+        formToTransfer.setStatusString("aborting upload of form and submissions...", true);
+        EventBus.publish(new FormStatusEvent(formToTransfer));
+        return false;
+      }
+
       String formName = formToTransfer.getFormName();
       File briefcaseFormDefFile = FileSystemUtils.getFormDefinitionFileIfExists(
           briefcaseFormsDir, formName);
@@ -114,7 +130,7 @@ public class ServerUploader {
     return allSuccessful;
   }
   
-  private boolean uploadForm(FormStatus formToTransfer, File briefcaseFormDefFile, File briefcaseFormMediaDir) {
+  public boolean uploadForm(FormStatus formToTransfer, File briefcaseFormDefFile, File briefcaseFormMediaDir) {
     // very similar to upload submissions...
   
     URI u;
@@ -158,8 +174,12 @@ public class ServerUploader {
         files.add(f);
       }
     }
-  
-    return AggregateUtils.uploadFilesToServer(serverInfo, u, "form_def_file", briefcaseFormDefFile, files, null, formToTransfer);
+
+    DocumentDescription formDefinitionUploadDescription = new DocumentDescription("Form definition upload failed.  Detailed error: ",
+        "Form definition upload failed.", "form definition", terminationFuture);
+
+    return AggregateUtils.uploadFilesToServer(serverInfo, u, "form_def_file", briefcaseFormDefFile, files,
+                                              formDefinitionUploadDescription, null, formToTransfer);
   }
 
   private URI getUploadSubmissionUri(FormStatus formToTransfer) {
@@ -217,14 +237,22 @@ public class ServerUploader {
     }
     SubmissionResponseAction action = new SubmissionResponseAction(file);
     
-    boolean outcome = AggregateUtils.uploadFilesToServer(serverInfo, u, "xml_submission_file", file, files, action, formToTransfer);
+    if ( isCancelled() ) {
+      formToTransfer.setStatusString("aborting upload of submission...", true);
+      EventBus.publish(new FormStatusEvent(formToTransfer));
+      return false;
+    }
+
+    DocumentDescription submissionUploadDescription = new DocumentDescription("Submission upload failed.  Detailed error: ",
+        "Submission upload failed.", "submission", terminationFuture);
+    boolean outcome = AggregateUtils.uploadFilesToServer(serverInfo, u, "xml_submission_file", file, files, submissionUploadDescription, action, formToTransfer);
     
     // and try to rename the instance directory to be its instanceID
     action.afterUpload(formToTransfer);
     return outcome;
   }
 
-  public static final void testServerUploadConnection(ServerConnectionInfo serverInfo) throws TransmissionException {
+  public static final void testServerUploadConnection(ServerConnectionInfo serverInfo, TerminationFuture terminationFuture) throws TransmissionException {
     AggregateUtils.testServerConnectionWithHeadRequest(serverInfo, "submission");
   }
 

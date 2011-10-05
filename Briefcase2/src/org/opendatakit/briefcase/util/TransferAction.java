@@ -18,6 +18,7 @@ package org.opendatakit.briefcase.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,6 +29,7 @@ import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.RetrieveAvailableFormsFailedEvent;
 import org.opendatakit.briefcase.model.RetrieveAvailableFormsSucceededEvent;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.opendatakit.briefcase.model.TerminationFuture;
 import org.opendatakit.briefcase.model.TransferFailedEvent;
 import org.opendatakit.briefcase.model.TransferSucceededEvent;
 import org.opendatakit.briefcase.ui.TransferInProgressDialog;
@@ -41,7 +43,7 @@ public class TransferAction {
   private static class TransferRunnable implements Runnable {
     ITransferFromSourceAction src;
     ITransferToDestAction dest;
-    List<FormStatus> formsToTransfer;
+    private List<FormStatus> formsToTransfer;
 
     TransferRunnable(ITransferFromSourceAction src, ITransferToDestAction dest,
         List<FormStatus> formsToTransfer) {
@@ -52,6 +54,10 @@ public class TransferAction {
 
     @Override
     public void run() {
+      boolean srcIsDeletable = false;
+      if (src != null) {
+        srcIsDeletable = src.isSourceDeletable();
+      }
       try {
         boolean allSuccessful = true;
         if (src != null) {
@@ -62,24 +68,25 @@ public class TransferAction {
           allSuccessful = allSuccessful & // do not short-circuit!
             dest.doAction();
         }
+        
         if ( allSuccessful ) {
-          EventBus.publish(new TransferSucceededEvent(src.isSourceDeletable(), formsToTransfer));
+          EventBus.publish(new TransferSucceededEvent(srcIsDeletable, formsToTransfer));
         } else {
-          EventBus.publish(new TransferFailedEvent(src.isSourceDeletable(), formsToTransfer));
+          EventBus.publish(new TransferFailedEvent(srcIsDeletable, formsToTransfer));
         }
       } catch (Exception e) {
         e.printStackTrace();
-        EventBus.publish(new TransferFailedEvent(src.isSourceDeletable(), formsToTransfer));
+        EventBus.publish(new TransferFailedEvent(srcIsDeletable, formsToTransfer));
       }
     }
 
   }
 
   private static void showDialogAndRun(ITransferFromSourceAction src, ITransferToDestAction dest,
-      List<FormStatus> formsToTransfer) {
+      TerminationFuture terminationFuture, List<FormStatus> formsToTransfer) {
     // create the dialog first so that the background task will always have a
     // listener for its completion events...
-    final TransferInProgressDialog dlg = new TransferInProgressDialog("Transfer in Progress...");
+    final TransferInProgressDialog dlg = new TransferInProgressDialog("Transfer in Progress...", terminationFuture);
 
     backgroundExecutorService.execute(new TransferRunnable(src, dest, formsToTransfer));
 
@@ -106,69 +113,83 @@ public class TransferAction {
 
   }
 
-  private static void showDialogAndRun(RetrieveAvailableFormsFromServer src) {
+  private static void showDialogAndRun(RetrieveAvailableFormsFromServer src, TerminationFuture terminationFuture) {
     // create the dialog first so that the background task will always have a
     // listener for its completion events...
-    final TransferInProgressDialog dlg = new TransferInProgressDialog("Fetching Available Forms...");
+    final TransferInProgressDialog dlg = new TransferInProgressDialog("Fetching Available Forms...", terminationFuture);
 
     backgroundExecutorService.execute(new RetrieveAvailableFormsRunnable(src));
 
     dlg.setVisible(true);
   }
 
-  public static void retrieveAvailableFormsFromServer(ServerConnectionInfo originServerInfo) {
-    RetrieveAvailableFormsFromServer source = new RetrieveAvailableFormsFromServer(originServerInfo);
-    showDialogAndRun(source);
+  public static void retrieveAvailableFormsFromServer(ServerConnectionInfo originServerInfo, TerminationFuture terminationFuture) {
+    RetrieveAvailableFormsFromServer source = new RetrieveAvailableFormsFromServer(originServerInfo, terminationFuture);
+    showDialogAndRun(source, terminationFuture);
+  }
+  
+  public static void uploadForm(ServerConnectionInfo destinationServerInfo, 
+      TerminationFuture terminationFuture, File formDefn, FormStatus status) {
+    UploadToServer dest = new UploadToServer( destinationServerInfo, terminationFuture, formDefn, status);
+    showDialogAndRun( null, dest, terminationFuture, Collections.singletonList(status));
   }
 
   public static void transferServerViaToServer(ServerConnectionInfo originServerInfo,
-      ServerConnectionInfo destinationServerInfo, 
+      ServerConnectionInfo destinationServerInfo, TerminationFuture terminationFuture, 
       List<FormStatus> formsToTransfer) throws IOException {
 
     File briefcaseDir = new File(BriefcasePreferences.getBriefcaseDirectoryProperty());
-    TransferFromServer source = new TransferFromServer(originServerInfo, briefcaseDir,
+    TransferFromServer source = new TransferFromServer(originServerInfo, terminationFuture, 
+        briefcaseDir,
         formsToTransfer, true);
-    TransferToServer dest = new TransferToServer(destinationServerInfo, briefcaseDir,
+    TransferToServer dest = new TransferToServer(destinationServerInfo, 
+        terminationFuture, briefcaseDir,
         formsToTransfer, true);
-    showDialogAndRun(source, dest, formsToTransfer);
+    showDialogAndRun(source, dest, terminationFuture, formsToTransfer);
   }
 
   public static void transferServerViaToBriefcase(ServerConnectionInfo originServerInfo,
+      TerminationFuture terminationFuture,
       List<FormStatus> formsToTransfer)
       throws IOException {
 
     File briefcaseDir = new File(BriefcasePreferences.getBriefcaseDirectoryProperty());
-    TransferFromServer source = new TransferFromServer(originServerInfo, briefcaseDir,
+    TransferFromServer source = new TransferFromServer(originServerInfo, terminationFuture,
+        briefcaseDir,
         formsToTransfer, false);
-    showDialogAndRun(source, null, formsToTransfer);
+    showDialogAndRun(source, null, terminationFuture, formsToTransfer);
   }
 
   public static void transferODKViaToServer(File odkSrcDir,
       ServerConnectionInfo destinationServerInfo,
+      TerminationFuture terminationFuture,
       List<FormStatus> formsToTransfer) throws IOException {
 
     File briefcaseDir = new File(BriefcasePreferences.getBriefcaseDirectoryProperty());
     TransferFromODK source = new TransferFromODK(odkSrcDir, briefcaseDir, formsToTransfer, true);
-    TransferToServer dest = new TransferToServer(destinationServerInfo, briefcaseDir,
+    TransferToServer dest = new TransferToServer(destinationServerInfo, 
+        terminationFuture, briefcaseDir,
         formsToTransfer, true);
-    showDialogAndRun(source, dest, formsToTransfer);
+    showDialogAndRun(source, dest, terminationFuture, formsToTransfer);
   }
 
-  public static void transferODKViaToBriefcase(File odkSrcDir,
+  public static void transferODKViaToBriefcase(TerminationFuture terminationFuture, File odkSrcDir,
       List<FormStatus> formsToTransfer) throws IOException {
 
     File briefcaseDir = new File(BriefcasePreferences.getBriefcaseDirectoryProperty());
     TransferFromODK source = new TransferFromODK(odkSrcDir, briefcaseDir, formsToTransfer, false);
-    showDialogAndRun(source, null, formsToTransfer);
+    showDialogAndRun(source, null, terminationFuture, formsToTransfer);
   }
 
   public static void transferBriefcaseViaToServer(
       ServerConnectionInfo destinationServerInfo,
+      TerminationFuture terminationFuture,
       List<FormStatus> formsToTransfer) throws IOException {
 
     File briefcaseDir = new File(BriefcasePreferences.getBriefcaseDirectoryProperty());
-    TransferToServer dest = new TransferToServer(destinationServerInfo, briefcaseDir,
+    TransferToServer dest = new TransferToServer(destinationServerInfo, 
+        terminationFuture, briefcaseDir,
         formsToTransfer, false);
-    showDialogAndRun(null, dest, formsToTransfer);
+    showDialogAndRun(null, dest, terminationFuture, formsToTransfer);
   }
 }

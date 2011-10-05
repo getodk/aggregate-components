@@ -46,6 +46,7 @@ import org.opendatakit.briefcase.model.FormStatus;
 import org.opendatakit.briefcase.model.LocalFormDefinition;
 import org.opendatakit.briefcase.model.RetrieveAvailableFormsFailedEvent;
 import org.opendatakit.briefcase.model.ServerConnectionInfo;
+import org.opendatakit.briefcase.model.TerminationFuture;
 import org.opendatakit.briefcase.util.FileSystemUtils;
 import org.opendatakit.briefcase.util.TransferAction;
 
@@ -72,6 +73,8 @@ public class TransferPanel extends JPanel {
   private JButton btnSelectOrClearAllForms;
   private JButton btnTransfer;
 
+  private TerminationFuture terminationFuture;
+  
   /**
    * UI changes related to the selection of the origin location from drop-down
    * box.
@@ -253,14 +256,15 @@ public class TransferPanel extends JPanel {
 
       try {
         btnTransfer.setEnabled(false);
+        terminationFuture.reset();
         if (EndPointType.AGGREGATE_0_9_X_CHOICE.equals(originSelection)
             || EndPointType.AGGREGATE_1_0_CHOICE.equals(originSelection)) {
-
           if (EndPointType.AGGREGATE_1_0_CHOICE.equals(destinationSelection)) {
             TransferAction.transferServerViaToServer(originServerInfo, destinationServerInfo,
-                formsToTransfer);
+                terminationFuture, formsToTransfer);
           } else if (EndPointType.BRIEFCASE_CHOICE.equals(destinationSelection)) {
-            TransferAction.transferServerViaToBriefcase(originServerInfo, formsToTransfer);
+            TransferAction.transferServerViaToBriefcase(originServerInfo, 
+                terminationFuture, formsToTransfer);
           } else {
             throw new IllegalStateException("unhandled case");
           }
@@ -269,9 +273,9 @@ public class TransferPanel extends JPanel {
 
           if (EndPointType.AGGREGATE_1_0_CHOICE.equals(destinationSelection)) {
             TransferAction.transferODKViaToServer(new File(txtOriginName.getText()),
-                destinationServerInfo, formsToTransfer);
+                destinationServerInfo, terminationFuture, formsToTransfer);
           } else if (EndPointType.BRIEFCASE_CHOICE.equals(destinationSelection)) {
-            TransferAction.transferODKViaToBriefcase(new File(txtOriginName.getText()),
+            TransferAction.transferODKViaToBriefcase(terminationFuture, new File(txtOriginName.getText()),
                 formsToTransfer);
           } else {
             throw new IllegalStateException("unhandled case");
@@ -279,7 +283,7 @@ public class TransferPanel extends JPanel {
         } else if (EndPointType.BRIEFCASE_CHOICE.equals(originSelection)) {
 
           if (EndPointType.AGGREGATE_1_0_CHOICE.equals(destinationSelection)) {
-            TransferAction.transferBriefcaseViaToServer(destinationServerInfo, formsToTransfer);
+            TransferAction.transferBriefcaseViaToServer(destinationServerInfo, terminationFuture, formsToTransfer);
           } else {
             throw new IllegalStateException("unhandled case");
           }
@@ -301,9 +305,9 @@ public class TransferPanel extends JPanel {
    * 
    * @param txtBriefcaseDir
    */
-  public TransferPanel() {
+  public TransferPanel(TerminationFuture terminationFuture) {
     super();
-
+    this.terminationFuture = terminationFuture;
     JLabel lblGetDataFrom = new JLabel("Get data from:");
 
     listOriginDataSource = new JComboBox(new String[] {
@@ -489,7 +493,8 @@ public class TransferPanel extends JPanel {
           || EndPointType.AGGREGATE_1_0_CHOICE.equals(selection)) {
         // clear the list of forms first...
         formTransferTable.setFormStatusList(statuses);
-        TransferAction.retrieveAvailableFormsFromServer(originServerInfo);
+        terminationFuture.reset();
+        TransferAction.retrieveAvailableFormsFromServer(originServerInfo, terminationFuture);
         // list will be communicated back via the
         // RetrieveAvailableFormsSucceededEvent
       } else if (EndPointType.BRIEFCASE_CHOICE.equals(selection)) {

@@ -19,7 +19,9 @@ package org.opendatakit.briefcase.model;
 import java.util.List;
 
 public class TransferFailedEvent {
+  @SuppressWarnings("unused")
   private boolean isDeletableSource;
+  @SuppressWarnings("unused")
   private List<FormStatus> formsToTransfer;
 
   public TransferFailedEvent(boolean isDeletableSource, List<FormStatus> formsToTransfer) {

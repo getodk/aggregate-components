@@ -52,7 +52,8 @@ public class TransformPanel extends JPanel {
    * Create the panel.
    */
   public TransformPanel() {
-
+    super();
+    
     comboBoxOutputType = new JComboBox();
 
     JLabel lblForm = new JLabel("Form:");

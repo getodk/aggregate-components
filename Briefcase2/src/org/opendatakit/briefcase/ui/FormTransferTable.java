@@ -22,7 +22,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -110,8 +112,38 @@ public class FormTransferTable extends JTable {
     final JButton btnSelectOrClearAllForms;
     final JButton btnTransfer;
     List<FormStatus> formStatuses = new ArrayList<FormStatus>();
+    private Map<FormStatus, DetailButton> buttonMap = new HashMap<FormStatus, DetailButton>();
+    
+    public class DetailButton extends JButton implements ActionListener {
+      
+      /**
+       * 
+       */
+      private static final long serialVersionUID = -5106458166776020642L;
+      final FormStatus status;
+      
+      DetailButton(FormStatus status) {
+        super(columnNames[BUTTON_COLUMN]);
+        this.status = status;
+        this.addActionListener(this);
+        logger.info("creating details button");
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        try {
+          final String history = status.getStatusHistory();
+          final String formName = status.getFormName();
+          setEnabled(false);
+          ScrollingStatusListDialog.showDialog(JOptionPane.getFrameForComponent(this), formName, history);
+        } finally {
+          setEnabled(true);
+        }
+      }
+    }
     
     public FormTransferTableModel(JButton btnSelectOrClearAllForms, JButton btnTransfer) {
+      super();
       AnnotationProcessor.process(this);// if not using AOP
 
       this.btnSelectOrClearAllForms = btnSelectOrClearAllForms;
@@ -238,20 +270,11 @@ public class FormTransferTable extends JTable {
       case 2:
         return status.getStatusString();
       case 3:
-        logger.warn("getting button " + columnIndex);
-        final JButton button = new JButton(columnNames[columnIndex]);
-        final String history = status.getStatusHistory();
-        final String formName = status.getFormName();
-        button.addActionListener(new ActionListener() {
-           public void actionPerformed(ActionEvent arg0) {
-             try {
-               button.setEnabled(false);
-               ScrollingStatusListDialog.showDialog(JOptionPane.getFrameForComponent(button), formName, history);
-             } finally {
-               button.setEnabled(true);
-             }
-           }
-        });
+        DetailButton button = buttonMap.get(status);
+        if ( button == null ) {
+          button = new DetailButton(status);
+          buttonMap.put(status, button);
+        }
         return button;
       default:
         throw new IllegalStateException("unexpected column choice");

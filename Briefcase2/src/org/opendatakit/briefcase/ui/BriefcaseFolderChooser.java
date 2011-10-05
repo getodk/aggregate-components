@@ -24,7 +24,7 @@ import javax.swing.JOptionPane;
 
 import org.opendatakit.briefcase.util.FileSystemUtils;
 
-class BriefcaseFileChooser extends JFileChooser {
+class BriefcaseFolderChooser extends JFileChooser {
 
   /**
 	 * 
@@ -70,12 +70,12 @@ class BriefcaseFileChooser extends JFileChooser {
   }
 
   @SuppressWarnings("unused")
-  private BriefcaseFileChooser(Container parentWindow) {
+  private BriefcaseFolderChooser(Container parentWindow) {
     super();
     this.parentWindow = parentWindow;
   }
 
-  BriefcaseFileChooser(Container parentWindow, boolean asOpenDialog) {
+  BriefcaseFolderChooser(Container parentWindow, boolean asOpenDialog) {
     super();
     this.parentWindow = parentWindow;
     setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

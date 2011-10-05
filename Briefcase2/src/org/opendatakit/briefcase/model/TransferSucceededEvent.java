@@ -20,7 +20,9 @@ import java.util.List;
 
 public class TransferSucceededEvent {
 
+  @SuppressWarnings("unused")
   private boolean isDeletableSource;
+  @SuppressWarnings("unused")
   private List<FormStatus> formsToTransfer;
 
   public TransferSucceededEvent(boolean isDeletableSource, List<FormStatus> formsToTransfer) {

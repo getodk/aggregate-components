@@ -19,6 +19,8 @@ package org.opendatakit.briefcase.model;
 import java.util.prefs.Preferences;
 
 public class BriefcasePreferences {
+  
+  public static final String VERSION = "Preview";
 
   public static void setBriefcaseDirectoryProperty(String value) {
     getApplicationPreferences().put(BriefcasePreferences.BRIEFCASE_DIR_PROPERTY, value);
