@@ -276,10 +276,10 @@ public class FileSystemUtils {
   }
 
   public static File getFormSubmissionDirectory(File formInstancesDir, String instanceID) {
-    // create instance directory...
+    // construct the instance directory File...
     String instanceDirName = asFilesystemSafeName(instanceID);
     File instanceDir = new File(formInstancesDir, instanceDirName);
-    if (instanceDir.exists() && instanceDir.isDirectory()) {
+    if (!instanceDir.exists() || instanceDir.isDirectory()) {
       return instanceDir;
     }
     return null;
