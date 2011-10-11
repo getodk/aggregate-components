@@ -125,7 +125,15 @@ public class TransferFromODK implements ITransferFromSourceAction {
 
         @Override
         public boolean accept(File pathname) {
-          return pathname.getName().startsWith(odkFormName + "-");
+          boolean beginsWithFormName = pathname.getName().startsWith(odkFormName);
+          if ( !beginsWithFormName ) return false;
+          // skip the separator character, as it varies between 1.1.5, 1.1.6 and 1.1.7
+          String afterName = pathname.getName().substring(odkFormName.length() + 1);
+          // aftername should be a reasonable date though we allow extra stuff at the end...
+          // protects against someone having "formname" and "formname_2"
+          // and us mistaking "formname_2_2009-01-02_15_10_03" as containing
+          // instance data for "formname" instead of "formname_2"
+          return afterName.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}.*");
         }
       });
 
@@ -180,6 +188,8 @@ public class TransferFromODK implements ITransferFromSourceAction {
           }
         }
       }
+      fs.setStatusString("Done retrieving data from ODK directory", true);
+      EventBus.publish(new FormStatusEvent(fs));
     }
     return allSuccessful;
   }

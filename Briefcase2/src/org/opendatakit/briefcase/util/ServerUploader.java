@@ -94,8 +94,10 @@ public class ServerUploader {
     
     for (FormStatus formToTransfer : formsToTransfer) {
 
+      boolean thisFormSuccessful = true;
+      
       if ( isCancelled() ) {
-        formToTransfer.setStatusString("aborting upload of form and submissions...", true);
+        formToTransfer.setStatusString("Aborted upload.", true);
         EventBus.publish(new FormStatusEvent(formToTransfer));
         return false;
       }
@@ -105,14 +107,17 @@ public class ServerUploader {
           briefcaseFormsDir, formName);
       if (briefcaseFormDefFile == null) {
         formToTransfer.setStatusString("Form does not exist", true);
+        EventBus.publish(new FormStatusEvent(formToTransfer));
         continue;
       }
       File briefcaseFormMediaDir = FileSystemUtils.getMediaDirectoryIfExists(
           briefcaseFormsDir, formName);
 
-      allSuccessful = allSuccessful & // do not short-circuit!!!
-        uploadForm(formToTransfer, briefcaseFormDefFile, briefcaseFormMediaDir);
-
+      boolean outcome;
+      outcome = uploadForm(formToTransfer, briefcaseFormDefFile, briefcaseFormMediaDir);
+      thisFormSuccessful = thisFormSuccessful & outcome;
+      allSuccessful = allSuccessful & outcome;
+          
       List<File> briefcaseInstances = FileSystemUtils.getFormSubmissionDirectories(
           briefcaseFormsDir, formName);
 
@@ -122,9 +127,26 @@ public class ServerUploader {
         continue;
       }
       
+      int i = 1;
       for (File briefcaseInstance : briefcaseInstances) {
-        allSuccessful = allSuccessful & // do not short-circuit!!! 
-          uploadSubmission(formToTransfer, u, briefcaseInstance);
+        outcome = uploadSubmission(formToTransfer, u, i++, briefcaseInstances.size(), briefcaseInstance);
+        thisFormSuccessful = thisFormSuccessful & outcome;
+        allSuccessful = allSuccessful & outcome;
+        // and stop this loop quickly if we're cancelled...
+        if ( isCancelled() ) {
+          break;
+        }
+      }
+      
+      if ( isCancelled() ) {
+        formToTransfer.setStatusString("Aborted upload.", true);
+        EventBus.publish(new FormStatusEvent(formToTransfer));
+      } else if ( thisFormSuccessful ) {
+        formToTransfer.setStatusString("Successful upload!", true);
+        EventBus.publish(new FormStatusEvent(formToTransfer));
+      } else {
+        formToTransfer.setStatusString("Partially successful upload...", true);
+        EventBus.publish(new FormStatusEvent(formToTransfer));
       }
     }
     return allSuccessful;
@@ -197,7 +219,7 @@ public class ServerUploader {
     return u;
   }
   
-  private final boolean uploadSubmission(FormStatus formToTransfer, URI u, File instanceDirectory) {
+  private final boolean uploadSubmission(FormStatus formToTransfer, URI u, int count, int totalCount, File instanceDirectory) {
   
     // We have the actual server URL in u, possibly redirected to https.
     // We know we are talking to the server because the head request
@@ -244,7 +266,7 @@ public class ServerUploader {
     }
 
     DocumentDescription submissionUploadDescription = new DocumentDescription("Submission upload failed.  Detailed error: ",
-        "Submission upload failed.", "submission", terminationFuture);
+        "Submission upload failed.", "submission (" + count + " of " + totalCount + ")", terminationFuture);
     boolean outcome = AggregateUtils.uploadFilesToServer(serverInfo, u, "xml_submission_file", file, files, submissionUploadDescription, action, formToTransfer);
     
     // and try to rename the instance directory to be its instanceID
