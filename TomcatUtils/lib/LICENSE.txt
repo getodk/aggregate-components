@@ -1,0 +1,9 @@
+The Javax ImageIO library is not redistributable.  
+The subset of the library in this jar IS redistributable.
+It contains just the public domain BSD and Apache 2.0 licensed subset.
+Sources are on Github.  See the link below for further information.
+
+https://github.com/stain/jai-imageio-core   /Modified BSD/ /Apache 2.0/
+    jai-imageio-core-standalone-1.2-pre-dr-b04-2010-04-30.jar
+	Copyright (c) 2005 Sun Microsystems, Inc. All Rights Reserved.
+	Modifications (c) Stian Soiland-Reyes <stian@soiland-reyes.com> 2010-04-30
