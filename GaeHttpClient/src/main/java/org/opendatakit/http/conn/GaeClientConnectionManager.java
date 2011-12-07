@@ -17,7 +17,7 @@
 package org.opendatakit.http.conn;
 
 import java.io.IOException;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +31,8 @@ import org.apache.http.conn.ManagedClientConnection;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.scheme.SocketFactory;
+import org.apache.http.conn.scheme.SchemeSocketFactory;
+import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.params.HttpParams;
 
 /**
@@ -50,30 +51,30 @@ public class GaeClientConnectionManager  implements ClientConnectionManager {
 	
 	static {
 		DEFAULT_SCHEME_REGISTRY = new SchemeRegistry();
-		SocketFactory f = new SocketFactory() {
-			@Override
-			public Socket connectSocket(Socket sock, String host, int port,
-					InetAddress localAddress, int localPort, HttpParams params)
-					throws IOException, UnknownHostException,
-					ConnectTimeoutException {
-				return null;
-			}
+		
+		SchemeSocketFactory f = new SchemeSocketFactory() {
 
-			@Override
-			public Socket createSocket() throws IOException {
-				return null;
-			}
+      @Override
+      public Socket connectSocket(Socket arg0, InetSocketAddress arg1, InetSocketAddress arg2,
+          HttpParams arg3) throws IOException, UnknownHostException, ConnectTimeoutException {
+        return null;
+      }
 
-			@Override
-			public boolean isSecure(Socket sock)
-					throws IllegalArgumentException {
-				return false;
-			}
+      @Override
+      public Socket createSocket(HttpParams arg0) throws IOException {
+        return null;
+      }
+
+      @Override
+      public boolean isSecure(Socket arg0) throws IllegalArgumentException {
+        return false;
+      }
+		  
 		};
-		DEFAULT_SCHEME_REGISTRY.register(new Scheme("http",f, 80));
-		DEFAULT_SCHEME_REGISTRY.register(new Scheme("http",f, 8080));
-		DEFAULT_SCHEME_REGISTRY.register(new Scheme("https",f, 443));
-		DEFAULT_SCHEME_REGISTRY.register(new Scheme("https",f, 8443));
+		DEFAULT_SCHEME_REGISTRY.register(new Scheme("http", 80, f));
+		DEFAULT_SCHEME_REGISTRY.register(new Scheme("http", 8080, f));
+		DEFAULT_SCHEME_REGISTRY.register(new Scheme("https", 443, f));
+		DEFAULT_SCHEME_REGISTRY.register(new Scheme("https", 8443, f));
 	}
 
     private final Log log = LogFactory.getLog(getClass());
@@ -92,9 +93,21 @@ public class GaeClientConnectionManager  implements ClientConnectionManager {
      * @param params    the parameters for this manager
      * @param schreg    the scheme registry, or
      *                  <code>null</code> for the default registry
+     *
+     * @deprecated use {@link SingleClientConnManager#SingleClientConnManager(SchemeRegistry)}
      */
+    @Deprecated
     public GaeClientConnectionManager(HttpParams params,
                                    SchemeRegistry schreg) {
+        this(schreg);
+    }
+    
+    /**
+     * Creates a new simple connection manager.
+     *
+     * @param schreg    the scheme registry
+     */
+    public GaeClientConnectionManager(final SchemeRegistry schreg) {
         if (schreg == null) {
             throw new IllegalArgumentException
                 ("Scheme registry must not be null.");
@@ -103,6 +116,13 @@ public class GaeClientConnectionManager  implements ClientConnectionManager {
         this.isShutDown      = false;
     }
 
+    /**
+     * @since 4.1
+     */
+    public GaeClientConnectionManager() {
+        this(DEFAULT_SCHEME_REGISTRY);
+    }
+ 
     @Override
     protected void finalize() throws Throwable {
         try {

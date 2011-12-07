@@ -40,10 +40,12 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.conn.ManagedClientConnection;
+import org.apache.http.conn.OperatedClientConnection;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.EntityEnclosingRequestWrapper;
 import org.apache.http.impl.client.RequestWrapper;
+import org.apache.http.impl.conn.ConnectionShutdownException;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.params.CoreProtocolPNames;
@@ -121,17 +123,39 @@ public class GaeManagedClientConnection implements ManagedClientConnection {
 	}
 	
     /**
-     * Asserts that this connection is not open.
+     * @deprecated use {@link #assertValid(OperatedClientConnection)}
      *
      * @throws IllegalStateException    if this manager is shut down
      */
-    protected final void assertNotOpen() throws IllegalStateException {
+	 protected final void assertNotOpen() throws IllegalStateException {
         if (!reusable)
             throw new IllegalStateException("Connection is already open.");
         if (broken)
         	throw new IllegalStateException("Connection is not cleanly closed.");
     }
 
+    /**
+     * Asserts that there is a wrapped connection to delegate to.
+     * @since 4.1
+     * @return value of released flag
+     */
+    protected boolean isReleased() {
+        return reusable && !broken;
+    }
+
+    /**
+     * Asserts that there is a valid wrapped connection to delegate to.
+     *
+     * @throws ConnectionShutdownException if there is no wrapped connection
+     *                                  or connection has been aborted
+     */
+    protected final void assertValid(final OperatedClientConnection wrappedConn) 
+        throws ConnectionShutdownException {
+      if (isReleased() || wrappedConn == null) {
+        throw new ConnectionShutdownException();
+      }
+    }
+    
     public final HttpHost getTargetHost() {
         return this.targetHost;
     }
