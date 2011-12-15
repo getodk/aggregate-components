@@ -473,6 +473,14 @@ public class GaeManagedClientConnection implements ManagedClientConnection {
 	@Override
 	public int getRemotePort() {
 		HttpHost host = route.getTargetHost();
+		int port = host.getPort();
+		if ( port == -1 ) {
+		  if ( host.getSchemeName().equalsIgnoreCase("http") ) {
+		    return 80;
+		  } else {
+		    return 443;
+		  }
+		}
 		return host.getPort();
 	}
 
