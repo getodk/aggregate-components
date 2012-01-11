@@ -9,6 +9,11 @@ package org.openid4java;
  */
 public class OpenIDException extends Exception
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 6047949424689457359L;
+
     private int _errorCode;
 
     // error codes intended to help pinpoint the subsystem / cause of a failure

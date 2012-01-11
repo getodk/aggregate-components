@@ -4,6 +4,16 @@
 
 package org.openid4java.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
@@ -15,20 +25,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.AllClientPNames;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.message.BasicNameValuePair;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Date;
-
-import javax.net.ssl.SSLContext;
+import com.google.inject.Inject;
 
 /**
  * Wrapper cache around HttpClient providing caching for HTTP requests.
@@ -50,40 +49,31 @@ public class HttpCache extends AbstractHttpFetcher
     /**
      * Cache for GET requests. Map of URL -> HttpResponse.
      */
-    private Map _getCache = new HashMap();
+    private Map<String,HttpResponse> _getCache = new HashMap<String,HttpResponse>();
 
     // todo: cache management
 
     /**
      * Cache for HEAD requests. Map of URL -> HttpResponse.
      */
-    private Map _headCache = new HashMap();
+    private Map<String,HttpResponse> _headCache = new HashMap<String,HttpResponse>();
 
-    public HttpCache()
-    {
-    	this(null);
-    }
-    
-    public HttpCache(SSLContext sslContext)
-    {
-    	this(sslContext, null);
-    }
-    
     /**
      * Constructs a new HttpCache object, that will be initialized with the
      * default set of HttpRequestOptions.
      *
      * @see HttpRequestOptions
      */
-    public HttpCache(SSLContext sslContext, X509HostnameVerifier hostnameVerifier)
+    @Inject
+    public HttpCache(HttpClientFactory clientFactory)
     {
         super();
-        _client = HttpClientFactory.getInstance(
+        _client = clientFactory.getInstance(
                 getDefaultRequestOptions().getMaxRedirects(),
                 getDefaultRequestOptions().getAllowCircularRedirects(),
                 getDefaultRequestOptions().getSocketTimeout(),
                 getDefaultRequestOptions().getConnTimeout(),
-                null, sslContext, hostnameVerifier);
+                null);
     }
 
     /**
@@ -380,7 +370,7 @@ public class HttpCache extends AbstractHttpFetcher
         /**
          * Map of header names  List of Header objects of the HTTP response.
          */
-        private Map _responseHeaders;
+        private Map<String,List<Header>> _responseHeaders;
 
         /**
          * The HTTP response body.
@@ -414,7 +404,7 @@ public class HttpCache extends AbstractHttpFetcher
             _maxRedirectsFollowed = redirectsFollowed;
             _finalUri = finalUri;
 
-            _responseHeaders = new HashMap();
+            _responseHeaders = new HashMap<String,List<Header>>();
             if (responseHeaders != null)
             {
                 String headerName;
@@ -425,12 +415,12 @@ public class HttpCache extends AbstractHttpFetcher
                     headerName = responseHeaders[i].getName().toLowerCase();
                     header = responseHeaders[i];
 
-                    List headerList = (List) _responseHeaders.get(headerName);
+                    List<Header> headerList = _responseHeaders.get(headerName);
                     if (headerList != null)
                         headerList.add(responseHeaders[i]);
                     else
                         _responseHeaders.put(headerName,
-                            new ArrayList(Arrays.asList(new Header[] {header})));
+                            new ArrayList<Header>(Arrays.asList(new Header[] {header})));
                 }
             }
 
@@ -479,7 +469,7 @@ public class HttpCache extends AbstractHttpFetcher
          */
         public Header getResponseHeader(String headerName)
         {
-            List headerList = (List) _responseHeaders.get(headerName.toLowerCase());
+            List<Header> headerList = _responseHeaders.get(headerName.toLowerCase());
 
             if (headerList != null && headerList.size() > 0)
                 return (Header) headerList.get(0);
@@ -492,7 +482,7 @@ public class HttpCache extends AbstractHttpFetcher
          */
         public Header[] getResponseHeaders(String headerName)
         {
-            List headerList = (List) _responseHeaders.get(headerName.toLowerCase());
+            List<Header> headerList = _responseHeaders.get(headerName.toLowerCase());
 
             if (headerList != null)
                 return (Header[]) headerList.toArray(new Header[headerList.size()]);

@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
  * @see Association DiffieHellmanSession
  * @author Marius Scurtescu, Johnny Bufu
  */
-public class AssociationSessionType implements Comparable
+public class AssociationSessionType implements Comparable<AssociationSessionType>
 {
     private static Log _log = LogFactory.getLog(AssociationSessionType.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
@@ -230,10 +230,8 @@ public class AssociationSessionType implements Comparable
     /**
      * Compares to another AssociationSessionType; used for sorting.
      */
-    public int compareTo(Object object)
+    public int compareTo(AssociationSessionType that)
     {
-        AssociationSessionType that = (AssociationSessionType) object;
-
         if (this._order == that._order)
             return 0;
         else

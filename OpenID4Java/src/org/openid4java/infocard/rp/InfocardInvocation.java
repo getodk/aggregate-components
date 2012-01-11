@@ -36,12 +36,12 @@ public class InfocardInvocation
      * List of required claim URIs. The OpenID Identifier claim
      * is always part of the list.
      */
-    private List _requiredClaims = new ArrayList();
+    private List<String> _requiredClaims = new ArrayList<String>();
 
     /**
      * List of optional claim URIs.
      */
-    private List _optionalClaims = new ArrayList();
+    private List<String> _optionalClaims = new ArrayList<String>();
 
     /**
      * The issuer's URL for the accepted claims.
@@ -131,7 +131,7 @@ public class InfocardInvocation
      *                  claims are returned otherwise.
      * @return          The list of configured required/optional claims.
      */
-    public List getClaims(boolean required)
+    public List<String> getClaims(boolean required)
     {
         return required ? _requiredClaims : _optionalClaims;
     }
@@ -163,7 +163,7 @@ public class InfocardInvocation
      * @param required              If true, the required claims list is set,
      *                              otherwise the optional claims list is set.
      */
-    public void setClaims(List claims, boolean required)
+    public void setClaims(List<String> claims, boolean required)
     {
         if (required)
         {
@@ -308,13 +308,13 @@ public class InfocardInvocation
     /**
      * Converts a List of Strings to a space-separated string.
      */
-    public String arrayToString(List list)
+    public String arrayToString(List<String> list)
     {
         StringBuffer result = new StringBuffer();
 
         if (list != null && list.size() > 0)
         {
-            Iterator iter = list.iterator();
+            Iterator<String> iter = list.iterator();
             while (iter.hasNext())
             {
                 result.append(iter.next());

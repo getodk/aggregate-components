@@ -11,6 +11,11 @@ import org.openid4java.OpenIDException;
  */
 public class InfocardException extends OpenIDException
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -7667288852474075743L;
+
     public InfocardException(String message)
     {
         super(message, INFOCARD_ERROR);

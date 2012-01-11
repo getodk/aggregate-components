@@ -11,6 +11,11 @@ import org.openid4java.OpenIDException;
  */
 public class DiscoveryException extends OpenIDException
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 7047672063261430140L;
+
     public DiscoveryException(String message)
     {
         super(message, DISCOVERY_ERROR);

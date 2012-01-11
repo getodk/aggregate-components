@@ -26,6 +26,7 @@ public class StoreRequest extends AxPayload
      */
     protected StoreRequest()
     {
+        super();
         _parameters.set(new Parameter("mode", "store_request"));
 
         if (DEBUG) _log.debug("Created empty store request.");
@@ -48,7 +49,7 @@ public class StoreRequest extends AxPayload
      */
     protected StoreRequest(ParameterList params)
     {
-        _parameters = params;
+        super(params);
     }
 
     /**

@@ -6,7 +6,8 @@
   <parent>
     <groupId>org.openid4java</groupId>
     <artifactId>openid4java-parent</artifactId>
-    <version>0.9.6</version>
+    <version>0.9.6.662.odk.SNAPSHOT</version>
+	<relativePath>..</relativePath>
   </parent>
   <artifactId>openid4java-xri</artifactId>
   <packaging>pom</packaging>
@@ -20,15 +21,17 @@
     <dependency>
       <groupId>${groupId}</groupId>
       <artifactId>openid4java-nodeps</artifactId>
-      <version>${version}</version>
+      <version>${openid4java.version}</version>
     </dependency>
     <dependency>
       <groupId>org.openxri</groupId>
       <artifactId>openxri-syntax</artifactId>
+      <version>${org.openxri.version}</version>
     </dependency>
     <dependency>
       <groupId>org.openxri</groupId>
       <artifactId>openxri-client</artifactId>
+      <version>${org.openxri.version}</version>
     </dependency>
   </dependencies>
 </project>

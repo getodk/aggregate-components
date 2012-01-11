@@ -4,14 +4,18 @@
 
 package org.openid4java.message;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.List;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A list of parameters that are part of an OpenID message. Please note that you can have multiple parameters with
@@ -21,14 +25,18 @@ import java.net.URLDecoder;
  */
 public class ParameterList implements Serializable
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1229933065617217565L;
     private static Log _log = LogFactory.getLog(ParameterList.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    Map _parameterMap;
+    Map<String,Parameter> _parameterMap;
 
     public ParameterList()
     {
-        _parameterMap  = new LinkedHashMap();
+        _parameterMap  = new LinkedHashMap<String,Parameter>();
 
         if (DEBUG) _log.debug("Created empty parameter list.");
     }
@@ -37,7 +45,7 @@ public class ParameterList implements Serializable
     {
         if (DEBUG) _log.debug("Cloning parameter list:\n" + that);
 
-        this._parameterMap = new LinkedHashMap(that._parameterMap);
+        this._parameterMap = new LinkedHashMap<String,Parameter>(that._parameterMap);
     }
 
     /**
@@ -47,10 +55,11 @@ public class ParameterList implements Serializable
      *
      * @param parameterMap  Map<String,String[]> or Map<String,String>
      */
-    public ParameterList(Map parameterMap)
+    public ParameterList(@SuppressWarnings("rawtypes") Map parameterMap)
     {
-        _parameterMap  = new LinkedHashMap();
+        _parameterMap  = new LinkedHashMap<String,Parameter>();
 
+        @SuppressWarnings("rawtypes")
         Iterator keysIter = parameterMap.keySet().iterator();
         while (keysIter.hasNext())
         {
@@ -88,7 +97,7 @@ public class ParameterList implements Serializable
     {
         if (DEBUG) _log.debug("Copying parameter list:\n" + that);
 
-        this._parameterMap = new LinkedHashMap(that._parameterMap);
+        this._parameterMap = new LinkedHashMap<String,Parameter>(that._parameterMap);
     }
 
     public boolean equals(Object obj)
@@ -116,10 +125,10 @@ public class ParameterList implements Serializable
 
     public void addParams(ParameterList params)
     {
-        Iterator iter = params.getParameters().iterator();
+        Iterator<Parameter> iter = params.getParameters().iterator();
 
         while (iter.hasNext())
-            set((Parameter) iter.next());
+            set(iter.next());
     }
 
     public Parameter getParameter(String name)
@@ -134,9 +143,9 @@ public class ParameterList implements Serializable
         return param != null ? param.getValue() : null;
     }
 
-    public List getParameters()
+    public List<Parameter> getParameters()
     {
-        return new ArrayList(_parameterMap.values());
+        return new ArrayList<Parameter>(_parameterMap.values());
     }
 
     public void removeParameters(String name)
@@ -150,10 +159,10 @@ public class ParameterList implements Serializable
     }
 
     public boolean hasParameterPrefix(String prefix) {
-        Iterator keysIter = _parameterMap.keySet().iterator();
+        Iterator<String> keysIter = _parameterMap.keySet().iterator();
         while (keysIter.hasNext())
         {
-            if (((String)keysIter.next()).startsWith(prefix))
+            if (keysIter.next().startsWith(prefix))
                 return true;
         }
         return false;
@@ -224,11 +233,11 @@ public class ParameterList implements Serializable
     {
         StringBuffer allParams = new StringBuffer("");
 
-        List parameters = getParameters();
-        Iterator iterator = parameters.iterator();
+        List<Parameter> parameters = getParameters();
+        Iterator<Parameter> iterator = parameters.iterator();
         while (iterator.hasNext())
         {
-            Parameter parameter = (Parameter) iterator.next();
+            Parameter parameter = iterator.next();
             allParams.append(parameter.getKey());
             allParams.append(':');
             allParams.append(parameter.getValue());

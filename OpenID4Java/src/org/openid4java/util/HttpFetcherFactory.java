@@ -16,10 +16,6 @@
  */
 package org.openid4java.util;
 
-import javax.net.ssl.SSLContext;
-
-import org.apache.http.conn.ssl.X509HostnameVerifier;
-
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -37,19 +33,9 @@ public class HttpFetcherFactory {
    * Public constructor for non-Guice installations. Results in
    * {@link HttpCache} being used as the {@link HttpFetcher}
    */
-  public HttpFetcherFactory()
+  public HttpFetcherFactory(HttpClientFactory clientFactory)
   {
-      this(new HttpCacheProvider());
-  }
-
-  public HttpFetcherFactory(SSLContext sslContext)
-  {
-	  this(new HttpCacheProvider(sslContext));
-  }
-  
-  public HttpFetcherFactory(SSLContext sslContext, X509HostnameVerifier hostnameVerifier)
-  {
-	  this(new HttpCacheProvider(sslContext, hostnameVerifier));
+      this(new HttpCacheProvider(clientFactory));
   }
   
   public HttpFetcher createFetcher(HttpRequestOptions defaultOptions)
@@ -61,29 +47,16 @@ public class HttpFetcherFactory {
 
   private static class HttpCacheProvider implements Provider<HttpFetcher> {
 	  
-	  private final SSLContext sslContext;
+     private final HttpClientFactory clientFactory; 
 	  
-	  private final X509HostnameVerifier hostnameVerifier;
-	  
-	  public HttpCacheProvider(SSLContext sslContext, X509HostnameVerifier hostnameVerifier)
+	  public HttpCacheProvider(HttpClientFactory clientFactory)
 	  {
-		  this.sslContext = sslContext;
-		  this.hostnameVerifier = hostnameVerifier;
-	  }
-	  
-	  public HttpCacheProvider(SSLContext sslContext)
-	  {
-		  this(sslContext, null);
-	  }
-	  
-	  public HttpCacheProvider()
-	  {
-		  this(null, null);
+	    this.clientFactory = clientFactory;
 	  }
 	  
     public HttpFetcher get()
     {
-    	return new HttpCache(this.sslContext, this.hostnameVerifier);
+    	return new HttpCache(this.clientFactory);
     }
   }
 }

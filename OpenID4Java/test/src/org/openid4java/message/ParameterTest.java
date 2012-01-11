@@ -4,124 +4,116 @@
 
 package org.openid4java.message;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
 
 /**
  * @author Marius Scurtescu, Johnny Bufu
  */
-public class ParameterTest extends TestCase
-{
-    public ParameterTest(String name)
-    {
-        super(name);
-    }
+public class ParameterTest {
+  @Test
+  public void testEquals() throws Exception {
+    Parameter parameter1 = new Parameter("key", "value");
+    Parameter parameter2 = new Parameter("key", "value");
 
-    public void testEquals() throws Exception
-    {
-        Parameter parameter1 = new Parameter("key", "value");
-        Parameter parameter2 = new Parameter("key", "value");
+    assertEquals(parameter1, parameter2);
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1, parameter2);
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter("", "value");
+    parameter2 = new Parameter("", "value");
 
-        parameter1 = new Parameter("", "value");
-        parameter2 = new Parameter("", "value");
+    assertEquals(parameter1, parameter2);
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1, parameter2);
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter("", "");
+    parameter2 = new Parameter("", "");
 
-        parameter1 = new Parameter("", "");
-        parameter2 = new Parameter("", "");
+    assertEquals(parameter1, parameter2);
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1, parameter2);
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter(null, "");
+    parameter2 = new Parameter(null, "");
 
-        parameter1 = new Parameter(null, "");
-        parameter2 = new Parameter(null, "");
+    assertEquals(parameter1, parameter2);
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1, parameter2);
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter(null, null);
+    parameter2 = new Parameter(null, null);
 
-        parameter1 = new Parameter(null, null);
-        parameter2 = new Parameter(null, null);
+    assertEquals(parameter1, parameter2);
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1, parameter2);
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter("key", "value1");
+    parameter2 = new Parameter("key", "value2");
 
-        parameter1 = new Parameter("key", "value1");
-        parameter2 = new Parameter("key", "value2");
+    assertFalse(parameter1.equals(parameter2));
+    assertNotSame(parameter1, parameter2);
+  }
 
-        assertFalse(parameter1.equals(parameter2));
-        assertNotSame(parameter1, parameter2);
-    }
+  @Test
+  public void testHashCode() throws Exception {
+    Parameter parameter1 = new Parameter("key", "value");
+    Parameter parameter2 = new Parameter("key", "value");
 
-    public void testHashCode() throws Exception
-    {
-        Parameter parameter1 = new Parameter("key", "value");
-        Parameter parameter2 = new Parameter("key", "value");
+    assertEquals(parameter1.hashCode(), parameter2.hashCode());
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1.hashCode(), parameter2.hashCode());
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter("", "value");
+    parameter2 = new Parameter("", "value");
 
-        parameter1 = new Parameter("", "value");
-        parameter2 = new Parameter("", "value");
+    assertEquals(parameter1.hashCode(), parameter2.hashCode());
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1.hashCode(), parameter2.hashCode());
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter("", "");
+    parameter2 = new Parameter("", "");
 
-        parameter1 = new Parameter("", "");
-        parameter2 = new Parameter("", "");
+    assertEquals(parameter1.hashCode(), parameter2.hashCode());
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1.hashCode(), parameter2.hashCode());
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter(null, "");
+    parameter2 = new Parameter(null, "");
 
-        parameter1 = new Parameter(null, "");
-        parameter2 = new Parameter(null, "");
+    assertEquals(parameter1.hashCode(), parameter2.hashCode());
+    assertNotSame(parameter1, parameter2);
 
-        assertEquals(parameter1.hashCode(), parameter2.hashCode());
-        assertNotSame(parameter1, parameter2);
+    parameter1 = new Parameter(null, null);
+    parameter2 = new Parameter(null, null);
 
-        parameter1 = new Parameter(null, null);
-        parameter2 = new Parameter(null, null);
+    assertEquals(parameter1.hashCode(), parameter2.hashCode());
+    assertNotSame(parameter1, parameter2);
+  }
 
-        assertEquals(parameter1.hashCode(), parameter2.hashCode());
-        assertNotSame(parameter1, parameter2);
-    }
+  @Test
+  public void testGetName() throws Exception {
+    Parameter parameter = new Parameter(null, "value");
 
-    public void testGetName() throws Exception
-    {
-        Parameter parameter = new Parameter(null, "value");
+    assertNull(parameter.getKey());
 
-        assertNull(parameter.getKey());
+    parameter = new Parameter("", "value");
 
-        parameter = new Parameter("", "value");
+    assertEquals("", parameter.getKey());
 
-        assertEquals("", parameter.getKey());
+    parameter = new Parameter("key", "value");
 
-        parameter = new Parameter("key", "value");
+    assertEquals("key", parameter.getKey());
+  }
 
-        assertEquals("key", parameter.getKey());
-    }
+  @Test
+  public void testGetValue() throws Exception {
+    Parameter parameter = new Parameter("key", null);
 
-    public void testGetValue() throws Exception
-    {
-        Parameter parameter = new Parameter("key", null);
+    assertNull(parameter.getValue());
 
-        assertNull(parameter.getValue());
+    parameter = new Parameter("key", "");
 
-        parameter = new Parameter("key", "");
+    assertEquals("", parameter.getValue());
 
-        assertEquals("", parameter.getValue());
+    parameter = new Parameter("key", "value");
 
-        parameter = new Parameter("key", "value");
-
-        assertEquals("value", parameter.getValue());
-    }
-
-    public static Test suite()
-    {
-        return new TestSuite(ParameterTest.class);
-    }
+    assertEquals("value", parameter.getValue());
+  }
 }

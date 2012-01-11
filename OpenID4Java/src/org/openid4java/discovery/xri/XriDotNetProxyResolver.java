@@ -10,7 +10,9 @@ import org.openid4java.discovery.DiscoveryInformation;
 import org.openid4java.discovery.XriIdentifier;
 import org.openid4java.discovery.xrds.XrdsParser;
 import org.openid4java.discovery.xrds.XrdsServiceEndpoint;
+import org.openid4java.util.DefaultHttpClientFactory;
 import org.openid4java.util.HttpCache;
+import org.openid4java.util.HttpClientFactory;
 import org.openid4java.util.HttpFetcher;
 import org.openid4java.util.HttpFetcherFactory;
 import org.openid4java.util.HttpRequestOptions;
@@ -33,7 +35,9 @@ public class XriDotNetProxyResolver implements XriResolver
     private static Log _log = LogFactory.getLog(XriDotNetProxyResolver.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    private final HttpFetcher _httpFetcher;
+    private HttpClientFactory _httpClientFactory = null;
+    private HttpFetcherFactory _httpFetcherFactory = null;
+    private HttpFetcher _httpFetcher = null; // accessed by getHttpFetcher();
 
     private final static String PROXY_URL = "https://xri.net/";
     private static final String XRDS_QUERY = "_xrd_r=application/xrds+xml";
@@ -58,9 +62,8 @@ public class XriDotNetProxyResolver implements XriResolver
      * of the {@link HttpFetcherFactory} returns {@link HttpCache}s.
      */
     @Inject
-    public XriDotNetProxyResolver(HttpFetcherFactory httpFetcherfactory) {
-      _httpFetcher = httpFetcherfactory.createFetcher(
-          HttpRequestOptions.getDefaultOptionsForDiscovery());
+    public XriDotNetProxyResolver(HttpFetcherFactory httpFetcherFactory) {
+      this._httpFetcherFactory = httpFetcherFactory;
     }
 
     /**
@@ -69,33 +72,53 @@ public class XriDotNetProxyResolver implements XriResolver
      */
     public XriDotNetProxyResolver()
     {
-      this(new HttpFetcherFactory());
     }
 
-    public List discover(XriIdentifier xri) throws DiscoveryException
+    public void setHttpClientFactory(HttpClientFactory clientFactory) {
+      this._httpClientFactory = clientFactory;
+    }
+
+    private synchronized HttpFetcher getHttpFetcher() {
+      if ( _httpClientFactory == null ) {
+        _httpClientFactory = new DefaultHttpClientFactory();
+      }
+      
+      if ( _httpFetcherFactory == null ) {
+        _httpFetcherFactory = new HttpFetcherFactory(_httpClientFactory);
+      }
+      
+      if ( _httpFetcher == null ) {
+        _httpFetcher = 
+            _httpFetcherFactory.createFetcher(HttpRequestOptions.getDefaultOptionsForDiscovery());
+      }
+      
+      return _httpFetcher;
+    }
+    
+    public List<DiscoveryInformation> discover(XriIdentifier xri) throws DiscoveryException
     {
         String hxri = PROXY_URL + xri.getIdentifier() + "?" + XRDS_QUERY;
         _log.info("Performing discovery on HXRI: " + hxri);
 
         try
         {
-            HttpResponse resp = _httpFetcher.get(hxri);
+            HttpResponse resp = getHttpFetcher().get(hxri);
             if (resp == null || HttpStatus.SC_OK != resp.getStatusCode())
                 throw new DiscoveryException("Error retrieving HXRI: " + hxri);
 
-            Set targetTypes = DiscoveryInformation.OPENID_OP_TYPES;
+            Set<String> targetTypes = DiscoveryInformation.OPENID_OP_TYPES;
 
-            List endpoints = XRDS_PARSER.parseXrds(resp.getBody(), targetTypes);
+            List<XrdsServiceEndpoint> endpoints = XRDS_PARSER.parseXrds(resp.getBody(), targetTypes);
 
-            List results = new ArrayList();
+            List<DiscoveryInformation> results = new ArrayList<DiscoveryInformation>();
 
-            Iterator endpointIter = endpoints.iterator();
+            Iterator<XrdsServiceEndpoint> endpointIter = endpoints.iterator();
             while (endpointIter.hasNext())
             {
-                XrdsServiceEndpoint endpoint = (XrdsServiceEndpoint) endpointIter.next();
-                Iterator typesIter = endpoint.getTypes().iterator();
+                XrdsServiceEndpoint endpoint = endpointIter.next();
+                Iterator<String> typesIter = endpoint.getTypes().iterator();
                 while (typesIter.hasNext()) {
-                    String type = (String) typesIter.next();
+                    String type = typesIter.next();
                     if (!targetTypes.contains(type)) continue;
                     try {
                         results.add(new DiscoveryInformation(

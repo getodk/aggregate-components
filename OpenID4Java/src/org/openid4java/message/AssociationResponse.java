@@ -30,12 +30,12 @@ public class AssociationResponse extends Message
     private static Log _log = LogFactory.getLog(AssociationResponse.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    protected final static List requiredFields = Arrays.asList( new String[] {
+    protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "assoc_type",
             "assoc_handle",
             "expires_in"
     });
-    protected final static List optionalFields = Arrays.asList( new String[] {
+    protected final static List<String> optionalFields = Arrays.asList( new String[] {
             "ns",                       // not in v1 messages
             "session_type",             // can be missing in v1
             "mac_key",
@@ -123,7 +123,7 @@ public class AssociationResponse extends Message
         return resp;
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return requiredFields;
     }

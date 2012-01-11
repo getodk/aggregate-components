@@ -18,7 +18,7 @@ public class InMemoryNonceVerifier extends AbstractNonceVerifier
     private static Log _log = LogFactory.getLog(InMemoryNonceVerifier.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    private Map _opMap = new HashMap();
+    private Map<String,Set<String>> _opMap = new HashMap<String,Set<String>>();
 
     public InMemoryNonceVerifier() {
       this(60);
@@ -33,11 +33,11 @@ public class InMemoryNonceVerifier extends AbstractNonceVerifier
     {
         removeAged(now);
 
-        Set seenSet = (Set) _opMap.get(opUrl);
+        Set<String> seenSet = _opMap.get(opUrl);
 
         if (seenSet == null)
         {
-            seenSet = new HashSet();
+            seenSet = new HashSet<String>();
 
             _opMap.put(opUrl, seenSet);
         }
@@ -57,19 +57,19 @@ public class InMemoryNonceVerifier extends AbstractNonceVerifier
 
     private synchronized void removeAged(Date now)
     {
-        Set opToRemove = new HashSet();
-        Iterator opUrls = _opMap.keySet().iterator();
+        Set<String> opToRemove = new HashSet<String>();
+        Iterator<String> opUrls = _opMap.keySet().iterator();
         while (opUrls.hasNext())
         {
-            String opUrl = (String) opUrls.next();
+            String opUrl = opUrls.next();
 
-            Set seenSet = (Set) _opMap.get(opUrl);
-            Set nonceToRemove = new HashSet();
+            Set<String> seenSet = _opMap.get(opUrl);
+            Set<String> nonceToRemove = new HashSet<String>();
 
-            Iterator nonces = seenSet.iterator();
+            Iterator<String> nonces = seenSet.iterator();
             while (nonces.hasNext())
             {
-                String nonce = (String) nonces.next();
+                String nonce = nonces.next();
 
                 try
                 {
@@ -89,7 +89,7 @@ public class InMemoryNonceVerifier extends AbstractNonceVerifier
             nonces = nonceToRemove.iterator();
             while (nonces.hasNext())
             {
-                String nonce = (String) nonces.next();
+                String nonce = nonces.next();
 
                 if (DEBUG)
                     _log.debug("Removing nonce: " + nonce +
@@ -104,7 +104,7 @@ public class InMemoryNonceVerifier extends AbstractNonceVerifier
         opUrls = opToRemove.iterator();
         while (opUrls.hasNext())
         {
-            String opUrl = (String) opUrls.next();
+            String opUrl = opUrls.next();
 
             if (DEBUG) _log.debug("Removed all nonces from OP: " + opUrl);
 
@@ -116,12 +116,12 @@ public class InMemoryNonceVerifier extends AbstractNonceVerifier
     {
         int total = 0;
 
-        Iterator opUrls = _opMap.keySet().iterator();
+        Iterator<String> opUrls = _opMap.keySet().iterator();
         while (opUrls.hasNext())
         {
-            String opUrl = (String) opUrls.next();
+            String opUrl = opUrls.next();
 
-            Set seenSet = (Set) _opMap.get(opUrl);
+            Set<String> seenSet = _opMap.get(opUrl);
 
             total += seenSet.size();
         }

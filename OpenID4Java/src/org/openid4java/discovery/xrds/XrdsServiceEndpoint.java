@@ -1,7 +1,6 @@
 package org.openid4java.discovery.xrds;
 
 import java.util.Set;
-import java.util.Arrays;
 
 /**
  * Encapsulates the (OpenID-related) information extracted in
@@ -12,18 +11,18 @@ import java.util.Arrays;
  *
  * @author jbufu
  */
-public class XrdsServiceEndpoint implements Comparable {
+public class XrdsServiceEndpoint implements Comparable<XrdsServiceEndpoint> {
 
     private int servicePriority;
     private int uriPriority;
-    private Set types;
+    private Set<String> types;
     private String uri;
     private String localId;
     private String delegate;
     public static final int LOWEST_PRIORITY = -1;
     private String canonicalId;
 
-    public XrdsServiceEndpoint(String uri, Set types,
+    public XrdsServiceEndpoint(String uri, Set<String> types,
                         int servicePriority, int uriPriority, String localId, String delegate, String canonicalId)
     {
         this.servicePriority = servicePriority;
@@ -51,11 +50,11 @@ public class XrdsServiceEndpoint implements Comparable {
         this.uriPriority = uriPriority;
     }
 
-    public Set getTypes() {
+    public Set<String> getTypes() {
         return types;
     }
 
-    public void setTypes(Set types) {
+    public void setTypes(Set<String> types) {
         this.types = types;
     }
 
@@ -96,8 +95,7 @@ public class XrdsServiceEndpoint implements Comparable {
         this.canonicalId = canonicalId;
     }
 
-    public int compareTo(Object o) {
-        XrdsServiceEndpoint other = (XrdsServiceEndpoint) o;
+    public int compareTo(XrdsServiceEndpoint other) {
 
         if (servicePriority == LOWEST_PRIORITY && other.servicePriority != LOWEST_PRIORITY)
             return 1;

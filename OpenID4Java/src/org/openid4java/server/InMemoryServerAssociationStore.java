@@ -22,13 +22,13 @@ public class InMemoryServerAssociationStore implements ServerAssociationStore
 
     private String _timestamp;
     private int _counter;
-    private Map _handleMap;
+    private Map<String,Association> _handleMap;
 
     public InMemoryServerAssociationStore()
     {
         _timestamp = Long.toString(new Date().getTime());
         _counter   = 0;
-        _handleMap = new HashMap();
+        _handleMap = new HashMap<String,Association>();
     }
 
     public synchronized Association generate(String type, int expiryIn)
@@ -67,11 +67,11 @@ public class InMemoryServerAssociationStore implements ServerAssociationStore
 
     private synchronized void removeExpired()
     {
-        Set handleToRemove = new HashSet();
-        Iterator handles = _handleMap.keySet().iterator();
+        Set<String> handleToRemove = new HashSet<String>();
+        Iterator<String> handles = _handleMap.keySet().iterator();
         while (handles.hasNext())
         {
-            String handle = (String) handles.next();
+            String handle = handles.next();
 
             Association association = (Association) _handleMap.get(handle);
 
@@ -82,7 +82,7 @@ public class InMemoryServerAssociationStore implements ServerAssociationStore
         handles = handleToRemove.iterator();
         while (handles.hasNext())
         {
-            String handle = (String) handles.next();
+            String handle = handles.next();
 
             if (DEBUG) _log.debug("Removing expired association, handle: " + handle);
 

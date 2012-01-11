@@ -13,6 +13,8 @@ import org.openid4java.message.sreg.SRegMessage;
 import org.openid4java.message.sreg.SRegRequest;
 import org.openid4java.message.sreg.SRegResponse;
 import org.openid4java.message.*;
+import org.openid4java.util.DefaultHttpClientFactory;
+import org.openid4java.util.HttpClientFactory;
 import org.openid4java.OpenIDException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,8 +43,10 @@ public class SampleConsumer
         // the authentication responses from the OpenID provider
         this.returnToUrl = returnToUrl;
 
+        HttpClientFactory clientFactory = new DefaultHttpClientFactory();
+
         // instantiate a ConsumerManager object
-        manager = new ConsumerManager();
+        manager = new ConsumerManagerImpl(clientFactory);
         manager.setAssociations(new InMemoryConsumerAssociationStore());
         manager.setNonceVerifier(new InMemoryNonceVerifier(5000));
 
@@ -67,7 +71,7 @@ public class SampleConsumer
             // HttpClientFactory.setProxyProperties(proxyProps);
 
             // perform discovery on the user-supplied identifier
-            List discoveries = manager.discover(userSuppliedString);
+            List<DiscoveryInformation> discoveries = manager.discover(userSuppliedString);
 
             // attempt to associate with the OpenID provider
             // and retrieve one service endpoint for authentication

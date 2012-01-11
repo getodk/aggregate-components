@@ -17,10 +17,14 @@ import java.io.UnsupportedEncodingException;
  */
 public class UrlIdentifier implements Identifier
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 7848968201854533416L;
     private static Log _log = LogFactory.getLog(UrlIdentifier.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    private static final Set UNRESERVED_CHARACTERS = new HashSet();
+    private static final Set<Character> UNRESERVED_CHARACTERS = new HashSet<Character>();
 
     static
     {

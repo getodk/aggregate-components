@@ -19,11 +19,11 @@ public class DirectError extends Message
     private static Log _log = LogFactory.getLog(DirectError.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    protected final static List requiredFields = Arrays.asList( new String[] {
+    protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "error"
     });
 
-    protected final static List optionalFields = Arrays.asList( new String[] {
+    protected final static List<String> optionalFields = Arrays.asList( new String[] {
             "ns",
             "contact",
             "reference"
@@ -131,7 +131,7 @@ public class DirectError extends Message
         this._exception = e;
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return requiredFields;
     }

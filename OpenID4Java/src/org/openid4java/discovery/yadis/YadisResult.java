@@ -36,7 +36,7 @@ public class YadisResult
     /**
      * XRDS endpoints obtained by performing Yadis discovery on the YadisURL.
      */
-    private List _endpoints;
+    private List<XrdsServiceEndpoint> _endpoints;
 
     /**
      * The content-type of the XRDS response.
@@ -132,7 +132,7 @@ public class YadisResult
     /**
      * Sets the OpenID XRDS endpoints discovered from an identifier.
      */
-    public void setEndpoints(List endpoints)
+    public void setEndpoints(List<XrdsServiceEndpoint> endpoints)
     {
         _endpoints = endpoints;
     }
@@ -140,7 +140,7 @@ public class YadisResult
     /**
      * Gets the OpenID XRDS endpoints discovered from an identifier.
      */
-    public List getEndpoints()
+    public List<XrdsServiceEndpoint> getEndpoints()
     {
         return _endpoints;
     }
@@ -150,19 +150,19 @@ public class YadisResult
         return _endpoints == null ? 0 : _endpoints.size();
     }
 
-    public List getDiscoveredInformation(Set targetTypes) throws DiscoveryException
+    public List<DiscoveryInformation> getDiscoveredInformation(Set<String> targetTypes) throws DiscoveryException
     {
-        List result = new ArrayList();
+        List<DiscoveryInformation> result = new ArrayList<DiscoveryInformation>();
 
         if (hasEndpoints()) 
         {
             XrdsServiceEndpoint endpoint;
-            Iterator endpointsIter = _endpoints.iterator();
+            Iterator<XrdsServiceEndpoint> endpointsIter = _endpoints.iterator();
             while (endpointsIter.hasNext()) {
-                endpoint = (XrdsServiceEndpoint) endpointsIter.next();
-                Iterator typesIter = endpoint.getTypes().iterator();
+                endpoint = endpointsIter.next();
+                Iterator<String> typesIter = endpoint.getTypes().iterator();
                 while (typesIter.hasNext()) {
-                    String type = (String) typesIter.next();
+                    String type = typesIter.next();
                     if (!targetTypes.contains(type)) continue;
                     try {
                         result.add(new DiscoveryInformation(
@@ -260,10 +260,10 @@ public class YadisResult
         {
             dump.append("\nXRDS:");
             XrdsServiceEndpoint endpoint;
-            Iterator iter = _endpoints.iterator();
+            Iterator<XrdsServiceEndpoint> iter = _endpoints.iterator();
             while(iter.hasNext())
             {
-                endpoint = (XrdsServiceEndpoint) iter.next();
+                endpoint = iter.next();
                 dump.append("\n\tType: ").append(endpoint.getTypes().toArray());
                 dump.append("\n\tServicePriority: ").append(endpoint.getServicePriority());
                 dump.append("\n\tUriPriority: ").append(endpoint.getUriPriority());

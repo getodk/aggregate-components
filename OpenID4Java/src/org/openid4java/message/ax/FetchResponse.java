@@ -30,6 +30,7 @@ public class FetchResponse extends AxPayload
      */
     protected FetchResponse()
     {
+        super();
         _parameters.set(new Parameter("mode", "fetch_response"));
 
         if (DEBUG) _log.debug("Created empty fetch response.");
@@ -52,7 +53,7 @@ public class FetchResponse extends AxPayload
      */
     protected FetchResponse(ParameterList params)
     {
-        _parameters = params;
+        super(params);
     }
 
     public static FetchResponse createFetchResponse(ParameterList params)
@@ -81,17 +82,17 @@ public class FetchResponse extends AxPayload
      *                          number of attribute values requested in the FetchRequest.
      * @return                  Properly formed FetchResponse.
      */
-    public static FetchResponse createFetchResponse(FetchRequest req, Map userData)
+    public static FetchResponse createFetchResponse(FetchRequest req, Map<String,Object> userData)
         throws MessageException
     {
         FetchResponse resp = new FetchResponse();
 
         // go through each requested attribute
-        Map attributes = req.getAttributes();
+        Map<String,String> attributes = req.getAttributes();
 
-        for (Iterator i = attributes.keySet().iterator(); i.hasNext(); )
+        for (Iterator<String> i = attributes.keySet().iterator(); i.hasNext(); )
         {
-            String alias = (String) i.next();
+            String alias = i.next();
 
             // find attribute in userData
             Object value = userData.get(alias);
@@ -105,13 +106,14 @@ public class FetchResponse extends AxPayload
             // if the value is a string, add the single attribute to the response
             if (value instanceof String)
             {
-                resp.addAttribute(alias, (String) attributes.get(alias), (String)value);
+                resp.addAttribute(alias, attributes.get(alias), (String)value);
             }
 
             // if the value is a list (of string) iteratively add each attribute to the response
             else if (value instanceof List)
             {
-                Iterator values = ((List)value).iterator();
+                @SuppressWarnings({ "unchecked", "rawtypes" })
+                Iterator<Object> values = ((List) value).iterator();
 
                 // only send up the the maximum requested number
                 int max = req.getCount(alias);
@@ -125,7 +127,7 @@ public class FetchResponse extends AxPayload
                         count--; // disregard this as a value as we are skipping over it
                         continue;
                     }
-                    resp.addAttribute(alias, (String) attributes.get(alias), val);
+                    resp.addAttribute(alias, attributes.get(alias), val);
                 }
             }
         }

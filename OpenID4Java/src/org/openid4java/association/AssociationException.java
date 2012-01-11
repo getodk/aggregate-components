@@ -11,6 +11,11 @@ import org.openid4java.OpenIDException;
  */
 public class AssociationException extends OpenIDException
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1431605572541743392L;
+
     public AssociationException(String message)
     {
         super(message, ASSOC_ERROR);

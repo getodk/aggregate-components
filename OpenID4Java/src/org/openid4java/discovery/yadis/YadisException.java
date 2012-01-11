@@ -11,6 +11,11 @@ import org.openid4java.discovery.DiscoveryException;
  */
 public class YadisException extends DiscoveryException
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 3642800430052035426L;
+
     public YadisException(String message)
     {
         super(message, YADIS_ERROR);

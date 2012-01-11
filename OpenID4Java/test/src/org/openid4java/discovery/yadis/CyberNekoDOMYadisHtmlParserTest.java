@@ -4,63 +4,57 @@
 
 package org.openid4java.discovery.yadis;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.io.InputStream;
 
-import junit.framework.TestCase;
-
 import org.apache.commons.io.IOUtils;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Sutra Zhou
  * 
  */
-public class CyberNekoDOMYadisHtmlParserTest extends TestCase
-{
-    private CyberNekoDOMYadisHtmlParser parser;
+public class CyberNekoDOMYadisHtmlParserTest {
+  private CyberNekoDOMYadisHtmlParser parser;
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void setUp() throws Exception
-    {
-        super.setUp();
-        parser = new CyberNekoDOMYadisHtmlParser();
-    }
+  @Before
+  public void setUp() throws Exception {
+    parser = new CyberNekoDOMYadisHtmlParser();
+  }
 
-    /**
-     * Test method for
-     * {@link org.openid4java.discovery.yadis.CyberNekoDOMYadisHtmlParser#getHtmlMeta(java.lang.String)}
-     * .
-     * 
-     * @throws IOException
-     * @throws YadisException
-     */
-    public final void testGetHtmlMetaIssue83() throws IOException, YadisException
-    {
-        String htmlData = getResourceAsString("issue83.html");
-        String s = parser.getHtmlMeta(htmlData);
-        assertEquals("http://edevil.livejournal.com/data/yadis", s);
-    }
+  /**
+   * Test method for
+   * {@link org.openid4java.discovery.yadis.CyberNekoDOMYadisHtmlParser#getHtmlMeta(java.lang.String)}
+   * .
+   * 
+   * @throws IOException
+   * @throws YadisException
+   */
+  @Test
+  public final void testGetHtmlMetaIssue83() throws IOException, YadisException {
+    String htmlData = getResourceAsString("issue83.html");
+    String s = parser.getHtmlMeta(htmlData);
+    assertEquals("http://edevil.livejournal.com/data/yadis", s);
+  }
 
-    /**
-     * Read the resource as string.
-     * 
-     * @param name
-     *            the resource name
-     * @return a string
-     * @throws IOException
-     *             if an I/O error occurs
-     */
-    private String getResourceAsString(String name) throws IOException
-    {
-        InputStream inputStream = CyberNekoDOMYadisHtmlParserTest.class.getResourceAsStream(name);
-        try
-        {
-            return IOUtils.toString(inputStream);
-        } finally
-        {
-            inputStream.close();
-        }
+  /**
+   * Read the resource as string.
+   * 
+   * @param name
+   *          the resource name
+   * @return a string
+   * @throws IOException
+   *           if an I/O error occurs
+   */
+  private String getResourceAsString(String name) throws IOException {
+    InputStream inputStream = CyberNekoDOMYadisHtmlParserTest.class.getResourceAsStream(name);
+    try {
+      return IOUtils.toString(inputStream);
+    } finally {
+      inputStream.close();
     }
+  }
 }

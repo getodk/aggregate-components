@@ -75,7 +75,8 @@ public class OpenIDTokenGeneratorHandler
     /* (non-Javadoc)
 	 * @see org.eclipse.higgins.sts.IExtension#configure(java.util.Hashtable)
 	 */
-	public void configure
+	@SuppressWarnings("rawtypes")
+   public void configure
 		(final Map mapGlobalSettings,
 		final String strComponentName,
 		final Map mapComponentSettings)
@@ -113,8 +114,9 @@ public class OpenIDTokenGeneratorHandler
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.higgins.sts.IExtension#invoke
-     */
-	public void invoke
+    */
+	@SuppressWarnings("rawtypes")
+   public void invoke
 		(final java.util.Map mapGlobalSettings,
 		final String strComponentName,
 		final java.util.Map mapComponentSettings,
@@ -180,7 +182,9 @@ public class OpenIDTokenGeneratorHandler
 
         // --- extract needed data from the RST ---
 
-        final java.util.List listRST = request.getRequestSecurityTokenCollection();
+      @SuppressWarnings("unchecked")
+      final java.util.List<IRequestSecurityToken> listRST =
+          request.getRequestSecurityTokenCollection();
 		final IRequestSecurityToken RST = (IRequestSecurityToken)listRST.get(0);
 
         final org.eclipse.higgins.sts.api.ILifetime ltLifetime = RST.getLifetime();
@@ -272,19 +276,20 @@ public class OpenIDTokenGeneratorHandler
         // --- process the claims / attribute request ---
 
         String claimedID = null;
-        Map attrs = new HashMap();
+        Map<String,String> attrs = new HashMap<String,String>();
 
-        final java.util.List listClaims = digitalIdentity.getClaims();
+        @SuppressWarnings("unchecked")
+        final java.util.List<IClaim> listClaims = digitalIdentity.getClaims();
         final java.util.Map mapAttributeClaim =
             (java.util.Map)mapGlobalSettings.get("AttributeClaimMap");
 
         String claimTypeUri;
         String value;
         String displayTag;
-        Iterator claimsIter = listClaims.iterator();
+        Iterator<IClaim> claimsIter = listClaims.iterator();
         while (claimsIter.hasNext())
         {
-            final IClaim claim = (IClaim) claimsIter.next();
+            final IClaim claim = claimsIter.next();
 
             value =  claim.getValues().hasNext() ?
                 (String) claim.getValues().next() : null;
@@ -408,7 +413,8 @@ public class OpenIDTokenGeneratorHandler
         omOpenIDToken.setText(openidResp.keyValueFormEncoding());
 
 
-        final java.util.List listRSTR =
+      @SuppressWarnings("unchecked")
+      final java.util.List<org.eclipse.higgins.sts.api.IRequestSecurityTokenResponse> listRSTR =
             response.getRequestSecurityTokenResponseCollection();
 		if (0 == listRSTR.size())
 		{

@@ -23,7 +23,7 @@ public class SRegResponse extends SRegMessage
     private static Log _log = LogFactory.getLog(SRegResponse.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    protected final static List SREG_FIELDS = Arrays.asList( new String[] {
+    protected final static List<String> SREG_FIELDS = Arrays.asList( new String[] {
             "nickname", "email", "fullname", "dob", "gender",
             "postcode", "country", "language", "timezone"
     });
@@ -81,17 +81,17 @@ public class SRegResponse extends SRegMessage
      * @throws MessageException if any attribute-name in the userData map does not
      *                          correspond to an SREG field-name.
      */
-    public static SRegResponse createSRegResponse(SRegRequest req, Map userData)
+    public static SRegResponse createSRegResponse(SRegRequest req, Map<String,String> userData)
             throws MessageException
     {
         SRegResponse resp = new SRegResponse();
 
-        List attributes = req.getAttributes();
-        Iterator iter = attributes.iterator();
+        List<String> attributes = req.getAttributes();
+        Iterator<String> iter = attributes.iterator();
         while (iter.hasNext())
         {
-            String attr = (String) iter.next();
-            String value = (String) userData.get(attr);
+            String attr = iter.next();
+            String value = userData.get(attr);
             if (value != null)
                 resp.addAttribute(attr, value);
         }
@@ -134,14 +134,14 @@ public class SRegResponse extends SRegMessage
     /**
      * Gets a list of attribute names in the SReg response.
      */
-    public List getAttributeNames()
+    public List<String> getAttributeNames()
     {
-        List attributes = new ArrayList();
+        List<String> attributes = new ArrayList<String>();
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            attributes.add(((Parameter) it.next()).getKey());
+            attributes.add(it.next().getKey());
         }
 
         return attributes;
@@ -150,14 +150,14 @@ public class SRegResponse extends SRegMessage
     /**
      * Gets a map with attribute names -> values.
      */
-    public Map getAttributes()
+    public Map<String,String> getAttributes()
     {
-        Map attributes = new HashMap();
+        Map<String,String> attributes = new HashMap<String,String>();
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String attr = ((Parameter) it.next()).getKey();
+            String attr = it.next().getKey();
             attributes.put(attr, getAttributeValue(attr));
         }
 
@@ -174,10 +174,10 @@ public class SRegResponse extends SRegMessage
      */
     private boolean isValid()
     {
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
 
             if (! SREG_FIELDS.contains(paramName))
             {

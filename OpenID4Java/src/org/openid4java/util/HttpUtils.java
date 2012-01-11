@@ -7,7 +7,9 @@ package org.openid4java.util;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.params.AllClientPNames;
+import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -36,9 +38,9 @@ public final class HttpUtils
         {
             try
             {
-                entity.consumeContent();
+              EntityUtils.consume(entity);
             }
-            catch (Exception ignored)
+            catch (IOException ignored)
             {
                 // ignored
             }
@@ -56,14 +58,14 @@ public final class HttpUtils
         request.getParams().setParameter(AllClientPNames.ALLOW_CIRCULAR_REDIRECTS,
                 Boolean.valueOf(requestOptions.getAllowCircularRedirects()));
 
-        Map requestHeaders = requestOptions.getRequestHeaders();
+        Map<String,String> requestHeaders = requestOptions.getRequestHeaders();
         if (requestHeaders != null)
         {
-            Iterator iter = requestHeaders.keySet().iterator();
+            Iterator<String> iter = requestHeaders.keySet().iterator();
             String headerName;
             while (iter.hasNext())
             {
-                headerName = (String) iter.next();
+                headerName = iter.next();
                 request.addHeader(headerName,
                     (String) requestHeaders.get(headerName));
             }

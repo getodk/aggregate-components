@@ -23,6 +23,10 @@ import java.io.UnsupportedEncodingException;
  */
 public class Association implements Serializable
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -1178702916712883757L;
     private static Log _log = LogFactory.getLog(Association.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 

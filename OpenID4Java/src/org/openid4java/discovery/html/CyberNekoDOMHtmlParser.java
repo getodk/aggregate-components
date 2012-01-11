@@ -106,7 +106,7 @@ public class CyberNekoDOMHtmlParser implements HtmlParser
     private void setResult(String rel, String href, HtmlResult result)
             throws DiscoveryException
     {
-        List relations = Arrays.asList(rel.split(" "));
+        List<String> relations = Arrays.asList(rel.split(" "));
 
         // openid.server
         if (relations.contains("openid.server"))

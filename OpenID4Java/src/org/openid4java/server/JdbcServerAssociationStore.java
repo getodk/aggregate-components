@@ -128,6 +128,7 @@ public class JdbcServerAssociationStore extends JdbcDaoSupport
 
             JdbcTemplate jdbcTemplate = getJdbcTemplate();
 
+            @SuppressWarnings("rawtypes")
             Map res = jdbcTemplate.queryForMap(sql, new Object[] {handle});
 
             String type = (String) res.get("type");

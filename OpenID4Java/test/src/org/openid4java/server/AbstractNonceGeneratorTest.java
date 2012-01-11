@@ -4,30 +4,33 @@
 
 package org.openid4java.server;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Date;
 import java.text.ParseException;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.junit.Before;
+import org.junit.Test;
 import org.openid4java.util.InternetDateFormat;
 
 /**
  * @author Marius Scurtescu, Johnny Bufu
  */
-public abstract class AbstractNonceGeneratorTest extends TestCase
+public abstract class AbstractNonceGeneratorTest
 {
     protected InternetDateFormat _dateFormat = new InternetDateFormat();
     protected NonceGenerator _nonceGenerator;
 
-    public AbstractNonceGeneratorTest(String name)
+    public AbstractNonceGeneratorTest()
     {
-        super(name);
     }
 
+    @Before
     public void setUp() throws Exception
     {
         _nonceGenerator = createGenerator();
@@ -35,9 +38,10 @@ public abstract class AbstractNonceGeneratorTest extends TestCase
 
     public abstract NonceGenerator createGenerator();
 
+    @Test
     public void testUniqueLoop()
     {
-        Set seen = new HashSet();
+        Set<String> seen = new HashSet<String>();
 
         for (int i = 0; i < 100; i++)
         {
@@ -50,6 +54,7 @@ public abstract class AbstractNonceGeneratorTest extends TestCase
         }
     }
 
+    @Test
     public void testUniqueSequential()
     {
         String nonce1 = _nonceGenerator.next();
@@ -60,6 +65,7 @@ public abstract class AbstractNonceGeneratorTest extends TestCase
         assertFalse(nonce2.equals(nonce3));
     }
 
+    @Test
     public void testTimestamp() throws ParseException
     {
         String nonce = _nonceGenerator.next();
@@ -68,10 +74,5 @@ public abstract class AbstractNonceGeneratorTest extends TestCase
 
         assertNotNull(nonceDate);
         assertTrue(nonceDate.before(new Date()));
-    }
-
-    public static Test suite()
-    {
-        return new TestSuite(AbstractNonceGeneratorTest.class);
     }
 }

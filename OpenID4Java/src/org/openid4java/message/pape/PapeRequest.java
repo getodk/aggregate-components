@@ -25,7 +25,7 @@ public class PapeRequest extends PapeMessage
     private static Log _log = LogFactory.getLog(PapeRequest.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    protected final static List PAPE_FIELDS = Arrays.asList( new String[] {
+    protected final static List<String> PAPE_FIELDS = Arrays.asList( new String[] {
             "preferred_auth_policies", "preferred_auth_level_types", "max_auth_age"
     });
 
@@ -128,14 +128,14 @@ public class PapeRequest extends PapeMessage
      * returned if no authentication policies exist.
      *
      */
-    public List getPreferredAuthPoliciesList()
+    public List<String> getPreferredAuthPoliciesList()
     {
         String policies = getParameterValue("preferred_auth_policies");
 
         if (policies != null)
             return Arrays.asList(policies.split(" "));
         else
-            return new ArrayList();
+            return new ArrayList<String>();
     }
 
     /**
@@ -182,10 +182,10 @@ public class PapeRequest extends PapeMessage
                 OpenIDException.PAPE_ERROR);
         }
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
             if (! PAPE_FIELDS.contains(paramName) && ! paramName.startsWith(PapeMessage.AUTH_LEVEL_NS_PREFIX))
             {
                 throw new MessageException(

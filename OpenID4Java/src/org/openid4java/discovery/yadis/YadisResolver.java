@@ -4,23 +4,19 @@
 
 package org.openid4java.discovery.yadis;
 
-import com.google.inject.Inject;
-
-import org.apache.http.HttpException;
-import org.apache.http.HttpStatus;
-import org.apache.http.Header;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.http.client.ClientProtocolException;
-
 import java.io.IOException;
-import java.util.Set;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.http.Header;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.ClientProtocolException;
 import org.openid4java.OpenIDException;
-import org.openid4java.discovery.DiscoveryInformation;
 import org.openid4java.discovery.DiscoveryException;
+import org.openid4java.discovery.DiscoveryInformation;
 import org.openid4java.discovery.xrds.XrdsParser;
 import org.openid4java.util.HttpCache;
 import org.openid4java.util.HttpFetcher;
@@ -28,6 +24,8 @@ import org.openid4java.util.HttpFetcherFactory;
 import org.openid4java.util.HttpRequestOptions;
 import org.openid4java.util.HttpResponse;
 import org.openid4java.util.OpenID4JavaUtils;
+
+import com.google.inject.Inject;
 
 
 
@@ -137,7 +135,7 @@ public class YadisResolver
      * @return      List of DiscoveryInformation entries discovered
      *              from the RP's endpoints
      */
-    public List discoverRP(String url) throws DiscoveryException
+    public List<DiscoveryInformation> discoverRP(String url) throws DiscoveryException
     {
         return discover(url, 0,
             Collections.singleton(DiscoveryInformation.OPENID2_RP))
@@ -161,7 +159,7 @@ public class YadisResolver
      *                      obtained from the URL Identifier.
      * @see YadisResult #discover(String, int, HttpCache)
      */
-    public List discover(String url) throws DiscoveryException
+    public List<DiscoveryInformation> discover(String url) throws DiscoveryException
     {
         return discover(url, _maxRedirects, _httpFetcher);
     }
@@ -184,7 +182,7 @@ public class YadisResolver
      *                      obtained from the URL Identifier.
      * @see YadisResult #discover(String, int, HttpCache)
      */
-    public List discover(String url, HttpFetcher httpFetcher) throws DiscoveryException
+    public List<DiscoveryInformation> discover(String url, HttpFetcher httpFetcher) throws DiscoveryException
     {
         return discover(url, _maxRedirects, httpFetcher);
     }
@@ -204,7 +202,7 @@ public class YadisResolver
      *                      obtained from the URL Identifier.
      * @see YadisResult
      */
-    public List discover(String url, int maxRedirects)
+    public List<DiscoveryInformation> discover(String url, int maxRedirects)
         throws DiscoveryException
     {
       return discover(url, maxRedirects, _httpFetcher);
@@ -226,20 +224,20 @@ public class YadisResolver
      *                      obtained from the URL Identifier.
      * @see YadisResult
      */
-    public List discover(String url, int maxRedirects, HttpFetcher httpFetcher)
+    public List<DiscoveryInformation> discover(String url, int maxRedirects, HttpFetcher httpFetcher)
         throws DiscoveryException
     {
         return discover(url, maxRedirects, httpFetcher, DiscoveryInformation.OPENID_OP_TYPES)
             .getDiscoveredInformation(DiscoveryInformation.OPENID_OP_TYPES);
     }
 
-    public YadisResult discover(String url, int maxRedirects, Set serviceTypes)
+    public YadisResult discover(String url, int maxRedirects, Set<String> serviceTypes)
         throws DiscoveryException
     {
       return discover(url, maxRedirects, _httpFetcher, serviceTypes);
     }
 
-    public YadisResult discover(String url, int maxRedirects, HttpFetcher httpFetcher, Set serviceTypes)
+    public YadisResult discover(String url, int maxRedirects, HttpFetcher httpFetcher, Set<String> serviceTypes)
         throws DiscoveryException
     {
         YadisUrl yadisUrl = new YadisUrl(url);
@@ -274,7 +272,7 @@ public class YadisResolver
      * @param cache        The HttpClient object to use for placing the call
      * @param maxRedirects
      */
-    private void retrieveXrdsDocument(YadisResult result, int maxRedirects, Set serviceTypes)
+    private void retrieveXrdsDocument(YadisResult result, int maxRedirects, Set<String> serviceTypes)
         throws DiscoveryException {
 
         _httpFetcher.getRequestOptions().setMaxRedirects(maxRedirects);
@@ -359,7 +357,7 @@ public class YadisResolver
      */
 
     private YadisResult retrieveXrdsLocation(
-        YadisUrl url, boolean useGet, int maxRedirects, Set serviceTypes)
+        YadisUrl url, boolean useGet, int maxRedirects, Set<String> serviceTypes)
         throws DiscoveryException
     {
 

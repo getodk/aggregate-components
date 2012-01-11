@@ -4,25 +4,24 @@
 
 package org.openid4java.discovery.html;
 
-import com.google.inject.Inject;
-import org.apache.http.HttpStatus;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
-
-import org.openid4java.discovery.UrlIdentifier;
+import org.apache.http.HttpStatus;
+import org.openid4java.OpenIDException;
 import org.openid4java.discovery.DiscoveryException;
 import org.openid4java.discovery.DiscoveryInformation;
-import org.openid4java.util.HttpCache;
+import org.openid4java.discovery.UrlIdentifier;
 import org.openid4java.util.HttpFetcher;
 import org.openid4java.util.HttpFetcherFactory;
-import org.openid4java.util.HttpResponse;
 import org.openid4java.util.HttpRequestOptions;
+import org.openid4java.util.HttpResponse;
 import org.openid4java.util.OpenID4JavaUtils;
-import org.openid4java.OpenIDException;
+
+import com.google.inject.Inject;
 
 /**
  * @author Marius Scurtescu, Johnny Bufu, Sutra Zhou
@@ -86,7 +85,7 @@ public class HtmlResolver
      * @return                  List of DiscoveryInformation entries discovered
      *                          obtained from the URL Identifier.
      */
-    public List discoverHtml(UrlIdentifier identifier)
+    public List<DiscoveryInformation> discoverHtml(UrlIdentifier identifier)
         throws DiscoveryException {
       return discoverHtml(identifier, _httpFetcher);
     }
@@ -99,7 +98,7 @@ public class HtmlResolver
      * @return                  List of DiscoveryInformation entries discovered
      *                          obtained from the URL Identifier.
      */
-    public List discoverHtml(UrlIdentifier identifier, HttpFetcher httpFetcher)
+    public List<DiscoveryInformation> discoverHtml(UrlIdentifier identifier, HttpFetcher httpFetcher)
         throws DiscoveryException
     {
         // initialize the results of the HTML discovery
@@ -145,10 +144,10 @@ public class HtmlResolver
      * @return              List of DiscoveryInformation endpoints.
      * @throws DiscoveryException when invalid information is discovered.
      */
-    private List extractDiscoveryInformation(HtmlResult htmlResult)
+    private List<DiscoveryInformation> extractDiscoveryInformation(HtmlResult htmlResult)
             throws DiscoveryException
     {
-        ArrayList htmlList = new ArrayList();
+        ArrayList<DiscoveryInformation> htmlList = new ArrayList<DiscoveryInformation>();
 
         if (htmlResult.getOP2Endpoint() != null)
         {

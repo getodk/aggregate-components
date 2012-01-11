@@ -38,8 +38,8 @@ public class RealmVerifier
     public static final int RP_DISCOVERY_FAILED = 9;
     public static final int RP_INVALID_ENDPOINT = 10;
 
-    private List _deniedRealmDomains;
-    private List _deniedRealmRegExps;
+    private List<String> _deniedRealmDomains;
+    private List<Pattern> _deniedRealmRegExps;
 
     // yadis resolver used for RP discovery
     private YadisResolver _yadisResolver;
@@ -53,7 +53,7 @@ public class RealmVerifier
      */
     RealmVerifier(boolean isOP, YadisResolver yadisResolver)
     {
-        _deniedRealmDomains = new ArrayList();
+        _deniedRealmDomains = new ArrayList<String>();
 
         addDeniedRealmDomain("\\*\\.[^\\.]+");
         addDeniedRealmDomain("\\*\\.[a-z]{2}\\.[a-z]{2}");
@@ -71,12 +71,12 @@ public class RealmVerifier
         compileDeniedRealms();
     }
 
-    public List getDeniedRealmDomains()
+    public List<String> getDeniedRealmDomains()
     {
         return _deniedRealmDomains;
     }
 
-    public void setDeniedRealmDomains(List deniedRealmDomains)
+    public void setDeniedRealmDomains(List<String> deniedRealmDomains)
     {
         _deniedRealmDomains = deniedRealmDomains;
 
@@ -85,11 +85,11 @@ public class RealmVerifier
 
     private void compileDeniedRealms()
     {
-        _deniedRealmRegExps = new ArrayList(_deniedRealmDomains.size());
+        _deniedRealmRegExps = new ArrayList<Pattern>(_deniedRealmDomains.size());
 
         for (int i = 0; i < _deniedRealmDomains.size(); i++)
         {
-            String deniedRealm = (String) _deniedRealmDomains.get(i);
+            String deniedRealm = _deniedRealmDomains.get(i);
 
             Pattern deniedRealmPattern =
                 Pattern.compile(deniedRealm, Pattern.CASE_INSENSITIVE);
@@ -166,13 +166,13 @@ public class RealmVerifier
             if (realmUrl.getAuthority().startsWith("*."))
                 realm = realm.replaceFirst("\\*\\.", "www.");
 
-            List endpoints = Discovery.rpDiscovery(realm, _yadisResolver);
+            List<DiscoveryInformation> endpoints = Discovery.rpDiscovery(realm, _yadisResolver);
             DiscoveryInformation endpoint;
             String endpointUrl;
-            Iterator iter = endpoints.iterator();
+            Iterator<DiscoveryInformation> iter = endpoints.iterator();
             while (iter.hasNext())
             {
-                endpoint = (DiscoveryInformation) iter.next();
+                endpoint = iter.next();
                 endpointUrl = endpoint.getOPEndpoint().toString();
 
                 if (endpoint.getOPEndpoint().getAuthority().startsWith("*."))

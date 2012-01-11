@@ -30,12 +30,12 @@ public class AssociationRequest extends Message
 
     public static final String MODE_ASSOC = "associate";
 
-    protected final static List requiredFields = Arrays.asList( new String[] {
+    protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "openid.mode",
             "openid.session_type",
     });
 
-    protected final static List optionalFields = Arrays.asList( new String[] {
+    protected final static List<String> optionalFields = Arrays.asList( new String[] {
             "openid.ns",                    // not in v1 messages
             "openid.assoc_type",            // can be missing in v1
             "openid.dh_modulus",
@@ -156,7 +156,7 @@ public class AssociationRequest extends Message
         return req;
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return requiredFields;
     }

@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.openid4java.discovery.html.HtmlResolver;
 import org.openid4java.discovery.xri.XriResolver;
 import org.openid4java.discovery.yadis.YadisResolver;
+import org.openid4java.util.HttpClientFactory;
 import org.openid4java.util.HttpFetcherFactory;
 import org.openid4java.util.OpenID4JavaUtils;
 
@@ -36,12 +37,14 @@ public class Discovery
 
     private static final String XRI_RESOLVER_CLASS_NAME_KEY = "discovery.xri.resolver";
 
-    public static XriResolver getXriResolver()
+    public static XriResolver getXriResolver(HttpClientFactory clientFactory)
     {
         String className = OpenID4JavaUtils.getProperty(XRI_RESOLVER_CLASS_NAME_KEY);
         if (DEBUG) _log.debug(XRI_RESOLVER_CLASS_NAME_KEY + ":" + className);
         try {
-            return (XriResolver) Class.forName(className).newInstance();
+          XriResolver resolver = (XriResolver) Class.forName(className).newInstance();
+          resolver.setHttpClientFactory(clientFactory);
+          return resolver;
         } catch (Exception e) {
             throw new RuntimeException("Error initializing XRI resolver.", e);
         }
@@ -56,12 +59,12 @@ public class Discovery
         _xriResolver = xriResolver;
     }
 
-    public Discovery()
+    public Discovery(HttpClientFactory clientFactory)
     {
       this(
-          new HtmlResolver(new HttpFetcherFactory()),
-          new YadisResolver(new HttpFetcherFactory()),
-          getXriResolver());
+          new HtmlResolver(new HttpFetcherFactory(clientFactory)),
+          new YadisResolver(new HttpFetcherFactory(clientFactory)),
+          getXriResolver(clientFactory));
     }
 
     public void setXriResolver(XriResolver xriResolver)
@@ -123,15 +126,15 @@ public class Discovery
         }
     }
 
-    public List discover(String identifier)
+    public List<DiscoveryInformation> discover(String identifier)
             throws DiscoveryException
     {
         return discover(parseIdentifier(identifier, true)); // remove fragment
     }
 
-    public List discover(Identifier identifier) throws DiscoveryException
+    public List<DiscoveryInformation> discover(Identifier identifier) throws DiscoveryException
     {
-        List result;
+        List<DiscoveryInformation> result;
 
         if (identifier instanceof XriIdentifier)
         {
@@ -177,7 +180,7 @@ public class Discovery
      * @param yadisResolver The YadisResolver instance to be used for discovery.
      * @return              List of OpenID 2.0 DiscoveryInformation endpoints.
      */
-    public static List rpDiscovery(String realm, YadisResolver yadisResolver)
+    public static List<DiscoveryInformation> rpDiscovery(String realm, YadisResolver yadisResolver)
         throws DiscoveryException
     {
         // don't follow redirects when doing RP discovery

@@ -16,6 +16,7 @@ import org.openid4java.message.ax.FetchResponse;
 import org.openid4java.message.sreg.SRegMessage;
 import org.openid4java.message.sreg.SRegRequest;
 import org.openid4java.message.sreg.SRegResponse;
+import org.openid4java.util.DefaultHttpClientFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,7 +33,7 @@ import java.io.IOException;
 public class SampleServer
 {
     // instantiate a ServerManager object
-    public ServerManager manager = new ServerManager();
+    public final ServerManager manager;
 
     public SampleServer()
     {
@@ -40,7 +41,8 @@ public class SampleServer
     }
 
     public SampleServer(String endPointUrl)
-    {
+    { 
+        manager = new ServerManager(new DefaultHttpClientFactory());
         manager.setOPEndpointUrl(endPointUrl);
         // for a working demo, not enforcing RP realm discovery
         // since this new feature is not deployed
@@ -70,6 +72,7 @@ public class SampleServer
                 || "checkid_immediate".equals(mode))
         {
             // interact with the user and obtain data needed to continue
+            @SuppressWarnings("rawtypes")
             List userData = userInteraction(request);
 
             String userSelectedClaimedId = (String) userData.get(0);
@@ -104,11 +107,11 @@ public class SampleServer
                     if (ext instanceof FetchRequest)
                     {
                         FetchRequest fetchReq = (FetchRequest) ext;
-                        Map required = fetchReq.getAttributes(true);
+                        Map<String,String> required = fetchReq.getAttributes(true);
                         //Map optional = fetchReq.getAttributes(false);
                         if (required.containsKey("email"))
                         {
-                            Map userDataExt = new HashMap();
+                            Map<String,Object> userDataExt = new HashMap<String,Object>();
                             //userDataExt.put("email", userData.get(3));
 
                             FetchResponse fetchResp =
@@ -130,12 +133,12 @@ public class SampleServer
                     if (ext instanceof SRegRequest)
                     {
                         SRegRequest sregReq = (SRegRequest) ext;
-                        List required = sregReq.getAttributes(true);
+                        List<String> required = sregReq.getAttributes(true);
                         //List optional = sregReq.getAttributes(false);
                         if (required.contains("email"))
                         {
                             // data released by the user
-                            Map userDataSReg = new HashMap();
+                            Map<String,String> userDataSReg = new HashMap<String,String>();
                             //userData.put("email", "user@example.com");
 
                             SRegResponse sregResp = SRegResponse.createSRegResponse(sregReq, userDataSReg);
@@ -185,6 +188,7 @@ public class SampleServer
         return responseText;
     }
 
+    @SuppressWarnings("rawtypes")
     protected List userInteraction(ParameterList request) throws ServerException
     {
         throw new ServerException("User-interaction not implemented.");

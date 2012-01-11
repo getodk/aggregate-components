@@ -36,6 +36,7 @@ public class FetchRequest extends AxMessage
      */
     protected FetchRequest()
     {
+        super();
         _parameters.set(new Parameter("mode", "fetch_request"));
 
         if (DEBUG) _log.debug("Created empty fetch request.");
@@ -58,7 +59,7 @@ public class FetchRequest extends AxMessage
      */
     protected FetchRequest(ParameterList params)
     {
-        _parameters = params;
+      super(params);
     }
 
     /**
@@ -228,9 +229,9 @@ public class FetchRequest extends AxMessage
      *                          attributes.
      * @return      Map of attribute aliases -> attribute type URIs.
      */
-    public Map getAttributes(boolean required)
+    public Map<String,String> getAttributes(boolean required)
     {
-        HashMap attributes = new LinkedHashMap();
+        HashMap<String,String> attributes = new LinkedHashMap<String,String>();
 
         String level = required ? "required" : "if_available";
 
@@ -254,9 +255,9 @@ public class FetchRequest extends AxMessage
      *
      * @return      Map of attribute aliases -> attribute type URIs.
      */
-    public Map getAttributes()
+    public Map<String,String> getAttributes()
     {
-        Map attributes = getAttributes(true);
+        Map<String,String> attributes = getAttributes(true);
         attributes.putAll(getAttributes(false));
 
         return attributes;
@@ -318,10 +319,10 @@ public class FetchRequest extends AxMessage
             }
         }
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
             if (! paramName.equals("mode") &&
                     ! paramName.startsWith("type.") &&
                     ! paramName.startsWith("count.") &&

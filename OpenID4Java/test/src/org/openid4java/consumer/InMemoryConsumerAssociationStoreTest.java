@@ -4,34 +4,23 @@
 
 package org.openid4java.consumer;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 /**
  * @author Marius Scurtescu
  */
-public class InMemoryConsumerAssociationStoreTest extends ConsumerAssociationStoreTest
-{
-    public InMemoryConsumerAssociationStoreTest(String name)
-    {
-        super(name);
-    }
+public class InMemoryConsumerAssociationStoreTest extends ConsumerAssociationStoreTest {
+  protected ConsumerAssociationStore createStore() {
+    return new InMemoryConsumerAssociationStore();
+  }
 
-    protected ConsumerAssociationStore createStore()
-    {
-        return new InMemoryConsumerAssociationStore();
-    }
+  @Test
+  public void testCleanup() throws InterruptedException {
+    super.testCleanup();
 
-    public void testCleanup() throws InterruptedException
-    {
-        super.testCleanup();
-
-        InMemoryConsumerAssociationStore inMemoryAssociationStore = (InMemoryConsumerAssociationStore) _associationStore;
-        assertEquals(1, inMemoryAssociationStore.size());
-    }
-
-    public static Test suite()
-    {
-        return new TestSuite(InMemoryConsumerAssociationStoreTest.class);
-    }
+    InMemoryConsumerAssociationStore inMemoryAssociationStore = (InMemoryConsumerAssociationStore) _associationStore;
+    assertEquals(1, inMemoryAssociationStore.size());
+  }
 }

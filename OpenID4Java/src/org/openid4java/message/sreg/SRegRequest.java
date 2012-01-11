@@ -114,9 +114,9 @@ public class SRegRequest extends SRegMessage
      *                          attributes.
      * @return      List of attribute names.
      */
-    public List getAttributes(boolean required)
+    public List<String> getAttributes(boolean required)
     {
-        List attributes = new ArrayList();
+        List<String> attributes = new ArrayList<String>();
 
         String level = required ? "required" : "optional";
 
@@ -139,9 +139,9 @@ public class SRegRequest extends SRegMessage
      *
      * @return      List of attribute names.
      */
-    public List getAttributes()
+    public List<String> getAttributes()
     {
-        List attributes = getAttributes(true);
+        List<String> attributes = getAttributes(true);
         attributes.addAll(getAttributes(false));
 
         return attributes;
@@ -194,10 +194,10 @@ public class SRegRequest extends SRegMessage
             return false;
         }
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
             if (! paramName.equals("required") &&
                     ! paramName.equals("optional") &&
                     ! paramName.equals("policy_url"))

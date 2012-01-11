@@ -42,7 +42,7 @@ public class XrdsParserImpl implements XrdsParser
     private static final String OPENID_ELEM_DELEGATE = "Delegate";
 
 
-    public List parseXrds(String input, Set targetTypes) throws DiscoveryException
+    public List<XrdsServiceEndpoint> parseXrds(String input, Set<String> targetTypes) throws DiscoveryException
     {
         if (DEBUG)
             _log.debug("Parsing XRDS input for service types: " + targetTypes.toString());
@@ -69,8 +69,8 @@ public class XrdsParserImpl implements XrdsParser
 
         // extract the services that match the specified target types
         NodeList types = document.getElementsByTagNameNS(XRD_NS, XRD_ELEM_TYPE);
-        Map serviceTypes = new HashMap();
-        Set selectedServices = new HashSet();
+        Map<Node,Set<String>> serviceTypes = new HashMap<Node,Set<String>>();
+        Set<Node> selectedServices = new HashSet<Node>();
         Node typeNode, serviceNode;
         for (int i = 0; i < types.getLength(); i++) {
             typeNode = types.item(i);
@@ -90,11 +90,11 @@ public class XrdsParserImpl implements XrdsParser
             _log.debug("Found " + serviceTypes.size() + " services for the requested types.");
 
         // extract local IDs
-        Map serviceLocalIDs = extractElementsByParent(XRD_NS, XRD_ELEM_LOCALID, selectedServices, document);
-        Map serviceDelegates = extractElementsByParent(OPENID_NS, OPENID_ELEM_DELEGATE, selectedServices, document);
+        Map<Node,String> serviceLocalIDs = extractElementsByParent(XRD_NS, XRD_ELEM_LOCALID, selectedServices, document);
+        Map<Node,String> serviceDelegates = extractElementsByParent(OPENID_NS, OPENID_ELEM_DELEGATE, selectedServices, document);
 
         // build XrdsServiceEndpoints for all URIs in the found services
-        List result = new ArrayList();
+        List<XrdsServiceEndpoint> result = new ArrayList<XrdsServiceEndpoint>();
         NodeList uris = document.getElementsByTagNameNS(XRD_NS, XRD_ELEM_URI);
         Node uriNode;
         for (int i = 0; i < uris.getLength(); i++) {
@@ -105,7 +105,7 @@ public class XrdsParserImpl implements XrdsParser
                 uriNode.getFirstChild().getNodeValue() : null;
 
             serviceNode = uriNode.getParentNode();
-            Set typeSet = (Set) serviceTypes.get(serviceNode);
+            Set<String> typeSet = serviceTypes.get(serviceNode);
 
             String localId = (String) serviceLocalIDs.get(serviceNode);
             String delegate = (String) serviceDelegates.get(serviceNode);
@@ -120,9 +120,9 @@ public class XrdsParserImpl implements XrdsParser
         return result;
     }
 
-    private Map extractElementsByParent(String ns, String elem, Set parents, Document document)
+    private Map<Node,String> extractElementsByParent(String ns, String elem, Set<Node> parents, Document document)
     {
-        Map result = new HashMap();
+        Map<Node,String> result = new HashMap<Node,String>();
         NodeList nodes = document.getElementsByTagNameNS(ns, elem);
         Node node;
         for (int i = 0; i < nodes.getLength(); i++) {
@@ -204,12 +204,12 @@ public class XrdsParserImpl implements XrdsParser
         }
     }
 
-    private void addServiceType(Map serviceTypes, Node serviceNode, String type)
+    private void addServiceType(Map<Node,Set<String>> serviceTypes, Node serviceNode, String type)
     {
-        Set types = (Set) serviceTypes.get(serviceNode);
+        Set<String> types = serviceTypes.get(serviceNode);
         if (types == null)
         {
-            types = new HashSet();
+            types = new HashSet<String>();
             serviceTypes.put(serviceNode, types);
         }
         types.add(type);

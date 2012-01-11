@@ -12,6 +12,11 @@ import org.openid4java.OpenIDException;
 public class ConsumerException extends OpenIDException
 {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 2508753547768329939L;
+
     public ConsumerException(String message)
     {
         super(message, CONSUMER_ERROR);

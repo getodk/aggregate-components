@@ -22,6 +22,6 @@ public interface XrdsParser
      *         extracted from the XRDS document,
      *         in the proper, sorted order
      */
-    public List parseXrds(String input, Set targetTypes) throws DiscoveryException;
+    public List<XrdsServiceEndpoint> parseXrds(String input, Set<String> targetTypes) throws DiscoveryException;
     
 }

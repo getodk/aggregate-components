@@ -19,17 +19,18 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
     private static Log _log = LogFactory.getLog(InMemoryConsumerAssociationStore.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    private Map _opMap = new HashMap();
+    private Map<String,Map<String,Association>> _opMap =
+        new HashMap<String,Map<String,Association>>();
 
     public synchronized void save(String opUrl, Association association)
     {
         removeExpired();
 
-        Map handleMap = (Map) _opMap.get(opUrl);
+        Map<String,Association> handleMap = _opMap.get(opUrl);
 
         if (handleMap == null)
         {
-            handleMap = new HashMap();
+            handleMap = new HashMap<String,Association>();
 
 
             _opMap.put(opUrl, handleMap);
@@ -50,11 +51,11 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
 
         if (_opMap.containsKey(opUrl))
         {
-            Map handleMap = (Map) _opMap.get(opUrl);
+            Map<String,Association> handleMap = _opMap.get(opUrl);
 
             if (handleMap.containsKey(handle))
             {
-                return (Association) handleMap.get(handle);
+                return handleMap.get(handle);
             }
         }
 
@@ -70,14 +71,14 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
 
         if (_opMap.containsKey(opUrl))
         {
-            Map handleMap = (Map) _opMap.get(opUrl);
+            Map<String,Association> handleMap = _opMap.get(opUrl);
 
-            Iterator handles = handleMap.keySet().iterator();
+            Iterator<String> handles = handleMap.keySet().iterator();
             while (handles.hasNext())
             {
-                String handle = (String) handles.next();
+                String handle = handles.next();
 
-                Association association = (Association) handleMap.get(handle);
+                Association association = handleMap.get(handle);
 
                 if (latest == null ||
                         latest.getExpiry().before(association.getExpiry()))
@@ -94,7 +95,7 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
 
         if (_opMap.containsKey(opUrl))
         {
-            Map handleMap = (Map) _opMap.get(opUrl);
+            Map<String,Association> handleMap = _opMap.get(opUrl);
 
             _log.info("Removing association: " + handle + " widh OP: " + opUrl);
 
@@ -108,21 +109,21 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
 
     private synchronized void removeExpired()
     {
-        Set opToRemove = new HashSet();
-        Iterator opUrls = _opMap.keySet().iterator();
+        Set<String> opToRemove = new HashSet<String>();
+        Iterator<String> opUrls = _opMap.keySet().iterator();
         while (opUrls.hasNext())
         {
-            String opUrl = (String) opUrls.next();
+            String opUrl = opUrls.next();
 
-            Map handleMap = (Map) _opMap.get(opUrl);
+            Map<String,Association> handleMap = _opMap.get(opUrl);
 
-            Set handleToRemove = new HashSet();
-            Iterator handles = handleMap.keySet().iterator();
+            Set<String> handleToRemove = new HashSet<String>();
+            Iterator<String> handles = handleMap.keySet().iterator();
             while (handles.hasNext())
             {
-                String handle = (String) handles.next();
+                String handle = handles.next();
 
-                Association association = (Association) handleMap.get(handle);
+                Association association = handleMap.get(handle);
 
                 if (association.hasExpired())
                 {
@@ -133,7 +134,7 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
             handles = handleToRemove.iterator();
             while (handles.hasNext())
             {
-                String handle = (String) handles.next();
+                String handle = handles.next();
 
                 _log.info("Removing expired association: " + handle +
                           " with OP: " + opUrl);
@@ -148,7 +149,7 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
         opUrls = opToRemove.iterator();
         while (opUrls.hasNext())
         {
-            String opUrl = (String) opUrls.next();
+            String opUrl = opUrls.next();
 
             _opMap.remove(opUrl);
         }
@@ -158,12 +159,12 @@ public class InMemoryConsumerAssociationStore implements ConsumerAssociationStor
     {
         int total = 0;
 
-        Iterator opUrls = _opMap.keySet().iterator();
+        Iterator<String> opUrls = _opMap.keySet().iterator();
         while (opUrls.hasNext())
         {
-            String opUrl = (String) opUrls.next();
+            String opUrl = opUrls.next();
 
-            Map handleMap = (Map) _opMap.get(opUrl);
+            Map<String,Association> handleMap = _opMap.get(opUrl);
 
             total += handleMap.size();
         }

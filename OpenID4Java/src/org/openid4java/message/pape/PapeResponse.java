@@ -26,7 +26,7 @@ public class PapeResponse extends PapeMessage
     private static Log _log = LogFactory.getLog(PapeResponse.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    protected final static List PAPE_FIELDS = Arrays.asList( new String[] {
+    protected final static List<String> PAPE_FIELDS = Arrays.asList( new String[] {
             "auth_policies", "auth_time",
     });
 
@@ -124,12 +124,12 @@ public class PapeResponse extends PapeMessage
      * Gets a list with the auth_policies. An empty list is
      * returned if no authentication policies exist.
      */
-    public List getAuthPoliciesList()
+    public List<String> getAuthPoliciesList()
     {
         String policies = getParameterValue("auth_policies");
 
         if (policies == null || AUTH_POLICY_NONE.equals(policies)) // should never be null
-            return new ArrayList();
+            return new ArrayList<String>();
         else
             return Arrays.asList(policies.split(" "));
     }
@@ -223,10 +223,10 @@ public class PapeResponse extends PapeMessage
             }
         }
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
 
             if (PAPE_FIELDS.contains(paramName) ||  paramName.startsWith(PapeMessage.AUTH_LEVEL_NS_PREFIX))
                 continue;

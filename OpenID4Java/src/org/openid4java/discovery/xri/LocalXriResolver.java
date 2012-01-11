@@ -12,6 +12,7 @@ import org.openid4java.discovery.DiscoveryException;
 import org.openid4java.discovery.DiscoveryInformation;
 import org.openid4java.discovery.Identifier;
 import org.openid4java.discovery.XriIdentifier;
+import org.openid4java.util.HttpClientFactory;
 import org.openxri.XRI;
 import org.openxri.resolve.Resolver;
 import org.openxri.resolve.ResolverFlags;
@@ -30,7 +31,6 @@ public class LocalXriResolver implements XriResolver
     private static final boolean DEBUG = _log.isDebugEnabled();
 
     private Resolver _openXriResolver;
-    
 
     public LocalXriResolver()
     {
@@ -50,7 +50,7 @@ public class LocalXriResolver implements XriResolver
     	return _openXriResolver;
     }
     
-    public List discover(XriIdentifier xri) throws DiscoveryException
+    public List<DiscoveryInformation> discover(XriIdentifier xri) throws DiscoveryException
     {
         try
         {
@@ -105,12 +105,13 @@ public class LocalXriResolver implements XriResolver
      * @return              A list of DiscoveryInformation endpoints.
      * @throws DiscoveryException when invalid information is discovered.
      */
-    protected List extractDiscoveryInformation(XRDS xrds,
+    protected List<DiscoveryInformation> extractDiscoveryInformation(XRDS xrds,
                                                       XriIdentifier identifier,
                                                       Resolver xriResolver)
             throws DiscoveryException
     {
-        ArrayList endpoints = new ArrayList();
+        ArrayList<DiscoveryInformation> endpoints = 
+            new ArrayList<DiscoveryInformation>();
 
         XRD xrd = xrds.getFinalXRD();
 
@@ -160,7 +161,7 @@ public class LocalXriResolver implements XriResolver
     }
 
     protected boolean extractDiscoveryInformationOpenID(
-            Resolver xriResolver, ArrayList out, XRD baseXRD,
+            Resolver xriResolver, ArrayList<DiscoveryInformation> out, XRD baseXRD,
             XriIdentifier identifier, String srvType, boolean wantCID)
     {
         try
@@ -171,7 +172,8 @@ public class LocalXriResolver implements XriResolver
         	flags.setNoDefaultT(srvType != null);	// we don't want default SEPs, only ones that really have the service type we are looking for
         	ResolverState state = new ResolverState();
 
-        	List services = xriResolver.selectServiceFromXRD(
+        	@SuppressWarnings("unchecked")
+         List<Service> services = xriResolver.selectServiceFromXRD(
         		new XRDS(),
         		baseXRD,
                 new XRI(identifier.getIdentifier()),
@@ -207,15 +209,16 @@ public class LocalXriResolver implements XriResolver
                           " for " + srvType);
             }
 
-            Iterator it = services.iterator();
+            Iterator<Service> it = services.iterator();
             while (it.hasNext())
             {
-                Service srv = (Service)it.next();
-                Iterator itURI = srv.getPrioritizedURIs().iterator();
+                Service srv = it.next();
+                @SuppressWarnings("unchecked")
+                Iterator<SEPUri> itURI = srv.getPrioritizedURIs().iterator();
                 SEPUri sepURI;
                 while (itURI.hasNext())
                 {
-                    sepURI = (SEPUri) itURI.next();
+                    sepURI = itURI.next();
                     try
                     {
                         String urlString = xriResolver.constructURI(
@@ -266,5 +269,9 @@ public class LocalXriResolver implements XriResolver
     }
 
     // --- end XRI discovery patch from William Tan ---
+
+    public void setHttpClientFactory(HttpClientFactory clientFactory) {
+      // NO-OP.
+    }
 
 }

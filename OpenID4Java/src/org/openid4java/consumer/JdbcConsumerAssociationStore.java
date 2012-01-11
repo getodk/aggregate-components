@@ -76,7 +76,8 @@ public class JdbcConsumerAssociationStore
 		{
 			JdbcTemplate jdbcTemplate = getJdbcTemplate ( ) ;
 
-			Map res = jdbcTemplate.queryForMap ( _sqlSelect, new Object[]
+			@SuppressWarnings("rawtypes")
+         Map res = jdbcTemplate.queryForMap ( _sqlSelect, new Object[]
 				{ opUrl, handle } ) ;
 
 			String type = (String) res.get ( "type" ) ;
@@ -139,7 +140,8 @@ public class JdbcConsumerAssociationStore
 		{
 			JdbcTemplate jdbcTemplate = getJdbcTemplate ( ) ;
 
-			Map res = jdbcTemplate.queryForMap ( _sqlSelectAlt, new Object[]
+			@SuppressWarnings("rawtypes")
+         Map res = jdbcTemplate.queryForMap ( _sqlSelectAlt, new Object[]
 				{ opUrl } ) ;
 
 			String handle = (String) res.get ( "handle" ) ;

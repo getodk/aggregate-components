@@ -34,17 +34,18 @@ public class Message
     private int _extCounter;
 
     // extention type URI -> extension alias : extension present in the message
-    private Map _extAliases;
+    private Map<String,String> _extAliases;
 
     // extension type URI -> MessageExtensions : extracted extension objects
-    private Map _extesion;
+    private Map<String, MessageExtension> _extesion;
 
     // the URL where this message should be sent, where applicable
     // should remain null for received messages (created from param lists)
     protected String _destinationUrl;
 
     // type URI -> message extension factory : supported extensions
-    private static Map _extensionFactories = new HashMap();
+    private static Map<String,Class<? extends MessageExtensionFactory>> _extensionFactories = 
+          new HashMap<String,Class<? extends MessageExtensionFactory>>();
 
     static
     {
@@ -58,8 +59,8 @@ public class Message
     {
         _params = new ParameterList();
         _extCounter = 0;
-        _extAliases = new HashMap();
-        _extesion   = new HashMap();
+        _extAliases = new HashMap<String,String>();
+        _extesion   = new HashMap<String, MessageExtension>();
     }
 
     protected Message (ParameterList params)
@@ -68,7 +69,7 @@ public class Message
         this._params = params;
 
         //build the extension list when creating a message from a param list
-        Iterator iter = _params.getParameters().iterator();
+        Iterator<Parameter> iter = _params.getParameters().iterator();
 
         // simple registration is a special case; we support only:
         // SREG1.0 (no namespace, "sreg" alias hardcoded) in :
@@ -80,7 +81,7 @@ public class Message
 
         while (iter.hasNext())
         {
-            String key = ((Parameter) iter.next()).getKey();
+            String key = iter.next().getKey();
             if (key.startsWith("openid.ns.") && key.length() > 10)
                 _extAliases.put(_params.getParameter(key).getValue(),
                         key.substring(10));
@@ -142,20 +143,20 @@ public class Message
         _params.set(new Parameter(name, value));
     }
 
-    protected List getParameters()
+    protected List<Parameter> getParameters()
     {
         return _params.getParameters();
     }
 
 
-    public Map getParameterMap()
+    public Map<String,String> getParameterMap()
     {
-        Map params = new LinkedHashMap();
+        Map<String,String> params = new LinkedHashMap<String,String>();
 
-        Iterator iter = _params.getParameters().iterator();
+        Iterator<Parameter> iter = _params.getParameters().iterator();
         while (iter.hasNext())
         {
-            Parameter p = (Parameter) iter.next();
+            Parameter p = iter.next();
             params.put( p.getKey(), p.getValue() );
         }
 
@@ -167,12 +168,12 @@ public class Message
      */
     public void validate() throws MessageException
     {
-        List requiredFields = getRequiredFields();
+        List<String> requiredFields = getRequiredFields();
 
-        Iterator paramIter = _params.getParameters().iterator();
+        Iterator<Parameter> paramIter = _params.getParameters().iterator();
         while (paramIter.hasNext())
         {
-            Parameter param = (Parameter) paramIter.next();
+            Parameter param = paramIter.next();
             if (!param.isValid())
                 throw new MessageException("Invalid parameter: " + param);
         }
@@ -180,17 +181,17 @@ public class Message
         if (requiredFields == null)
             return;
 
-        Iterator reqIter = requiredFields.iterator();
+        Iterator<String> reqIter = requiredFields.iterator();
         while(reqIter.hasNext())
         {
-            String required = (String) reqIter.next();
+            String required = reqIter.next();
             if (! hasParameter(required))
                 throw new MessageException(
                     "Required parameter missing: " + required);
         }
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return null;
     }
@@ -204,11 +205,11 @@ public class Message
     {
         StringBuffer allParams = new StringBuffer("");
 
-        List parameters = _params.getParameters();
-        Iterator iterator = parameters.iterator();
+        List<Parameter> parameters = _params.getParameters();
+        Iterator<Parameter> iterator = parameters.iterator();
         while (iterator.hasNext())
         {
-            Parameter parameter = (Parameter) iterator.next();
+            Parameter parameter = iterator.next();
 
             // All of the keys in the request message MUST be prefixed with "openid."
             if ( ! parameter.getKey().startsWith("openid."))
@@ -272,12 +273,11 @@ public class Message
      * @param clazz         The implementation class for the extension factory,
      *                      must implement {@link MessageExtensionFactory}.
      */
-    public static void addExtensionFactory(Class clazz) throws MessageException
+    public static void addExtensionFactory(Class<? extends MessageExtensionFactory> clazz) throws MessageException
     {
         try
         {
-            MessageExtensionFactory extensionFactory =
-                    (MessageExtensionFactory) clazz.newInstance();
+            MessageExtensionFactory extensionFactory = clazz.newInstance();
 
             if (DEBUG) _log.debug("Adding extension factory for " +
                                   extensionFactory.getTypeUri());
@@ -319,8 +319,9 @@ public class Message
 
         try
         {
-            Class extensionClass = (Class) _extensionFactories.get(typeUri);
-            extensionFactory = (MessageExtensionFactory) extensionClass.newInstance();
+            Class<? extends MessageExtensionFactory> extensionClass = 
+                _extensionFactories.get(typeUri);
+            extensionFactory = extensionClass.newInstance();
         }
         catch (Exception e)
         {
@@ -345,7 +346,7 @@ public class Message
     /**
      * Gets a set of extension Type URIs that are present in the message.
      */
-    public Set getExtensions()
+    public Set<String> getExtensions()
     {
         return _extAliases.keySet();
     }
@@ -398,10 +399,10 @@ public class Message
 
         set("openid.ns." + alias, typeUri);
 
-        Iterator iter = extension.getParameters().getParameters().iterator();
+        Iterator<Parameter> iter = extension.getParameters().getParameters().iterator();
         while (iter.hasNext())
         {
-            Parameter param = (Parameter) iter.next();
+            Parameter param = iter.next();
 
             String paramName = param.getKey().length() > 0 ?
                     "openid." + alias + "." + param.getKey() :
@@ -441,10 +442,10 @@ public class Message
         {
             String extensionAlias = getExtensionAlias(extensionTypeUri);
 
-            Iterator iter = getParameters().iterator();
+            Iterator<Parameter> iter = getParameters().iterator();
             while (iter.hasNext())
             {
-                Parameter param = (Parameter) iter.next();
+                Parameter param = iter.next();
                 String paramName = null;
 
                 if (param.getKey().startsWith("openid." + extensionAlias + "."))
@@ -486,7 +487,7 @@ public class Message
 
                 if (this instanceof AuthSuccess && extension.signRequired())
                 {
-                    List signedParams = Arrays.asList(
+                    List<String> signedParams = Arrays.asList(
                         ((AuthSuccess)this).getSignList().split(",") );
 
                     String alias = getExtensionAlias(typeUri);
@@ -494,10 +495,10 @@ public class Message
                     if (! signedParams.contains("ns." + alias))
                         throw new MessageException("Namespace declaration for extension "
                                                     + typeUri + " MUST be signed");
-                    Iterator iter = extension.getParameters().getParameters().iterator();
+                    Iterator<Parameter> iter = extension.getParameters().getParameters().iterator();
                     while (iter.hasNext())
                     {
-                        Parameter param = (Parameter) iter.next();
+                        Parameter param = iter.next();
                         if (! signedParams.contains(alias + "." + param.getKey()))
                         {
                             throw new MessageException(

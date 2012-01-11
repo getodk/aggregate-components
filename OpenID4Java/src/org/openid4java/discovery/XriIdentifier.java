@@ -9,6 +9,10 @@ package org.openid4java.discovery;
  */
 public class XriIdentifier implements Identifier
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 2430440576104168419L;
     private String identifier;
     private String iriNormalForm;
     private String uriNormalForm;

@@ -28,6 +28,7 @@ public class StoreResponse extends AxMessage
      */
     protected StoreResponse()
     {
+        super();
         _parameters.set(new Parameter("mode", "store_response_success"));
 
         if (DEBUG) _log.debug("Created empty store request.");
@@ -126,10 +127,10 @@ public class StoreResponse extends AxMessage
             return false;
         }
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            Parameter param = (Parameter) it.next();
+            Parameter param = it.next();
             String paramName = param.getKey();
 
             if (! paramName.equals("mode") &&

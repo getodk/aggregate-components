@@ -24,6 +24,10 @@ import java.util.Date;
  */
 public class InternetDateFormat extends SimpleDateFormat
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -1960649989778132369L;
     private static Log _log = LogFactory.getLog(InternetDateFormat.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 

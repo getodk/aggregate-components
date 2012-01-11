@@ -11,6 +11,11 @@ import org.openid4java.OpenIDException;
  */
 public class MessageException extends OpenIDException
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -701778809581335389L;
+
     public MessageException(String message)
     {
         super(message, MESSAGE_ERROR);

@@ -16,26 +16,32 @@
  */
 package org.openid4java.consumer;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import junit.framework.TestCase;
+import java.util.Map;
 
 import org.apache.http.Header;
+import org.junit.Test;
 import org.openid4java.discovery.yadis.YadisResolver;
 import org.openid4java.util.AbstractHttpFetcher;
+import org.openid4java.util.DefaultHttpClientFactory;
 import org.openid4java.util.HttpCache;
+import org.openid4java.util.HttpClientFactory;
 import org.openid4java.util.HttpFetcher;
 import org.openid4java.util.HttpRequestOptions;
 import org.openid4java.util.HttpResponse;
 
-import java.util.Map;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
-public class InjectionTest extends TestCase {
+public class InjectionTest {
 
+  @Test
   public void testNonGuice() throws Exception {
-    ConsumerManager m = new ConsumerManager();
+    HttpClientFactory clientFactory = new DefaultHttpClientFactory();
+    ConsumerManager m = new ConsumerManagerImpl(clientFactory);
     HttpFetcher fetcher = m.getHttpFetcher();
 
     assertTrue(fetcher instanceof HttpCache);
@@ -48,6 +54,7 @@ public class InjectionTest extends TestCase {
     assertEquals(10, fetcher.getDefaultRequestOptions().getMaxRedirects());
   }
 
+  @Test
   public void testGuiceNoModule() throws Exception {
     Injector injector = Guice.createInjector();
     ConsumerManager m = injector.getInstance(ConsumerManager.class);
@@ -63,6 +70,7 @@ public class InjectionTest extends TestCase {
     assertEquals(10, fetcher.getDefaultRequestOptions().getMaxRedirects());
   }
 
+  @Test
   public void testGuiceInjectedFetcher() throws Exception {
     Injector injector = Guice.createInjector(new TestModule());
     ConsumerManager m = injector.getInstance(ConsumerManager.class);
@@ -98,7 +106,8 @@ public class InjectionTest extends TestCase {
     }
 
     @Override
-    public HttpResponse post(String url, Map<String, String> content, HttpRequestOptions requestOptions) {
+    public HttpResponse post(String url, Map<String, String> content,
+        HttpRequestOptions requestOptions) {
       return new TestHttpResponse(url, "test");
     }
   }

@@ -65,7 +65,7 @@ public class HttpRequestOptions
     /**
      * Map with HTTP request headers to be used when placing the HTTP request.
      */
-    private Map _requestHeaders = new HashMap();
+    private Map<String,String> _requestHeaders = new HashMap<String,String>();
 
     /**
      * If set to false, a new HTTP request will be placed even if a cached copy
@@ -118,7 +118,7 @@ public class HttpRequestOptions
         this._maxRedirects = other._maxRedirects;
         this._maxBodySize = other._maxBodySize;
         if (other._requestHeaders != null)
-            this._requestHeaders = new HashMap(other._requestHeaders);
+            this._requestHeaders = new HashMap<String,String>(other._requestHeaders);
         this._useCache = other._useCache;
         this._contentType = other._contentType;
         this._allowCircularRedirects = other._allowCircularRedirects;
@@ -195,7 +195,7 @@ public class HttpRequestOptions
      * Gets the HTTP request headers that will be used when placing
      * HTTP requests using the options in this object.
      */
-    public Map getRequestHeaders()
+    public Map<String,String> getRequestHeaders()
     {
         return _requestHeaders;
     }
@@ -204,7 +204,7 @@ public class HttpRequestOptions
      * Sets the HTTP request headers that will be used when placing
      * HTTP requests using the options in this object.
      */
-    public void setRequestHeaders(Map requestHeaders)
+    public void setRequestHeaders(Map<String,String> requestHeaders)
     {
         this._requestHeaders = requestHeaders;
     }

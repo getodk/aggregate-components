@@ -19,11 +19,11 @@ public class AuthFailure extends Message
     private static Log _log = LogFactory.getLog(AuthFailure.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    protected final static List requiredFields = Arrays.asList( new String[] {
+    protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "openid.mode"
     });
 
-    protected final static List optionalFields = Arrays.asList( new String[] {
+    protected final static List<String> optionalFields = Arrays.asList( new String[] {
             "openid.ns"
     });
 
@@ -56,7 +56,7 @@ public class AuthFailure extends Message
         return fail;
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return requiredFields;
     }

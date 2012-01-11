@@ -43,7 +43,8 @@ public class PapeMessage implements MessageExtension, MessageExtensionFactory
     protected static final String AUTH_LEVEL_NS_PREFIX    = "auth_level.ns.";
     private   static final String AUTH_LEVEL_ALIAS_PREFIX = "papeauthlevel";
 
-    protected Map authLevelAliases = new HashMap(); // auth level URL -> alias
+    // auth level URL -> alias
+    protected Map<String,String> authLevelAliases = new HashMap<String,String>();
     private int authLevelAliasCounter = 0;
 
     /**
@@ -119,9 +120,9 @@ public class PapeMessage implements MessageExtension, MessageExtensionFactory
     public void setParameters(ParameterList params)
     {
         _parameters = params;
-        Iterator iter = params.getParameters().iterator();
+        Iterator<Parameter> iter = params.getParameters().iterator();
         while(iter.hasNext())
-            checkAddAuthLevelExtension((Parameter) iter.next());
+            checkAddAuthLevelExtension(iter.next());
     }
 
     /**

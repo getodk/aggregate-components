@@ -2,6 +2,7 @@ package org.openid4java.message.ax;
 
 import org.openid4java.message.MessageException;
 import org.openid4java.message.Parameter;
+import org.openid4java.message.ParameterList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -17,6 +18,14 @@ public abstract class AxPayload extends AxMessage {
 
     private int _attrAliasCounter = 0;
 
+    protected AxPayload() {
+      super();
+    }
+    
+    protected AxPayload(ParameterList params) {
+      super(params);
+    }
+    
     private synchronized String generateAlias()
     {
         return "attr" + Integer.toString(++ _attrAliasCounter);
@@ -98,13 +107,13 @@ public abstract class AxPayload extends AxMessage {
      *
      * @param attributes    Map<String typeURI, String value>.
      */
-    public void addAttributes(Map attributes)
+    public void addAttributes(Map<String,String> attributes)
     {
         String typeUri;
-        Iterator iter = attributes.keySet().iterator();
+        Iterator<String> iter = attributes.keySet().iterator();
         while (iter.hasNext())
         {
-            typeUri = (String) iter.next();
+            typeUri = iter.next();
             addAttribute(typeUri, (String) attributes.get(typeUri));
         }
     }
@@ -116,9 +125,9 @@ public abstract class AxPayload extends AxMessage {
      * @param alias     The attribute alias.
      * @return          List of attribute values.
      */
-    public List getAttributeValues(String alias)
+    public List<String> getAttributeValues(String alias)
     {
-        List values = new ArrayList();
+        List<String> values = new ArrayList<String>();
 
         if (! _parameters.hasParameter("count." + alias))
             values.add(getParameterValue("value." + alias));
@@ -147,10 +156,10 @@ public abstract class AxPayload extends AxMessage {
         if (typeUri == null)
             return null;
         Parameter param;
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while(it.hasNext())
         {
-            param = (Parameter) it.next();
+            param = it.next();
             if (param.getKey().startsWith("type.") && typeUri.equals(param.getValue()))
                 return param.getKey().substring(5);
         }
@@ -176,7 +185,7 @@ public abstract class AxPayload extends AxMessage {
      * @param typeUri   The attribute type URI.
      * @return          List of attribute values.
      */
-    public List getAttributeValuesByTypeUri(String typeUri)
+    public List<String> getAttributeValuesByTypeUri(String typeUri)
     {
         return getAttributeValues(getAttributeAlias(typeUri));
     }
@@ -194,14 +203,14 @@ public abstract class AxPayload extends AxMessage {
     /**
      * Gets a list of attribute aliases.
      */
-    public List getAttributeAliases()
+    public List<String> getAttributeAliases()
     {
-        List aliases = new ArrayList();
+        List<String> aliases = new ArrayList<String>();
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
 
             if (paramName.startsWith("type."))
             {
@@ -218,14 +227,14 @@ public abstract class AxPayload extends AxMessage {
     /**
      * Gets a map with attribute aliases -> list of values.
      */
-    public Map getAttributes()
+    public Map<String,List<String>> getAttributes()
     {
-        Map attributes = new HashMap();
+        Map<String,List<String>> attributes = new HashMap<String,List<String>>();
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
 
             if (paramName.startsWith("type."))
             {
@@ -242,14 +251,14 @@ public abstract class AxPayload extends AxMessage {
     /**
      * Gets a map with attribute aliases -> attribute type URI.
      */
-    public Map getAttributeTypes()
+    public Map<String,String> getAttributeTypes()
     {
-        Map typeUris = new HashMap();
+        Map<String,String> typeUris = new HashMap<String,String>();
 
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            Parameter param = (Parameter) it.next();
+            Parameter param = it.next();
             String paramName = param.getKey();
             String paramType = param.getValue();
 
@@ -299,10 +308,10 @@ public abstract class AxPayload extends AxMessage {
 
     protected boolean isValid()
     {
-        Iterator it = _parameters.getParameters().iterator();
+        Iterator<Parameter> it = _parameters.getParameters().iterator();
         while (it.hasNext())
         {
-            String paramName = ((Parameter) it.next()).getKey();
+            String paramName = it.next().getKey();
 
             if (! paramName.equals("mode") &&
                     ! paramName.startsWith("type.") &&
@@ -320,12 +329,12 @@ public abstract class AxPayload extends AxMessage {
 
     private boolean checkAttributes()
     {
-        List aliases = getAttributeAliases();
+        List<String> aliases = getAttributeAliases();
 
-        Iterator it = aliases.iterator();
+        Iterator<String> it = aliases.iterator();
         while (it.hasNext())
         {
-            String alias = (String) it.next();
+            String alias = it.next();
 
             if (! _parameters.hasParameter("type." + alias))
             {

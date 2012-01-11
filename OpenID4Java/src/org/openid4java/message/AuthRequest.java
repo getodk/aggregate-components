@@ -31,11 +31,11 @@ public class AuthRequest extends Message
     public static final String SELECT_ID =
             "http://specs.openid.net/auth/2.0/identifier_select";
 
-    protected final static List requiredFields = Arrays.asList( new String[] {
+    protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "openid.mode"
     });
 
-    protected final static List optionalFields = Arrays.asList( new String[] {
+    protected final static List<String> optionalFields = Arrays.asList( new String[] {
             "openid.ns",
             "openid.claimed_id",
             "openid.identity",
@@ -120,7 +120,7 @@ public class AuthRequest extends Message
         return req;
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return requiredFields;
     }
@@ -299,10 +299,10 @@ public class AuthRequest extends Message
 
             boolean hasAuthProvider = false;
 
-            Iterator iter = getExtensions().iterator();
+            Iterator<String> iter = getExtensions().iterator();
             while (iter.hasNext())
             {
-                String typeUri = iter.next().toString();
+                String typeUri = iter.next();
 
                 try
                 {

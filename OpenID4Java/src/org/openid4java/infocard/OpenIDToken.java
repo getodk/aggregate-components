@@ -4,19 +4,20 @@
 
 package org.openid4java.infocard;
 
-import org.openid4java.message.Message;
-import org.openid4java.message.ParameterList;
-import org.openid4java.OpenIDException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.openid4java.OpenIDException;
+import org.openid4java.message.Message;
+import org.openid4java.message.ParameterList;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 /**
  * Models the OpenID Infocard token used to transport OpenID messages.

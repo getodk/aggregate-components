@@ -22,13 +22,13 @@ public class AssociationError extends DirectError
 
     public static final String ASSOC_ERR = "unsupported-type";
 
-    protected final static List requiredFields = Arrays.asList( new String[] {
+    protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "ns",
             "error_code",
             "error",
     });
 
-    protected final static List optionalFields = Arrays.asList( new String[] {
+    protected final static List<String> optionalFields = Arrays.asList( new String[] {
             "assoc_type",
             "session_type"
     });
@@ -83,7 +83,7 @@ public class AssociationError extends DirectError
         return err;
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return requiredFields;
     }

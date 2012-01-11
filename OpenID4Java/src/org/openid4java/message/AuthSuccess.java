@@ -26,7 +26,7 @@ public class AuthSuccess extends Message
     private static Log _log = LogFactory.getLog(AuthSuccess.class);
     private static final boolean DEBUG = _log.isDebugEnabled();
 
-    protected final static List requiredFields = Arrays.asList( new String[] {
+    protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "openid.mode",
             "openid.return_to",
             "openid.assoc_handle",
@@ -34,7 +34,7 @@ public class AuthSuccess extends Message
             "openid.sig"
     });
 
-    protected final static List optionalFields = Arrays.asList( new String[] {
+    protected final static List<String> optionalFields = Arrays.asList( new String[] {
             "openid.ns",
             "openid.op_endpoint",
             "openid.claimed_id",
@@ -54,9 +54,9 @@ public class AuthSuccess extends Message
     protected final static String signRequired3 =
             "op_endpoint,return_to,response_nonce,assoc_handle";
 
-    protected List _signFields = new ArrayList();
+    protected List<String> _signFields = new ArrayList<String>();
 
-    protected List _signExtensions = new ArrayList();
+    protected List<String> _signExtensions = new ArrayList<String>();
 
     protected AuthSuccess(String opEndpoint, String claimedId, String delegate,
                           boolean compatibility,
@@ -122,7 +122,7 @@ public class AuthSuccess extends Message
         return resp;
     }
 
-    public List getRequiredFields()
+    public List<String> getRequiredFields()
     {
         return requiredFields;
     }
@@ -238,12 +238,12 @@ public class AuthSuccess extends Message
                hasParameter("openid.identity") ? new StringBuffer(signRequired2)
                : new StringBuffer(signRequired3);
 
-        List signList = new ArrayList(Arrays.asList(toSign.toString().split(",")));
+        List<String> signList = new ArrayList<String>(Arrays.asList(toSign.toString().split(",")));
 
-        Iterator iter = _signFields.iterator();
+        Iterator<String> iter = _signFields.iterator();
         while (iter.hasNext())
         {
-            String field = (String) iter.next();
+            String field = iter.next();
             if ( ! signList.contains(field) )
             {
                 toSign.append(",").append(field);
@@ -252,11 +252,11 @@ public class AuthSuccess extends Message
         }
 
         // build list of field prefixes belonging to extensions
-        List extensionPrefixes = new ArrayList();
+        List<String> extensionPrefixes = new ArrayList<String>();
         iter = _signExtensions.iterator();
         while(iter.hasNext())
         {
-            String alias = getExtensionAlias((String) iter.next());
+            String alias = getExtensionAlias(iter.next());
             if (alias != null)
             {
                 // openid.ns.<ext_alias> needs to be signed
@@ -268,10 +268,10 @@ public class AuthSuccess extends Message
         }
 
         // add exension fields to the signed list
-        iter = getParameters().iterator();
-        while(iter.hasNext())
+        Iterator<Parameter> pIter = getParameters().iterator();
+        while(pIter.hasNext())
         {
-            String paramName = ((Parameter) iter.next()).getKey();
+            String paramName = pIter.next().getKey();
 
             if (! paramName.startsWith("openid.")) continue;
 
@@ -328,7 +328,7 @@ public class AuthSuccess extends Message
     {
         if (extensions != null)
         {
-            _signExtensions = new ArrayList(Arrays.asList(extensions));
+            _signExtensions = new ArrayList<String>(Arrays.asList(extensions));
 
             buildSignedList();
         }
@@ -356,7 +356,7 @@ public class AuthSuccess extends Message
         }
     }
 
-    public List getSignExtensions()
+    public List<String> getSignExtensions()
     {
         return _signExtensions;
     }
@@ -458,7 +458,7 @@ public class AuthSuccess extends Message
             }
 
             boolean hasAuthExt = false;
-            Iterator iter = getExtensions().iterator();
+            Iterator<String> iter = getExtensions().iterator();
             while (iter.hasNext())
             {
                 String typeUri = iter.next().toString();
@@ -538,7 +538,7 @@ public class AuthSuccess extends Message
 //            return false;
         }
 
-        List signedFields = Arrays.asList(
+        List<String> signedFields = Arrays.asList(
                 getParameterValue("openid.signed").split(","));
 
         // return_to must be signed
