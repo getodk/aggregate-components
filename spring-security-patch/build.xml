@@ -1,0 +1,29 @@
+<project name="UpdateSpringSecurity" default="dist" basedir=".">
+    <description>
+        simple Ant script to copy the files in spring-security-patch
+    	to the target location of the Spring security build and 
+		to remove all build subdirectories.
+	</description>
+  <!-- set global properties for this build -->
+  <property name="files" location="."/>
+  <property name="spring-security-folder" location="../SpringOpenId/spring-security/repo/spring-security"/>
+
+  <target name="dist" description="generate the distribution" >
+    <!-- copy the files over -->
+  	<copy overwrite="true" verbose="true" todir="${spring-security-folder}">
+      <fileset dir="${files}">
+		<exclude name="build.xml"/>
+	  </fileset>
+    </copy>
+  </target>
+
+  <target name="clean" description="clean up" >
+    <delete includeEmptyDirs="true">
+	    <fileset dir="${spring-security-folder}">
+		  <include name="**/build/"/>
+		  <exclude name="buildSrc/build/"/>
+		  <exclude name="buildSrc/build"/>
+		</fileset>
+    </delete>
+  </target>
+</project>

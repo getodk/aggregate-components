@@ -12,7 +12,7 @@ hsqlVersion = '1.8.0.10'
 slf4jVersion = '1.6.4'
 logbackVersion = '0.9.29'
 cglibVersion = '2.2'
-openid4javaVersion = '0.9.6.662.odk.SNAPSHOT'
+openid4javaVersion = '0.9.6.662.odk-SNAPSHOT'
 
 bundlorProperties = [
     version: version,

@@ -10,7 +10,7 @@
   <parent>
     <groupId>org.openid4java</groupId>
     <artifactId>openid4java-parent</artifactId>
-    <version>0.9.6.662.odk.SNAPSHOT</version>
+    <version>0.9.6.662.odk-SNAPSHOT</version>
     <relativePath>maven2/pom.xml</relativePath>
   </parent>
   <artifactId>openid4java-nodeps</artifactId>
@@ -289,56 +289,66 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>jcl-over-slf4j</artifactId>
-      <version>${org.slf4j.version}</version>
-    </dependency>
-   <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>${org.slf4j.version}</version>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>${commons-logging.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <scope>provided</scope>
+	  <version>${org.apache.httpcomponents.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+	  <version>${org.apache.httpcomponents.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>net.sourceforge.nekohtml</groupId>
       <artifactId>nekohtml</artifactId>
-      <scope>provided</scope>
+	  <version>${net.sourceforge.nekohtml.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.openxri</groupId>
       <artifactId>openxri-syntax</artifactId>
-      <scope>provided</scope>
+	  <version>${org.openxri.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.openxri</groupId>
       <artifactId>openxri-client</artifactId>
-      <scope>provided</scope>
+	  <version>${org.openxri.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
       <version>${com.google.inject.guice.version}</version>
+      <scope>compile</scope>
     </dependency>
 
     <!-- Discovery -->
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
-      <scope>provided</scope>
+	  <version>${xerces.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>xml-apis</groupId>
       <artifactId>xml-apis</artifactId>
-      <scope>provided</scope>
+	  <version>${xml-apis.version}</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.santuario</groupId>
       <artifactId>xmlsec</artifactId>
-      <scope>provided</scope>
+	  <version>${xml-security.version}</version>
+      <scope>compile</scope>
     </dependency>
 
     <!-- Infocard -->
@@ -404,20 +414,15 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>jetty</groupId>
+      <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty</artifactId>
       <version>${jetty.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>jetty</groupId>
+      <groupId>org.mortbay.jetty</groupId>
       <artifactId>jetty-util</artifactId>
       <version>${jetty.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -430,6 +435,16 @@
       <groupId>net.sourceforge.jwebunit</groupId>
       <artifactId>jwebunit-htmlunit-plugin</artifactId>
       <version>${net.sourceforge.jwebunit.version}</version>
+	  <exclusions>
+		<exclusion>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+		</exclusion>
+		<exclusion>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+		</exclusion>
+	  </exclusions>
       <scope>test</scope>
     </dependency>
 	<dependency>

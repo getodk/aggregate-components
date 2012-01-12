@@ -6,9 +6,11 @@ Building is tricky:
 1. download 3.1.0.RELEASE version of spring security from git
 2. build per their instructions (gradlew build).
 3. Confirm that gradle 1.0-milestone-3 was being used.
-4. copy patches into the spring-security tree.
-5. manually delete all build directories EXCEPT buildSrc\build
-6. run gradlew build again.
+4. Edit ant build.xml to set spring-security-folder location
+5. Run ant script. This:
+   a) deletes build directories (EXCEPT buildSrc/build)
+   b) copies patches into the spring-security tree
+6. Run gradlew build again.
 
 This process first builds the buildSrc directory, which requires
 the old libraries to function.  Then it applies the patches and 
