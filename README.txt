@@ -30,3 +30,28 @@ different set of APIs.
 NOTE: The Javax ImageIO library is not redistributable. Included in 
 the /lib directory of this project is a subset of the library that
 is redistributable.
+
+(4) OpenID4Java
+
+This is a copy of the openid4java sources 
+( http://code.google.com/p/openid4java/ )
+Updated to:
+* use current jars
+* not have untyped-collection errors
+* add piping for passing in an HttpClientFactory 
+ (so that the code in GAEHttpClient can be used 
+  on AppEngine).
+* use common-logging vs. slf4j
+
+This is NOT an eclipse project
+
+(5) spring-security-patch
+
+This is a delta off of springframework security 
+( http://static.springsource.org/spring-security/site/ )
+Updated to:
+* use the jar produced by (4) OpenID4Java
+* use 3.1.0.RELEASE springframework
+* use current jars
+
+This is NOT an eclipse project
