@@ -17,7 +17,6 @@ import java.util.Arrays;
 public class DirectError extends Message
 {
     private static Log _log = LogFactory.getLog(DirectError.class);
-    private static final boolean DEBUG = _log.isDebugEnabled();
 
     protected final static List<String> requiredFields = Arrays.asList( new String[] {
             "error"
