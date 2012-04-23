@@ -55,3 +55,10 @@ Updated to:
 * use current jars
 
 This is NOT an eclipse project
+
+(6) UsableServerDiagnosticApp
+
+This is the GWT sample app with an additional Server Information page.
+If a user has trouble running ODK Aggregate on a hosting service, 
+use this application to verify that the service properly handles 
+GWT applications and is Tomcat 6.

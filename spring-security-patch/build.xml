@@ -6,7 +6,7 @@
 	</description>
   <!-- set global properties for this build -->
   <property name="files" location="."/>
-  <property name="spring-security-folder" location="../SpringOpenId/spring-security/repo/spring-security"/>
+  <property name="spring-security-folder" location="../SpringSource-spring-security-3.1.0.odk-SNAPSHOT"/>
 
   <target name="dist" description="generate the distribution" >
     <!-- copy the files over -->
