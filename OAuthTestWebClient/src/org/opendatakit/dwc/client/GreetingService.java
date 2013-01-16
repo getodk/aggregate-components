@@ -40,4 +40,8 @@ public interface GreetingService extends RemoteService {
   String obtainOauth2Code(String destinationUrl) throws IllegalArgumentException;
 
   String getOauth2UserEmail() throws IllegalArgumentException;
+
+  String obtainOauth2ServiceAccountCode(String string);
+
+  String getOauth2ServiceAccountUserEmail();
 }

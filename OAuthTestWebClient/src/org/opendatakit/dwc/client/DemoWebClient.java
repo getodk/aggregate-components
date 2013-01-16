@@ -257,6 +257,58 @@ public class DemoWebClient implements EntryPoint {
         }
       });
     }
+    {
+        final Button getUserEmailOauth2ServiceAccountTokenButton = new Button("Get OAuth2 ServiceAccount Code");
+
+        RootPanel.get("userEmailOauth2ServiceAccountTokenButton").add(getUserEmailOauth2ServiceAccountTokenButton);
+        
+        // Add a handler to close the DialogBox
+        getUserEmailOauth2ServiceAccountTokenButton.addClickHandler(new ClickHandler() {
+
+          @Override
+          public void onClick(ClickEvent event) {
+            greetingService.obtainOauth2ServiceAccountCode("passthrough", new AsyncCallback<String>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                  errorLabel.setText(caught.toString());
+                }
+        
+                @Override
+                public void onSuccess(String result) {
+                   goTo(result);
+                }
+            }); 
+          }
+        });
+      }
+      
+      {
+        final Button getOauth2ServiceAccountUserEmailButtonContainer = new Button("Use Oauth2 ServiceAccount to access Google info.email");
+        final TextBox userEmailServiceAccountFieldContainer = new TextBox();
+        userEmailServiceAccountFieldContainer.setText("--confirm retrieval of Oauth2 ServiceAccount info.email -- unknown--");
+        
+        RootPanel.get("getOauth2ServiceAccountUserEmailButtonContainer").add(getOauth2ServiceAccountUserEmailButtonContainer);
+        RootPanel.get("userEmailServiceAccountFieldContainer").add(userEmailServiceAccountFieldContainer);
+        
+        // Add a handler to close the DialogBox
+        getOauth2ServiceAccountUserEmailButtonContainer.addClickHandler(new ClickHandler() {
+
+          @Override
+          public void onClick(ClickEvent event) {
+            greetingService.getOauth2ServiceAccountUserEmail(new AsyncCallback<String>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                  errorLabel.setText(caught.toString());
+                }
+        
+                @Override
+                public void onSuccess(String result) {
+                  userEmailServiceAccountFieldContainer.setText(result);
+                }
+            }); 
+          }
+        });
+      }
 
     {
       final Button urlSendButton = new Button("Access site using OAuth1");

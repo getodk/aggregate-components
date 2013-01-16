@@ -486,6 +486,18 @@ public class GreetingServiceImpl extends RemoteServiceServlet implements Greetin
     return toString;
   }
 
+	@Override
+	public String obtainOauth2ServiceAccountCode(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getOauth2ServiceAccountUserEmail() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
   @Override
   public String getOauth2UserEmail() throws IllegalArgumentException {
 

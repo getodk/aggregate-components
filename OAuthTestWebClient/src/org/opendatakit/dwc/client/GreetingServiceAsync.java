@@ -37,4 +37,8 @@ public interface GreetingServiceAsync {
   void setConfiguration(Configuration config, AsyncCallback<Void> callback);
 
   void getConfiguration(AsyncCallback<Configuration> callback);
+
+  void obtainOauth2ServiceAccountCode(String string, AsyncCallback<String> asyncCallback);
+
+  void getOauth2ServiceAccountUserEmail(AsyncCallback<String> asyncCallback);
 }
