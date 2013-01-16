@@ -1,20 +1,24 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-springVersion = '3.1.0.RELEASE'
-springLdapVersion = '1.3.1.RELEASE'
-ehcacheVersion = '1.6.2'
-aspectjVersion = '1.6.10'
-apacheDsVersion = '1.5.5'
-jstlVersion = '1.2'
-jettyVersion = '6.1.26'
-hsqlVersion = '1.8.0.10'
-slf4jVersion = '1.6.4'
-logbackVersion = '0.9.29'
-cglibVersion = '2.2'
-openid4javaVersion = '0.9.6.662.odk-SNAPSHOT'
+sourceCompatibility = 1.5
+targetCompatibility = 1.5
 
-bundlorProperties = [
+ext.springVersion = '3.1.3.RELEASE'
+ext.springLdapVersion = '1.3.1.RELEASE'
+ext.ehcacheVersion = '1.6.2'
+ext.aspectjVersion = '1.6.12'
+ext.apacheDsVersion = '1.5.5'
+ext.jstlVersion = '1.2'
+ext.jettyVersion = '6.1.26'
+ext.hsqlVersion = '1.8.0.10'
+ext.slf4jVersion = '1.6.6'
+ext.logbackVersion = '0.9.29'
+ext.cglibVersion = '2.2'
+ext.openid4javaVersion = '0.9.6.662.odk-SNAPSHOT'
+ext.powerMockVersion = '1.4.12'
+
+ext.bundlorProperties = [
     version: version,
     secRange: "[$version, 3.2.0)",
     springRange: "[$springVersion, 3.2.0)",
@@ -23,10 +27,8 @@ bundlorProperties = [
     cloggingRange: '[1.0.4, 2.0.0)',
     ehcacheRange: '[1.4.1, 2.5.0)',
     openid4javaRange: "[$openid4javaVersion, 1.0.0)",
-    springLdapRange: '[1.3.0,1.4.0)',
     apacheDSRange: '[1.5.5, 1.6)',
     apacheDSSharedRange: '[0.9.15, 1.0)',
-    ldapSdkRange: '[4.1, 5.0)',
     aopAllianceRange: '[1.0.0, 2.0.0)'
 ]
 
@@ -55,13 +57,13 @@ sourceSets {
     integrationTest {
         java.srcDir file('src/integration-test/java')
         resources.srcDir file('src/integration-test/resources')
-        compileClasspath = sourceSets.main.classes + sourceSets.test.classes + configurations.integrationTestCompile
-        runtimeClasspath = classes + compileClasspath + configurations.integrationTestRuntime
+        compileClasspath = sourceSets.main.output + sourceSets.test.output + configurations.integrationTestCompile
+        runtimeClasspath = output + compileClasspath + configurations.integrationTestRuntime
     }
 }
 
 task integrationTest(type: Test, dependsOn: jar) {
-    testClassesDir = sourceSets.integrationTest.classesDir
+    testClassesDir = sourceSets.integrationTest.output.classesDir
     logging.captureStandardOutput(LogLevel.INFO)
     classpath = sourceSets.integrationTest.runtimeClasspath
     maxParallelForks = 1
@@ -75,8 +77,8 @@ dependencies {
         exclude(group: 'commons-logging', module: 'commons-logging')
     }
 
-    testCompile 'junit:junit:4.10',
-            'org.mockito:mockito-core:1.8.5',
+    testCompile 'junit:junit:4.8',
+            'org.mockito:mockito-core:1.9.0',
             "org.springframework:spring-test:$springVersion"
 
     // Use slf4j/logback for logging
@@ -103,3 +105,41 @@ def guessMaxForks() {
     return Math.max(2, (int) (processors / 2))
 }
 
+javadoc {
+    title = "Spring Security $version API"
+    source = sourceSets.main.allJava
+    classpath +=  configurations.compileOnly + configurations.provided
+    options {
+        memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
+        author = true
+        header = project.name
+        outputLevel = org.gradle.external.javadoc.JavadocOutputLevel.QUIET
+        links = [
+            "http://static.springframework.org/spring/docs/3.1.x/javadoc-api",
+            "http://static.springsource.org/spring-ldap/docs/1.3.x/apidocs/",
+            "http://download.oracle.com/javase/6/docs/api/"
+        ]
+        groups = [
+            'Spring Security Core':[
+                'org.springframework.security.core*',
+                'org.springframework.security.authentication*',
+                'org.springframework.security.access*',
+                'org.springframework.security.remoting*',
+                'org.springframework.security.provisioning*',
+                'org.springframework.security.util*'],
+            'Spring Security Web':['org.springframework.security.web*'],
+            'Spring Security LDAP':['org.springframework.security.ldap*'],
+            'Spring Security Crypto':['org.springframework.security.crypto*'],
+            'Spring Security OpenID':['org.springframework.security.openid*'],
+            'Spring Security CAS':['org.springframework.security.cas*'],
+            'Spring Security ACL':['org.springframework.security.acls*'],
+            'Spring Security Config':['org.springframework.security.config*'],
+            'Spring Security Taglibs':['org.springframework.security.taglibs*'],
+        ]
+    }
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}

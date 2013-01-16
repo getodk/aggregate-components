@@ -1,24 +1,13 @@
 These are the files changed to work with the special openid4java build.
 
-Building is tricky:
+Build spring-security as follows:
 
 0. build the custom openid4java version and install it with mvn install-file
-1. download 3.1.0.RELEASE version of spring security from git
-2. build per their instructions (gradlew build).
-3. Confirm that gradle 1.0-milestone-3 was being used.
-4. Edit ant build.xml to set spring-security-folder location
-5. Run ant script. This:
-   a) deletes build directories (EXCEPT buildSrc/build)
-   b) copies patches into the spring-security tree
-6. Run gradlew build again.
+1. download 3.1.3.RELEASE version of spring security from git
+2. Edit ant build.xml to set spring-security-folder location to the git tree
+3. Run ant script. This copies the patches onto the 3.1.3 tree.
+4. build per their instructions (gradlew build).
 
-This process first builds the buildSrc directory, which requires
-the old libraries to function.  Then it applies the patches and 
-makes use of a dependency-determination bug in gradle milestone-3
-that prevents it from detecting changes; this necessitates deleting
-the /build directories so that everything is rebuilt appropriately.
-
-The buildSrc directory will not build after the patches are applied.
 
 
 

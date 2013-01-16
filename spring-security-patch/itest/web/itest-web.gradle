@@ -16,7 +16,6 @@ dependencies {
                 "org.testng:testng:6.3.1"
 
     testRuntime project(':spring-security-config'),
-                project(':spring-security-ldap'),
                 "org.mortbay.jetty:jsp-2.1-jetty:$jettyVersion",
                 'net.sourceforge.jwebunit:jwebunit-htmlunit-plugin:3.0'
 }

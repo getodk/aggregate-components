@@ -18,11 +18,11 @@ public class SpringSecurityCoreVersion {
      * N.B. Classes are not intended to be serializable between different versions.
      * See SEC-1709 for why we still need a serial version.
      */
-    public static final long SERIAL_VERSION_UID = 310L;
+    public static final long SERIAL_VERSION_UID = 313L;
 
     static final String SPRING_MAJOR_VERSION = "3";
 
-    static final String MIN_SPRING_VERSION = "3.1.0.RELEASE";
+    static final String MIN_SPRING_VERSION = "3.1.3.RELEASE";
 
     static {
         // Check Spring Compatibility

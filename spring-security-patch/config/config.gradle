@@ -23,25 +23,27 @@ dependencies {
 
     provided "javax.servlet:servlet-api:2.5"
 
-    groovy group: 'org.codehaus.groovy', name: 'groovy', version: '1.7.10'
+    groovy 'org.codehaus.groovy:groovy:1.8.7'
 
-    testCompile project(':spring-security-ldap'),
-                project(':spring-security-openid'),
-                project(':spring-security-core').sourceSets.test.classes,
+    testCompile project(':spring-security-openid'),
+                project(':spring-security-core').sourceSets.test.output,
                 'javax.annotation:jsr250-api:1.0',
-                "org.springframework.ldap:spring-ldap-core:$springLdapVersion",
                 "org.springframework:spring-expression:$springVersion",
                 "org.springframework:spring-jdbc:$springVersion",
                 "org.springframework:spring-tx:$springVersion",
-                'org.spockframework:spock-core:0.5-groovy-1.7',
+                'org.spockframework:spock-core:0.6-groovy-1.8',
                 "org.slf4j:jcl-over-slf4j:$slf4jVersion",
-				"org.openid4java:openid4java-nodeps:$openid4javaVersion"
+                "org.openid4java:openid4java-nodeps:$openid4javaVersion",
+                "org.powermock:powermock-core:$powerMockVersion",
+                "org.powermock:powermock-api-support:$powerMockVersion",
+                "org.powermock:powermock-module-junit4-common:$powerMockVersion",
+                "org.powermock:powermock-module-junit4:$powerMockVersion",
+                "org.powermock:powermock-api-mockito:$powerMockVersion",
+                "org.powermock:powermock-reflect:$powerMockVersion"
+
 
     testRuntime "hsqldb:hsqldb:$hsqlVersion",
                 "cglib:cglib-nodep:2.2"
-				// "net.sourceforge.nekohtml:nekohtml:1.9.15",
-				// "saxon:saxon:6.5.3",
-				// "net.sourceforge.jwebunit:jwebunit-core:3.0"
 }
 
 test {
