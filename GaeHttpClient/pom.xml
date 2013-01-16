@@ -13,7 +13,7 @@
 	</organization>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<gooogle.appengine.sdk.version>1.5.4</gooogle.appengine.sdk.version>
+		<gooogle.appengine.sdk.version>1.6.6</gooogle.appengine.sdk.version>
 		<!--
 			keystore.propertyfile - define this in your settings.xml - the
 			location of the properties file for the keystore
