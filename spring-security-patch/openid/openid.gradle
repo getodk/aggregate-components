@@ -12,5 +12,5 @@ dependencies {
 
     provided 'javax.servlet:servlet-api:2.5'
 
-    runtime 'org.apache.httpcomponents:httpclient:4.1.2'
+    runtime 'org.apache.httpcomponents:httpclient:4.2.2'
 }
