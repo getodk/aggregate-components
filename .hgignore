@@ -1,0 +1,5 @@
+syntax: glob
+gwt-google-maps-v3/bin/**
+.metadata/**
+GaeHttpClient/target/**
+OpenID4Java/target/**

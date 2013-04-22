@@ -65,22 +65,17 @@ GWT applications and is Tomcat 6.
 
 (7) gwt-google-maps-v3
 
-The gwt-google-maps-v3-snapshot.jar is built from the code at:
+The gwt-google-maps-v3-snapshot.jar is built from code formerly at:
   http://code.google.com/p/gwt-google-maps-v3/
-Unfortunately, the uploaded jars on that site do not include both 
-the source and the compiled classes, so they fail during GWT compiles.
+Unfortunately, that has since been removed, and, even then, the 
+uploaded jars on that site do not include both the source and the
+compiled classes, so they failed during GWT compiles.
 
 To build, do the following:
-(1) clone the above project
-(2) create an eclipse Java project
-(3) copy the /src and /jsio-src trees into that Eclipse project
-(4) add those 2 source trees to the java project
-(5) set project to be a GWT-2.5.0 project
-(6) if successful, the project should compile with 11 warnings
+(1) compile the project -- should compile with 11 warnings
 (7) Export... / Java / JAR File
 (8) Choose: Export generated class files and resources
 (9) Choose: Export Java source files and resources
 (10) Enter JAR file (gwt-google-maps-v3-snapshot.jar) and choose to compress contents.
 (11) Finish
 (12) You'll get a warning that it exported with warnings (the original 11).
-
