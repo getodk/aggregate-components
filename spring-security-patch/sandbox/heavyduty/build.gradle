@@ -3,7 +3,7 @@ apply: 'jetty'
 //apply: 'project-reports'
 
 version = '3.1.0.CI-SNAPSHOT'
-springVersion = '3.1.0.RELEASE'
+springVersion = '3.2.9.RELEASE'
 targetCompatibility = '1.5'
 sourceCompatibility = '1.5'
 
@@ -26,7 +26,7 @@ dependencies {
             'javax.persistence:persistence-api:1.0',
             'org.slf4j:jcl-over-slf4j:1.5.11'            
 
-    providedCompile 'javax.servlet:servlet-api:2.5'
+    providedCompile "javax.servlet:javax.servlet-api:$servletApiVersion"
 
     runtime 'org.hibernate:hibernate-entitymanager:3.4.0.GA',
             "org.springframework:spring-context-support:$springVersion",
@@ -37,7 +37,7 @@ dependencies {
             'org.apache.directory.server:apacheds-core:1.5.5',
             'org.apache.directory.server:apacheds-server-jndi:1.5.5',
             'org.freemarker:freemarker:2.3.16',
-            "hsqldb:hsqldb:1.8.0.10",
+            "org.hsqldb:hsqldb:1.8.0.10",
             'org.slf4j:slf4j-log4j12:1.5.11',
             'log4j:log4j:1.2.14'
 }
