@@ -4,35 +4,39 @@
 
 package org.openid4java.infocard.sts;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
-import org.eclipse.higgins.sts.api.*;
-import org.eclipse.higgins.sts.common.Fault;
-import org.eclipse.higgins.sts.utilities.XMLHelper;
-import org.openid4java.message.AuthSuccess;
-import org.openid4java.message.ax.FetchResponse;
-import org.openid4java.server.ServerAssociationStore;
-import org.openid4java.server.JdbcServerAssociationStore;
-import org.openid4java.server.NonceGenerator;
-import org.openid4java.server.IncrementalNonceGenerator;
-import org.openid4java.association.AssociationException;
-import org.openid4java.association.Association;
-import org.openid4java.OpenIDException;
-import org.openid4java.infocard.OpenIDTokenType;
-import org.apache.axiom.om.OMElement;
-import org.apache.axiom.om.OMNamespace;
-import org.apache.axiom.om.OMFactory;
-import org.apache.axiom.om.OMAbstractFactory;
-import org.apache.axiom.om.util.Base64;
-
-import javax.sql.DataSource;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.sql.DataSource;
+
+import org.apache.axiom.om.OMAbstractFactory;
+import org.apache.axiom.om.OMElement;
+import org.apache.axiom.om.OMFactory;
+import org.apache.axiom.om.OMNamespace;
+import org.apache.axiom.util.base64.Base64Utils;
+import org.eclipse.higgins.sts.api.IClaim;
+import org.eclipse.higgins.sts.api.IConstants;
+import org.eclipse.higgins.sts.api.IRequestSecurityToken;
+import org.eclipse.higgins.sts.api.ISTSRequest;
+import org.eclipse.higgins.sts.api.ISTSResponse;
+import org.eclipse.higgins.sts.common.Fault;
+import org.eclipse.higgins.sts.utilities.XMLHelper;
+import org.openid4java.OpenIDException;
+import org.openid4java.association.Association;
+import org.openid4java.association.AssociationException;
+import org.openid4java.infocard.OpenIDTokenType;
+import org.openid4java.message.AuthSuccess;
+import org.openid4java.message.ax.FetchResponse;
+import org.openid4java.server.IncrementalNonceGenerator;
+import org.openid4java.server.JdbcServerAssociationStore;
+import org.openid4java.server.NonceGenerator;
+import org.openid4java.server.ServerAssociationStore;
 
 /**
  * Handle RSTs and generate RSTRs containing OpenID Tokens.
@@ -45,13 +49,13 @@ public class OpenIDTokenGeneratorHandler
     private final org.eclipse.higgins.sts.utilities.LogHelper log =
         new org.eclipse.higgins.sts.utilities.LogHelper
 		(OpenIDTokenGeneratorHandler.class.getName());
-	
+
 	javax.xml.namespace.QName qnameIdentityClaimType =
         new javax.xml.namespace.QName(null, "ClaimType");
 
     javax.xml.namespace.QName qnameIdentityClaimURI =
         new javax.xml.namespace.QName(null, "Uri");
-	
+
     private boolean bConfigured = false;
 
     // nonce generator not actually used:
@@ -71,7 +75,7 @@ public class OpenIDTokenGeneratorHandler
 	{
 		this.log.trace("TokenGeneratorHandler::TokenGeneratorHandler");
 	}
-	
+
     /* (non-Javadoc)
 	 * @see org.eclipse.higgins.sts.IExtension#configure(java.util.Hashtable)
 	 */
@@ -126,7 +130,7 @@ public class OpenIDTokenGeneratorHandler
 		final ISTSResponse response)
 	{
 		this.log.trace("TokenGeneratorHandler::invoke: " + strComponentName);
-		
+
 		if (!this.bConfigured)
 		{
             setWstFault(constants, response, "The specified request failed",
@@ -140,7 +144,7 @@ public class OpenIDTokenGeneratorHandler
             (java.net.URI)mapComponentSettings.get("DefaultKeyType");
         this.log.trace("DefaultKeyType: " +
             uriDefaultKeyType != null ? uriDefaultKeyType.toString() : null);
-		
+
 		final java.lang.Boolean bIncludeBearerSubjectName =
             (java.lang.Boolean)mapComponentSettings.get("IncludeBearerSubjectName");
 		this.log.trace("IncludeBearerSubjectName: " +
@@ -165,7 +169,7 @@ public class OpenIDTokenGeneratorHandler
 			this.log.trace("SubjectNameIdentifier: " +
                 uriSubjectNameIdentifier != null ?
                 uriSubjectNameIdentifier.toString() : null);
-		
+
 		final java.net.URI uriSubjectNameIdentifierFormat =
             (java.net.URI)mapComponentSettings.get("SubjectNameIdentifierFormat");
 		if (null != uriSubjectNameIdentifierFormat)
@@ -177,7 +181,7 @@ public class OpenIDTokenGeneratorHandler
             (java.lang.Boolean)mapComponentSettings.get("EncryptToken");
 		this.log.trace("EncryptToken: " +
             bEncryptToken != null ? bEncryptToken.toString() : null);
-	
+
 
 
         // --- extract needed data from the RST ---
@@ -227,7 +231,7 @@ public class OpenIDTokenGeneratorHandler
 				"Digital Subject was not found");
 			return;
 	   	}
-		
+
         // --- build response ---
 
         final OMFactory omFactory = OMAbstractFactory.getOMFactory();
@@ -389,7 +393,7 @@ public class OpenIDTokenGeneratorHandler
         String sha1base64 = null;
         try
         {
-            sha1base64 = Base64.encode(
+            sha1base64 = Base64Utils.encode(
             md.digest(openidResp.keyValueFormEncoding().getBytes("utf-8")));
         }
         catch (UnsupportedEncodingException e)
@@ -440,7 +444,7 @@ public class OpenIDTokenGeneratorHandler
                 (org.eclipse.higgins.sts.utilities.XMLHelper.toElement(omRequestedAttachedReference));
             RSTR.setRequestedUnattachedReference
                 (org.eclipse.higgins.sts.utilities.XMLHelper.toElement(omRequestedUnattachedReference));
-            
+
         }
 		catch (final Exception e)
 		{
