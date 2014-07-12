@@ -323,7 +323,21 @@
       <artifactId>openxri-client</artifactId>
 	  <version>${org.openxri.version}</version>
       <scope>compile</scope>
-    </dependency>
+	  <exclusions>
+		<exclusion>
+		  <groupId>commons-logging</groupId>
+		  <artifactId>commons-logging</artifactId>
+		</exclusion>
+		<exclusion>
+		  <groupId>xml-security</groupId>
+		  <artifactId>xmlsec</artifactId>
+		</exclusion>
+		<exclusion>
+		  <groupId>jug</groupId>
+		  <artifactId>jug</artifactId>
+		</exclusion>
+	  </exclusions> 
+	</dependency>
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
