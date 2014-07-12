@@ -388,6 +388,12 @@
       <groupId>org.eclipse.higgins</groupId>
       <artifactId>higgins-sts-common</artifactId>
       <scope>provided</scope>
+	  <exclusions>
+		<exclusion>
+		  <groupId>xml-security</groupId>
+		  <artifactId>xmlsec</artifactId>
+		</exclusion>
+	  </exclusions> 
     </dependency>
     <dependency>
       <groupId>org.eclipse.higgins</groupId>
