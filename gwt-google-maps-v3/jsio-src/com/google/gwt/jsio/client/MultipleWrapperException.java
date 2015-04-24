@@ -21,6 +21,11 @@ package com.google.gwt.jsio.client;
  */
 public class MultipleWrapperException extends RuntimeException {
 
+  /**
+   * 
+   */
+  private static final long serialVersionUID = -6826465292192514801L;
+
   public MultipleWrapperException() {
   }
 

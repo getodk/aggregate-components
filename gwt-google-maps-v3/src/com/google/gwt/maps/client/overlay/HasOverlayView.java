@@ -14,7 +14,6 @@
  */
 package com.google.gwt.maps.client.overlay;
 
-import com.google.gwt.maps.client.HasJso;
 import com.google.gwt.maps.client.HasMap;
 import com.google.gwt.maps.client.HasMapCanvasProjection;
 import com.google.gwt.maps.client.HasMapPanes;

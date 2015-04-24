@@ -34,7 +34,6 @@ public final class JSListWrapper<T> extends AbstractJSListWrapper<T> implements
   private static class WrappingExtractor<T> implements
       Extractor<JSListWrapper<T>> {
     // package protected to avoid style warning, only read from JSNI
-    @SuppressWarnings("unused")
     private final Extractor<T> subExtractor;
 
     public WrappingExtractor(Extractor<T> subExtractor) {

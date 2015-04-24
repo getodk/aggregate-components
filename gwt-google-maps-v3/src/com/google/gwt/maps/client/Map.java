@@ -23,7 +23,7 @@ import com.google.gwt.maps.client.impl.MapImpl;
 import com.google.gwt.maps.client.mvc.MVCObject;
 import com.google.gwt.maps.client.overlay.HasProjection;
 import com.google.gwt.maps.client.overlay.Projection;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * Map java overlay.

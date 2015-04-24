@@ -24,7 +24,7 @@ import com.google.gwt.maps.client.overlay.HasMarkerOptions;
 import com.google.gwt.maps.client.overlay.HasPolylineOptions;
 import com.google.gwt.maps.client.overlay.MarkerOptions;
 import com.google.gwt.maps.client.overlay.PolylineOptions;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * 

@@ -14,7 +14,7 @@
  */
 package com.google.gwt.maps.client;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * 

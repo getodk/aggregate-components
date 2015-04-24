@@ -64,8 +64,7 @@ public final class JSStringListWrapper extends AbstractJSListWrapper<String>
     return getNative(arr, index);
   }
 
-  @SuppressWarnings("unchecked")
-  public Extractor getExtractor() {
+  public Extractor<JSStringListWrapper> getExtractor() {
     // Unused method, the Extractor class isn't appropriate for Strings.
       return null;
   }

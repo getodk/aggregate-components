@@ -16,9 +16,7 @@ package com.google.gwt.maps.client.overlay.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.jsio.client.Binding;
 import com.google.gwt.jsio.client.JSFlyweightWrapper;
-import com.google.gwt.maps.client.overlay.OverlayView;
 
 /**
  * 

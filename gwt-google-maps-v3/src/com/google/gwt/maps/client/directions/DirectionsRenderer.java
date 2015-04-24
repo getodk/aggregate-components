@@ -20,7 +20,7 @@ import com.google.gwt.maps.client.Map;
 import com.google.gwt.maps.client.base.ElementProvider;
 import com.google.gwt.maps.client.base.HasElementProvider;
 import com.google.gwt.maps.client.directions.impl.DirectionsRendererImpl;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * 

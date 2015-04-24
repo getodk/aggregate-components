@@ -20,6 +20,8 @@ supports variable deadlines (timeouts), redirects, certificate
 validation, and expect-continue semantics (provided Google's 
 UrlFetchService supports those semantics).
 
+Version was updated to 1.1.2 with Java 1.7 compiler and AppEngine 1.9.18
+
 (3) TomcatUtils
 
 A wrapper to the Javax ImageIO library for resizing the images 
@@ -31,30 +33,21 @@ NOTE: The Javax ImageIO library is not redistributable. Included in
 the /lib directory of this project is a subset of the library that
 is redistributable.
 
+This was updated to 1.0.1 with the change to use the ImageIO library
+version 1.3.0 here:
+		<dependency>
+			<groupId>com.github.jai-imageio</groupId>
+			<artifactId>jai-imageio-core</artifactId>
+			<version>1.3.0</version>
+		</dependency>
+
 (4) OpenID4Java
 
-This is a copy of the openid4java sources 
-( http://code.google.com/p/openid4java/ )
-Updated to:
-* use current jars
-* not have untyped-collection errors
-* add piping for passing in an HttpClientFactory 
- (so that the code in GAEHttpClient can be used 
-  on AppEngine).
-* use common-logging vs. slf4j
-
-This is NOT an eclipse project
+This is no longer maintained and has been deleted. 
 
 (5) spring-security-patch
 
-This is a delta off of springframework security 
-( http://static.springsource.org/spring-security/site/ )
-Updated to:
-* use the jar produced by (4) OpenID4Java
-* use 3.1.3.RELEASE springframework https://github.com/SpringSource/spring-security.git
-* use current jars
-
-This is NOT an eclipse project
+This is no longer maintained and has been deleted. 
 
 (6) UsableServerDiagnosticApp
 
@@ -63,9 +56,19 @@ If a user has trouble running ODK Aggregate on a hosting service,
 use this application to verify that the service properly handles 
 GWT applications and is Tomcat 6.
 
-(7) gwt-google-maps-v3
+(7) gwt-visualization-1.1.2
 
-The gwt-google-maps-v3-snapshot.jar is built from code formerly at:
+This is formerly a zip found at:
+  https://code.google.com/p/gwt-google-apis/
+With the decommissioning of Googlecode, the
+zip was copied and exploded into this project.
+
+(8) gwt-google-maps-v3
+
+The gwt-google-maps-v3-1.0.1.jar is built from sources that
+have been updated to work with GWT 2.7.0.
+
+The gwt-google-maps-v3-snapshot.jar was built from code formerly at:
   http://code.google.com/p/gwt-google-maps-v3/
 Unfortunately, that has since been removed, and, even then, the 
 uploaded jars on that site do not include both the source and the

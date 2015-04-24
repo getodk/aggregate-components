@@ -31,7 +31,6 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.HasAnnotations;
-import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -74,10 +73,6 @@ public class JSWrapperGenerator extends Generator {
    */
   protected static final String OBJ = "jsoPeer";
 
-  /**
-   * Allows the metadata warning to be turned off to prevent log spam.
-   */
-  private static final boolean SUPPRESS_WARNINGS = Boolean.getBoolean("JSWrapper.suppressMetaWarnings");
 
   /**
    * Extract an Annotation. If the requested Annotation does not exist on the
@@ -100,8 +95,7 @@ public class JSWrapperGenerator extends Generator {
    *           but cannot be interpreted as the return type of the annotation's
    *           value method
    */
-  @SuppressWarnings("deprecation")
-  static <A extends Annotation, M extends HasAnnotations & HasMetaData> A hasTag(
+  static <A extends Annotation, M extends HasAnnotations> A hasTag(
       TreeLogger logger, M target, final Class<A> annotation)
       throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.TRACE, "Looking for annotation/meta "
@@ -125,27 +119,15 @@ public class JSWrapperGenerator extends Generator {
 
     String tagName = metaDataName.value();
     boolean hasTag = false;
-    for (String tag : target.getMetaDataTags()) {
-      if (tagName.equals(tag)) {
-        hasTag = true;
-        if (!SUPPRESS_WARNINGS) {
-          logger.log(TreeLogger.WARN, target
-              + " uses deprecated metadata.  Replace with annotation "
-              + annotation.getName(), null);
-        }
-        break;
-      }
-    }
     if (!hasTag) {
       logger.log(TreeLogger.TRACE, "No metadata with tag " + tagName, null);
       return null;
     }
 
-    Object value;
+    Object value = null;
     try {
       Method valueMethod = annotation.getMethod("value");
       Class<?> returnType = valueMethod.getReturnType();
-      String[][] metaData = target.getMetaData(metaDataName.value());
 
       // Use the default value if there's no value in the metadata
       Object annotationDefaultValue;
@@ -155,32 +137,20 @@ public class JSWrapperGenerator extends Generator {
         annotationDefaultValue = null;
       }
 
-      if (annotationDefaultValue == null && metaData.length == 0) {
+      if (annotationDefaultValue == null) {
         logger.log(TreeLogger.ERROR, "Metadata " + tagName
             + " must appear exactly once", null);
         throw new UnableToCompleteException();
 
       } else if (returnType.equals(String.class)) {
-        if (metaData[0].length == 1) {
-          logger.log(TreeLogger.TRACE, "Using value from metadata", null);
-          value = metaData[0][0];
-
-        } else if (annotationDefaultValue != null) {
+    	if (annotationDefaultValue != null) {
           value = annotationDefaultValue;
-        } else {
-          logger.log(TreeLogger.ERROR, "Metadata " + tagName
-              + " must have exactly one value", null);
-          throw new UnableToCompleteException();
         }
 
       } else if (annotationDefaultValue != null) {
         logger.log(TreeLogger.TRACE, "Using annotation's default value", null);
         value = annotationDefaultValue;
 
-      } else {
-        logger.log(TreeLogger.ERROR, "Can't deal with return type "
-            + returnType.getName(), null);
-        throw new UnableToCompleteException();
       }
     } catch (NoSuchMethodException e) {
       // Just a tag annotation

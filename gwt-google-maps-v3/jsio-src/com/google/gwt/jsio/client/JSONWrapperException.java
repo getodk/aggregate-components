@@ -19,6 +19,11 @@ package com.google.gwt.jsio.client;
  * A generic Exception base class for JSWrapper operations.
  */
 public class JSONWrapperException extends Exception {
+  /**
+   * 
+   */
+  private static final long serialVersionUID = -3845511712493064918L;
+
   public JSONWrapperException() {
   }
 
