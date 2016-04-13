@@ -80,8 +80,8 @@ public class TranslatedStrings extends ListResourceBundle {
         {LAUNCH_FAILED, "Launch Failed: %1$s"},
         {DIR_RUNNABLE_JAR, "Directory of this runnable Jar: %1$s"},
         {INSTALL_ROOT_REQUIRED, "Unable to determine path to %1$s. Relaunch supplying %2$s argument value."},
-        {EMAIL_LABEL, "Email:"},
-        {TOKEN_GRANTING_LABEL, "Google Token-Granting Authorization Code:"},
+        {EMAIL_LABEL, "Email of Google Cloud Platform account (the owner of your App Engine):"},
+        {TOKEN_GRANTING_LABEL, "Code from Google's account authorization web page (granting access for Google App Engine appcfg):"},
         {GET_TOKEN_LABEL, "Get Token"},
         {SET_TOKEN_LABEL, "Set Token"},
         {VERIFY_TOKEN_LABEL, "Verify Token"},
@@ -96,32 +96,32 @@ public class TranslatedStrings extends ListResourceBundle {
 
         {BAD_INSTALL_ROOT_PATH, "Bad %1$s path: %2$s"},
         
-        {WARNING_ERRANT_LABEL, "<html>A token was detected on your system. If the token is invalid, you may be redirected to a browser to obtain an token-granting code. Copy that into the pop-up window and click OK.</html>"},
-        {WARNING_REDIRECT_LABEL, "<html>You will be redirected to a browser to obtain an token-granting code. Copy that into the pop-up window and click OK.</html>"},
+        {WARNING_ERRANT_LABEL, "<html>A token was detected on your system. Click on \"Upload\" to upload ODK Aggregate to your App Engine instance. If the token is invalid, you may be redirected to a browser to obtain a code from Google's account authorization web page. If that occurs, copy that code into the pop-up window that will appear and click OK to proceed.</html>"},
+        {WARNING_REDIRECT_LABEL, "<html>After entering the Email address, Click on \"Get Token.\" <br>You will be redirected to a browser to obtain a code from Google's account authorization web page. <br>Copy that code into the pop-up window that will appear and click OK to proceed.</html>"},
 
-        {EMAIL_ARG_DESC, "Google E-mail account that has ownership privileges for AppEngine Cloud project"},
-        {TOKEN_GRANTING_CODE_ARG_DESC, "Token-granting-code from Google Authentication screens"},
-        {SDK_ROOT_ARG_DESC, "Specify path to appengine sdk"},
+        {EMAIL_ARG_DESC, "Email of Google Cloud Platform account (the owner of your App Engine)"},
+        {TOKEN_GRANTING_CODE_ARG_DESC, "Code from Google's account authorization web page (granting access for Google App Engine appcfg)"},
+        {SDK_ROOT_ARG_DESC, "Specify path to app engine sdk"},
         {INSTALL_ROOT_ARG_DESC, "Specify path to ODK Aggregate directory produced by installer"},
         {HELP_ARG_DESC, "Print help information (this screen)"},
         {VERSION_ARG_DESC, "Print version information"},
         {NO_UI_ARG_DESC, "Run without a GUI (as a command line program)"},
-        {CLEAR_ARG_DESC, "Delete the Oauth2 Credentials file (clears all tokens)"},
-        {UPLOAD_ARG_DESC, "Upload ODK Aggregate to AppEngine"},
-        {ROLLBACK_ARG_DESC, "Rollback any failed/stuck upload of ODK Aggregate to AppEngine"},
+        {CLEAR_ARG_DESC, "Clear all tokens (delete the Oauth2 Credentials file)"},
+        {UPLOAD_ARG_DESC, "Upload ODK Aggregate to App Engine"},
+        {ROLLBACK_ARG_DESC, "Rollback any failed/stuck upload of ODK Aggregate to App Engine"},
 
         {STATUS_LBL, "status"},
         {SUCCEEDED_ACTION, "Action Succeeded!"},
         {ABORTED_BY_USER_ACTION, "Action failed or aborted by user"},
         {FAILED_BUT_OK_ACTION, "Action failed (this is expected)"},
         {OK_LBL, "OK"},
-        {TITLE_ENTER_AUTH_TOKEN_GRANTING_CODE_LBL, "Enter Google Token-Granting Authorization Code"},
-        {ENTER_TOKEN_GRANTING_CODE_LBL, "Enter Token-Granting Authorization Code: (from browser page)"},
+        {TITLE_ENTER_AUTH_TOKEN_GRANTING_CODE_LBL, "Enter Code from Google's Account Authorization Web Page"},
+        {ENTER_TOKEN_GRANTING_CODE_LBL, "Enter Code from Google's Account Authorization web page"},
         {OUTPUT_LBL, "Output:"},
         {FILE_NOT_FOUND_EXCEPTION, "File Not Found Exception"},
         {IO_EXCEPTION, "IO Exception"},
 
-        {AGG_INSTALLER_VERSION, "ODK Aggregate AppEngine Updater - Version %1$s"}
+        {AGG_INSTALLER_VERSION, "ODK Aggregate App Engine Updater - Version %1$s"}
     // END OF MATERIAL TO LOCALIZE
     };
   }

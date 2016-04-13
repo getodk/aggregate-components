@@ -361,34 +361,19 @@ public class UpdaterWindow implements WindowListener {
 
       @Override
       public void insertUpdate(DocumentEvent e) {
-        changeDisplayText(); 
+        updateUI();
       }
 
       @Override
       public void removeUpdate(DocumentEvent e) {
-        changeDisplayText(); 
+        updateUI();
       }
 
       @Override
       public void changedUpdate(DocumentEvent e) {
-        changeDisplayText(); 
+        updateUI();
       }
       
-      private void changeDisplayText() {
-        if ( (txtEmail.getText().length() > 0) && ((txtToken.getText().length() > 0) || perhapsHasToken()) ) {
-          lblWarning.setText(t(TranslatedStrings.WARNING_ERRANT_LABEL));
-          if ( perhapsHasToken() ) {
-            btnChoose.setText(t(TranslatedStrings.VERIFY_TOKEN_LABEL));
-          } else {
-            btnChoose.setText(t(TranslatedStrings.SET_TOKEN_LABEL));
-          }
-        } else {
-          lblWarning.setText(t(TranslatedStrings.WARNING_REDIRECT_LABEL));
-          btnChoose.setText(t(TranslatedStrings.GET_TOKEN_LABEL));
-        }
-        btnChoose.setEnabled(txtEmail.getText().length() > 0);
-        btnDeleteToken.setEnabled(perhapsHasToken());
-      }
       });
 
     // set up listener for updating warning message
@@ -396,34 +381,19 @@ public class UpdaterWindow implements WindowListener {
 
       @Override
       public void insertUpdate(DocumentEvent e) {
-        changeDisplayText(); 
+        updateUI();
       }
 
       @Override
       public void removeUpdate(DocumentEvent e) {
-        changeDisplayText(); 
+        updateUI();
       }
 
       @Override
       public void changedUpdate(DocumentEvent e) {
-        changeDisplayText(); 
+        updateUI();
       }
       
-      private void changeDisplayText() {
-        if ( (txtEmail.getText().length() > 0) && ((txtToken.getText().length() > 0) || perhapsHasToken()) ) {
-          lblWarning.setText(t(TranslatedStrings.WARNING_ERRANT_LABEL));
-          if ( perhapsHasToken() ) {
-            btnChoose.setText(t(TranslatedStrings.VERIFY_TOKEN_LABEL));
-          } else {
-            btnChoose.setText(t(TranslatedStrings.SET_TOKEN_LABEL));
-          }
-        } else {
-          lblWarning.setText(t(TranslatedStrings.WARNING_REDIRECT_LABEL));
-          btnChoose.setText(t(TranslatedStrings.GET_TOKEN_LABEL));
-        }
-        btnChoose.setEnabled(txtEmail.getText().length() > 0);
-        btnDeleteToken.setEnabled(perhapsHasToken());
-      }
       });
     
     if ( (txtEmail.getText().length() > 0) && ((txtToken.getText().length() > 0) || perhapsHasToken()) ) {
@@ -560,21 +530,8 @@ public class UpdaterWindow implements WindowListener {
       if ( tokenFile.exists() ) {
         tokenFile.delete();
       }
-      
-      // update display...
-      if ( (txtToken.getText().length() > 0 && txtEmail.getText().length() > 0) || perhapsHasToken() ) {
-        if ( perhapsHasToken() ) {
-          btnChoose.setText(t(TranslatedStrings.VERIFY_TOKEN_LABEL));
-        } else {
-          btnChoose.setText(t(TranslatedStrings.SET_TOKEN_LABEL));
-        }
-      } else {
-        btnChoose.setText(t(TranslatedStrings.GET_TOKEN_LABEL));
-      }
-      btnDeleteToken.setEnabled(perhapsHasToken());
-      btnChoose.setEnabled(txtEmail.getText().length() > 0);
-      btnUpload.setEnabled((txtEmail.getText().length() > 0) && perhapsHasToken());
-      btnRollback.setEnabled((txtEmail.getText().length() > 0) && perhapsHasToken());
+      txtToken.setText("");
+      updateUI();
     }
   }
   
@@ -614,6 +571,7 @@ public class UpdaterWindow implements WindowListener {
       switch ( successState ) {
       case GET_TOKEN:
         // odd state to be in
+        setActiveHandler(null);
         updateUI();
         break;
       case VERIFY_TOKEN:
@@ -705,13 +663,15 @@ public class UpdaterWindow implements WindowListener {
     private void updateUI() {
       boolean inProgress = hasActiveHandler();
       // upon getting a response...
-      if ( (txtToken.getText().length() > 0 && txtEmail.getText().length() > 0) || perhapsHasToken() ) {
+      if ( (txtEmail.getText().length() > 0) && ((txtToken.getText().length() > 0) || perhapsHasToken()) ) {
+        lblWarning.setText(t(TranslatedStrings.WARNING_ERRANT_LABEL));
         if ( perhapsHasToken() ) {
           btnChoose.setText(t(TranslatedStrings.VERIFY_TOKEN_LABEL));
         } else {
           btnChoose.setText(t(TranslatedStrings.SET_TOKEN_LABEL));
         }
       } else {
+        lblWarning.setText(t(TranslatedStrings.WARNING_REDIRECT_LABEL));
         btnChoose.setText(t(TranslatedStrings.GET_TOKEN_LABEL));
       }
       btnDeleteToken.setEnabled(!inProgress && perhapsHasToken());
@@ -719,7 +679,7 @@ public class UpdaterWindow implements WindowListener {
       btnUpload.setEnabled(!inProgress && (txtEmail.getText().length() > 0) && perhapsHasToken());
       btnRollback.setEnabled(!inProgress && (txtEmail.getText().length() > 0) && perhapsHasToken());
     }
-  
+
   class GetTokenActionListener implements ActionListener {
 
     @Override
@@ -767,43 +727,36 @@ public class UpdaterWindow implements WindowListener {
 
   @Override
   public void windowOpened(WindowEvent e) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void windowClosing(WindowEvent e) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void windowClosed(WindowEvent e) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void windowIconified(WindowEvent e) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void windowDeiconified(WindowEvent e) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void windowActivated(WindowEvent e) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void windowDeactivated(WindowEvent e) {
-    // TODO Auto-generated method stub
 
   }
 
