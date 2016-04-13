@@ -18,11 +18,17 @@ package org.opendatakit.appengine.updater;
 
 import java.io.File;
 
+/**
+ * Argument values that are derived, perhaps modified in the UI, or supplied as command line arguments.
+ * 
+ * @author mitchellsundt@gmail.com
+ *
+ */
 public class EffectiveArgumentValues {
 
   public File install_root;
   public String email;
-  public String token;
+  public String token_granting_code;
   
   public boolean noGUI;
 }

@@ -24,7 +24,7 @@ http://apache.org/                  /Apache 2.0/
 	
 	commons-exec-1.3.jar has been extensively 
 	modified and placed under the 
-	org.opendatakit.apache...
+	org.opendatakit.apache.commons.exec....
 	tree in our src directory.
 	
 http://www.eventbus.org/            /Apache 2.0/

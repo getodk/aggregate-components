@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2012 University of Washington.
- * 
+ * Copyright (C) 2016 University of Washington.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -51,6 +51,16 @@ import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+/**
+ * Modal pop-up that is displayed to the user to obtain the 
+ * Google Token-Granting Authorization Code.
+ * 
+ * User should paste the code from their browser into the text entry field
+ * and click OK.
+ * 
+ * @author mitchellsundt@gmail.com
+ *
+ */
 public class TokenEntryDialog extends JDialog {
 
   private static final long serialVersionUID = 6753077036860161654L;

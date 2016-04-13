@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2016 University of Washington.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /* 
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -25,8 +41,10 @@ import java.io.OutputStream;
 import org.opendatakit.apache.commons.exec.util.DebugUtils;
 
 /**
- * Modified StreamPumper that places all the read-write handling within the
- * abstract attemptProcessInputStreamBytes method.
+ * Moved the guts of StreamPumper here. 
+ * 
+ * - places the read-write handling within the abstract attemptProcessInputStreamBytes method.
+ * - move Thread inside this class; add shouldClose flag and ability to forcibly shut down the pumper thread.
  * 
  * Copies all data from an input stream to an output stream.
  *

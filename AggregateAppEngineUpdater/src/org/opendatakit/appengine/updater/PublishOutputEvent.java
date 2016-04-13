@@ -18,6 +18,15 @@ package org.opendatakit.appengine.updater;
 
 import org.opendatakit.apache.commons.exec.StreamPumperBuilder.StreamType;
 
+/**
+ * Event that is published to trigger processing of a line of 
+ * stdout or stderr from the appCfg process.  Processing can 
+ * be either emitting it to a screen or file, or analyzing it 
+ * to refine the success/failure status of the command.
+ * 
+ * @author mitchellsundt@gmail.com
+ *
+ */
 public class PublishOutputEvent {
   public final StreamType type;
   public final AppCfgActions action;

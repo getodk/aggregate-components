@@ -29,6 +29,13 @@ import org.opendatakit.apache.commons.exec.ExecuteResultHandler;
 import org.opendatakit.appengine.updater.exec.extended.LegacyRemovalPumpStreamHandler;
 import org.opendatakit.appengine.updater.exec.extended.MonitoredPumpStreamHandler;
 
+/**
+ * Static methods to configure an InvokationObject and execute an appCfg command.
+ * The passed-in ExecuteResultHandler manages the outcome of the execution.
+ *  
+ * @author mitchellsundt@gmail.com
+ *
+ */
 public class AppCfgWrapper {
   
   /**
@@ -92,9 +99,6 @@ public class AppCfgWrapper {
     // substitution map
     iObj.substitutionMap = new HashMap<String,Object>();
     iObj.substitutionMap.put("email",  args.email);
-    if ( args.token != null ) {
-      iObj.substitutionMap.put("token", args.token);
-    }
     iObj.substitutionMap.put("sdk_root", "." + File.separator + Preferences.APP_ENGINE_SDK_DIRNAME);
     iObj.substitutionMap.put("legacy_install", "." + File.separator + Preferences.LEGACY_REMOVAL_DIRNAME);
     iObj.substitutionMap.put("modules_install", "." + File.separator + Preferences.ODK_AGGREGATE_EAR_DIRNAME);
@@ -135,7 +139,7 @@ public class AppCfgWrapper {
     AppCfgActions action = AppCfgActions.getToken;
     InvokationObject iObj = buildAppCfgInvokation(args, 60000);
     
-    if ( args.token != null ) {
+    if ( args.token_granting_code != null ) {
       action = AppCfgActions.verifyToken;
     }
 
@@ -146,7 +150,7 @@ public class AppCfgWrapper {
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {
-      MonitoredPumpStreamHandler handler = new MonitoredPumpStreamHandler(args.token, action, outlog, errlog);
+      MonitoredPumpStreamHandler handler = new MonitoredPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
       executionHandler.setExecuteStreamHandler(handler);
       iObj.executor.setStreamHandler(handler);
       iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
@@ -176,7 +180,7 @@ public class AppCfgWrapper {
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token, action, outlog, errlog);
+      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
       executionHandler.setExecuteStreamHandler(handler);
       iObj.executor.setStreamHandler(handler);
       iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
@@ -207,7 +211,7 @@ public class AppCfgWrapper {
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token, action, outlog, errlog);
+      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
       executionHandler.setExecuteStreamHandler(handler);
       iObj.executor.setStreamHandler(handler);
       iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
@@ -236,7 +240,7 @@ public class AppCfgWrapper {
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {
-      MonitoredPumpStreamHandler handler = new MonitoredPumpStreamHandler(args.token, action, outlog, errlog);
+      MonitoredPumpStreamHandler handler = new MonitoredPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
       executionHandler.setExecuteStreamHandler(handler);
       iObj.executor.setStreamHandler(handler);
       iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
@@ -265,7 +269,7 @@ public class AppCfgWrapper {
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {
-      MonitoredPumpStreamHandler handler = new MonitoredPumpStreamHandler(args.token, action, outlog, errlog);
+      MonitoredPumpStreamHandler handler = new MonitoredPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
       executionHandler.setExecuteStreamHandler(handler);
       iObj.executor.setStreamHandler(handler);
       iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);

@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2016 University of Washington.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /* 
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -25,13 +41,15 @@ import java.io.OutputStream;
 import org.opendatakit.apache.commons.exec.StreamPumperBuilder.StreamType;
 
 /**
- * Modified PumpStreamHandler to use an init() method and to use a builder
- * to construct the StreamPumpers for the in, out, err streams.
+ * Moved the guts of PumpStreamHandler here.
  * 
+ * Changes:
+ *   - move initializer action into init() method.
+ *   - pass in a StreamPumperBuilder to enable changing those implementations.
+ *   
  * Copies standard output and error of sub-processes to standard output and error
- * of the parent process. If output or error stream are set to null, any feedback
- * from that stream will be lost.
- *
+ * of the parent process. 
+ * 
  * @version $Id: PumpStreamHandler.java 1557263 2014-01-10 21:18:09Z ggregory $
  */
 public abstract class AbstractPumpStreamHandler implements ExecuteStreamHandler {

@@ -1,7 +1,3 @@
-package org.opendatakit.appengine.updater;
-
-import java.util.ListResourceBundle;
-
 /*
  * Copyright (C) 2016 University of Washington.
  *
@@ -18,53 +14,64 @@ import java.util.ListResourceBundle;
  * the License.
  */
 
+package org.opendatakit.appengine.updater;
+
+import java.util.ListResourceBundle;
+
+/**
+ * Strings that we could translate if we want to internationalize this 
+ * applicaiton.
+ * 
+ * @author mitchellsundt@gmail.com
+ *
+ */
 public class TranslatedStrings extends ListResourceBundle {
 
-  public static final String LAUNCH_FAILED = "a2";
-  public static final String DIR_RUNNABLE_JAR = "a2a";
-  public static final String INSTALL_ROOT_REQUIRED = "a2b";
-  public static final String EMAIL_LABEL = "a3";
-  public static final String TOKEN_GRANTING_LABEL = "a3a";
-  public static final String GET_TOKEN_LABEL = "a4";
-  public static final String SET_TOKEN_LABEL = "a4a";
-  public static final String VERIFY_TOKEN_LABEL = "a4b";
-  public static final String DELETE_TOKEN_LABEL = "a4b1";
-  public static final String UPLOAD_LABEL = "a4c";
-  public static final String ROLLBACK_LABEL = "a4d";
-  public static final String VERSION_INFO = "a5";
+  public static final String LAUNCH_FAILED = "a";
+  public static final String DIR_RUNNABLE_JAR = "b";
+  public static final String INSTALL_ROOT_REQUIRED = "c";
+  public static final String EMAIL_LABEL = "d";
+  public static final String TOKEN_GRANTING_LABEL = "e";
+  public static final String GET_TOKEN_LABEL = "f";
+  public static final String SET_TOKEN_LABEL = "g";
+  public static final String VERIFY_TOKEN_LABEL = "h";
+  public static final String DELETE_TOKEN_LABEL = "i";
+  public static final String UPLOAD_LABEL = "j";
+  public static final String ROLLBACK_LABEL = "k";
+  public static final String VERSION_INFO = "l";
   
-  public static final String ARG_IS_REQUIRED = "a5a";
-  public static final String ARG_IS_REQUIRED_CMD = "a5b";
-  public static final String CONFLICTING_ARGS_CMD = "a5b1";
+  public static final String ARG_IS_REQUIRED = "m";
+  public static final String ARG_IS_REQUIRED_CMD = "n";
+  public static final String CONFLICTING_ARGS_CMD = "o";
 
-  public static final String BAD_INSTALL_ROOT_PATH = "a5c";
+  public static final String BAD_INSTALL_ROOT_PATH = "p";
   
-  public static final String WARNING_ERRANT_LABEL = "a6";
-  public static final String WARNING_REDIRECT_LABEL = "a7";
+  public static final String WARNING_ERRANT_LABEL = "q";
+  public static final String WARNING_REDIRECT_LABEL = "r";
 
-  public static final String EMAIL_ARG_DESC = "a7a";
-  public static final String TOKEN_GRANTING_CODE_ARG_DESC = "a7b";
-  public static final String SDK_ROOT_ARG_DESC = "a7c";
-  public static final String INSTALL_ROOT_ARG_DESC = "a7d";
-  public static final String HELP_ARG_DESC = "a7e";
-  public static final String VERSION_ARG_DESC = "a7f";
-  public static final String NO_UI_ARG_DESC = "a7g";
-  public static final String UPLOAD_ARG_DESC = "a7h";
-  public static final String ROLLBACK_ARG_DESC = "a7i";
-  public static final String CLEAR_ARG_DESC = "a7j";
+  public static final String EMAIL_ARG_DESC = "s";
+  public static final String TOKEN_GRANTING_CODE_ARG_DESC = "t";
+  public static final String SDK_ROOT_ARG_DESC = "u";
+  public static final String INSTALL_ROOT_ARG_DESC = "v";
+  public static final String HELP_ARG_DESC = "w";
+  public static final String VERSION_ARG_DESC = "x";
+  public static final String NO_UI_ARG_DESC = "y";
+  public static final String UPLOAD_ARG_DESC = "z";
+  public static final String ROLLBACK_ARG_DESC = "aa";
+  public static final String CLEAR_ARG_DESC = "bb";
 
-  public static final String STATUS_LBL = "a8";
-  public static final String SUCCEEDED_ACTION = "a8a";
-  public static final String ABORTED_BY_USER_ACTION = "a8b";
-  public static final String FAILED_BUT_OK_ACTION = "a8c";
-  public static final String OK_LBL = "a8d";
-  public static final String TITLE_ENTER_AUTH_TOKEN_GRANTING_CODE_LBL = "a8e";
-  public static final String ENTER_TOKEN_GRANTING_CODE_LBL = "a8f";
-  public static final String OUTPUT_LBL = "a8g";
-  public static final String FILE_NOT_FOUND_EXCEPTION = "a8h";
-  public static final String IO_EXCEPTION = "a8i";
+  public static final String STATUS_LBL = "cc";
+  public static final String SUCCEEDED_ACTION = "dd";
+  public static final String ABORTED_BY_USER_ACTION = "ee";
+  public static final String FAILED_BUT_OK_ACTION = "ff";
+  public static final String OK_LBL = "gg";
+  public static final String TITLE_ENTER_AUTH_TOKEN_GRANTING_CODE_LBL = "hh";
+  public static final String ENTER_TOKEN_GRANTING_CODE_LBL = "ii";
+  public static final String OUTPUT_LBL = "jj";
+  public static final String FILE_NOT_FOUND_EXCEPTION = "kk";
+  public static final String IO_EXCEPTION = "ll";
   
-  public static final String AGG_INSTALLER_VERSION = "a1";
+  public static final String AGG_INSTALLER_VERSION = "zz";
   
   @Override
   protected Object[][] getContents() {

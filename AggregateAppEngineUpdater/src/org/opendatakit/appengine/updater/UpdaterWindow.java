@@ -200,7 +200,7 @@ public class UpdaterWindow implements WindowListener {
       return;
     }
 
-    // pull from collect or aggregate, not both
+    // update appEngine with the local configuration
     if (cmdArgs.hasOption(ArgumentNameConstants.UPLOAD)) {
       
       if (cmdArgs.hasOption(ArgumentNameConstants.CLEAR)) {
@@ -213,9 +213,6 @@ public class UpdaterWindow implements WindowListener {
             ArgumentNameConstants.UPLOAD, ArgumentNameConstants.ROLLBACK));
       }
 
-      if (!cmdArgs.hasOption(ArgumentNameConstants.TOKEN)) {
-        System.out.println(fmt(TranslatedStrings.ARG_IS_REQUIRED_CMD, ArgumentNameConstants.TOKEN));
-      }
       if (!cmdArgs.hasOption(ArgumentNameConstants.EMAIL)) {
         System.out.println(fmt(TranslatedStrings.ARG_IS_REQUIRED_CMD, ArgumentNameConstants.EMAIL));
       }
@@ -224,7 +221,7 @@ public class UpdaterWindow implements WindowListener {
       return;
     }
 
-    // pull from aggregate
+    // rollback any stuck outstanding configuration transaction on appEngine infrastructure
     if (cmdArgs.hasOption(ArgumentNameConstants.ROLLBACK)) {
       
       if (cmdArgs.hasOption(ArgumentNameConstants.CLEAR)) {
@@ -237,9 +234,6 @@ public class UpdaterWindow implements WindowListener {
             ArgumentNameConstants.ROLLBACK, ArgumentNameConstants.UPLOAD));
       }
 
-      if (!cmdArgs.hasOption(ArgumentNameConstants.TOKEN)) {
-        System.out.println(fmt(TranslatedStrings.ARG_IS_REQUIRED_CMD, ArgumentNameConstants.TOKEN));
-      }
       if (!cmdArgs.hasOption(ArgumentNameConstants.EMAIL)) {
         System.out.println(fmt(TranslatedStrings.ARG_IS_REQUIRED_CMD, ArgumentNameConstants.EMAIL));
       }
@@ -357,8 +351,8 @@ public class UpdaterWindow implements WindowListener {
     txtToken.setMaximumSize( txtToken.getPreferredSize() );
     txtToken.setFocusable(false);
     txtToken.setEditable(false);
-    if ( cmd.hasOption(ArgumentNameConstants.TOKEN) ) {
-      txtToken.setText(cmd.getOptionValue(ArgumentNameConstants.TOKEN));
+    if ( cmd.hasOption(ArgumentNameConstants.TOKEN_GRANTING_CODE) ) {
+      txtToken.setText(cmd.getOptionValue(ArgumentNameConstants.TOKEN_GRANTING_CODE));
     }
     lblToken.setLabelFor(txtToken);
 
@@ -552,7 +546,7 @@ public class UpdaterWindow implements WindowListener {
     
     // override if different
     if ( txtToken.getText() != null && txtToken.getText().trim().length() > 0 ) {
-      args.token = txtToken.getText().trim();
+      args.token_granting_code = txtToken.getText().trim();
     }
     return args;
   }
@@ -873,7 +867,7 @@ public class UpdaterWindow implements WindowListener {
         .desc(t(TranslatedStrings.EMAIL_ARG_DESC))
         .build();
 
-    Option token = Option.builder().argName("token").hasArg().longOpt(ArgumentNameConstants.TOKEN)
+    Option token = Option.builder().argName("code").hasArg().longOpt(ArgumentNameConstants.TOKEN_GRANTING_CODE)
         .desc(t(TranslatedStrings.TOKEN_GRANTING_CODE_ARG_DESC)).build();
 
     Option clear = Option.builder().longOpt(ArgumentNameConstants.CLEAR)

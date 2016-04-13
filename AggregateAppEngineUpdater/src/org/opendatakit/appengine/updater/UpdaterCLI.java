@@ -26,6 +26,7 @@ import org.apache.commons.cli.CommandLine;
 import org.bushe.swing.event.annotation.AnnotationProcessor;
 import org.bushe.swing.event.annotation.EventSubscriber;
 import org.opendatakit.apache.commons.exec.DefaultExecuteResultHandler;
+import org.opendatakit.apache.commons.exec.StreamPumperBuilder.StreamType;
 import org.opendatakit.appengine.updater.exec.extended.MonitoredPumpStreamHandler;
 
 public class UpdaterCLI {
@@ -52,10 +53,10 @@ public class UpdaterCLI {
       args.email = null;
     }
 
-    if (cmd.hasOption(ArgumentNameConstants.TOKEN)) {
-      args.token = cmd.getOptionValue(ArgumentNameConstants.TOKEN);
+    if (cmd.hasOption(ArgumentNameConstants.TOKEN_GRANTING_CODE)) {
+      args.token_granting_code = cmd.getOptionValue(ArgumentNameConstants.TOKEN_GRANTING_CODE);
     } else {
-      args.token = null;
+      args.token_granting_code = null;
     }
 
     if (cmd.hasOption(ArgumentNameConstants.INSTALL_ROOT)) {
@@ -115,7 +116,7 @@ public class UpdaterCLI {
       } else {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
-        System.exit(-1);
+        System.exit(0);
         return;
       }
       
@@ -133,7 +134,7 @@ public class UpdaterCLI {
       } else {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
-        System.exit(-1);
+        System.exit(0);
         return;
       }
 
@@ -144,7 +145,7 @@ public class UpdaterCLI {
         tokenFile.delete();
         System.out.println(AppCfgActions.deleteToken.name() + ": " +
               UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
-        System.exit(-1);
+        System.exit(0);
         return;
       }
 
@@ -161,7 +162,7 @@ public class UpdaterCLI {
       } else {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
-        System.exit(-1);
+        System.exit(0);
         return;
       }
 
@@ -181,6 +182,13 @@ public class UpdaterCLI {
     } catch ( IOException e ) {
       e.printStackTrace();
     }
+  }
+
+  @EventSubscriber(eventClass = PublishOutputEvent.class)
+  public void displayOutput(PublishOutputEvent event) {
+
+    String str = event.action.name() + ((event.type == StreamType.ERR) ? "!:  " : " :  ") + event.line;
+    System.out.println(str);
   }
 
 }
