@@ -82,3 +82,12 @@ To build, do the following:
 (10) Enter JAR file (gwt-google-maps-v3-snapshot.jar) and choose to compress contents.
 (11) Finish
 (12) You'll get a warning that it exported with warnings (the original 11).
+
+(9) AggregateAppEngineUpdater
+
+This is a simple Eclipse project.
+
+Build, and export as a runnable jar.
+
+Copy into the bitrock installer tree for 
+inclusion in the installer.
