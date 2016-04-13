@@ -86,7 +86,7 @@ public class TranslatedStrings extends ListResourceBundle {
         {SET_TOKEN_LABEL, "Set Token"},
         {VERIFY_TOKEN_LABEL, "Verify Token"},
         {DELETE_TOKEN_LABEL, "Delete Token"},
-        {UPLOAD_LABEL, "Upload"},
+        {UPLOAD_LABEL, "Upload ODK Aggregate"},
         {ROLLBACK_LABEL, "Rollback"},
         {VERSION_INFO, "version %1$s"},
         
@@ -96,8 +96,8 @@ public class TranslatedStrings extends ListResourceBundle {
 
         {BAD_INSTALL_ROOT_PATH, "Bad %1$s path: %2$s"},
         
-        {WARNING_ERRANT_LABEL, "<html>A token was detected on your system. Click on \"Upload\" to upload ODK Aggregate to your App Engine instance. If the token is invalid, you may be redirected to a browser to obtain a code from Google's account authorization web page. If that occurs, copy that code into the pop-up window that will appear and click OK to proceed.</html>"},
-        {WARNING_REDIRECT_LABEL, "<html>After entering the Email address, Click on \"Get Token.\" <br>You will be redirected to a browser to obtain a code from Google's account authorization web page. <br>Copy that code into the pop-up window that will appear and click OK to proceed.</html>"},
+        {WARNING_ERRANT_LABEL, "<html>A token was detected on your system. Click on \"Upload ODK Aggregate\" to upload ODK Aggregate to your App Engine instance. If the token is invalid, you may be redirected to a browser to obtain a code from Google's account authorization web page. If that occurs, copy that code into the pop-up window that will appear, and click OK to proceed. <br><br><strong>IMPORTANT NOTE:</strong> The code is several characters wider than the text area that displays it on Google's web page. Please make sure you copy-and-paste the entire code into the pop-up window (and not just what is visible).</html>"},
+        {WARNING_REDIRECT_LABEL, "<html>After entering the Email address, Click on \"Get Token.\" <br><br>You will be redirected to a browser to obtain a code from Google's account authorization web page. <br>Copy that code into the pop-up window that will appear, and click OK to proceed. <br><br><strong>IMPORTANT NOTE:</strong> The code is several characters wider than the text area that displays it on Google's web page. Please make sure you copy-and-paste the entire code into the pop-up window (and not just what is visible).</html>"},
 
         {EMAIL_ARG_DESC, "Email of Google Cloud Platform account (the owner of your App Engine)"},
         {TOKEN_GRANTING_CODE_ARG_DESC, "Code from Google's account authorization web page (granting access for Google App Engine appcfg)"},
