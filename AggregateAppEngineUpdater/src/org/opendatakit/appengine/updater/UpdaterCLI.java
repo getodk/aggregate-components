@@ -40,7 +40,7 @@ public class UpdaterCLI {
     this.cmd = cmd;
     cliReader = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()));
   }
-
+  
   public static EffectiveArgumentValues getArgs(CommandLine cmd) {
     // execute appCfg
     EffectiveArgumentValues args = new EffectiveArgumentValues();
@@ -105,6 +105,20 @@ public class UpdaterCLI {
         System.exit(-1);
         return;
       }
+      // TODO: This is broken until appcfg can actually delete a module version
+      /*
+      if ( args.hasNewRemoval() ) {
+        handler = new DefaultExecuteResultHandler();
+        AppCfgWrapper.deleteModuleBackground(args, handler);
+        handler.waitFor();
+        if ( handler.getException() != null ) {
+          System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
+              UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
+          System.exit(-1);
+          return;
+        }
+      }
+      */
       handler = new DefaultExecuteResultHandler();
       AppCfgWrapper.update(args, handler);
       handler.waitFor();
@@ -113,12 +127,24 @@ public class UpdaterCLI {
             UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
         System.exit(-1);
         return;
-      } else {
-        System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
-            UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
-        System.exit(0);
-        return;
       }
+      
+      if (args.isLegacyUpload()) {
+        handler = new DefaultExecuteResultHandler();
+        AppCfgWrapper.updateBackendBackground(args, handler);
+        handler.waitFor();
+        if ( handler.getException() != null ) {
+          System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
+              UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
+          System.exit(-1);
+          return;
+        }
+      }
+      
+      System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
+          UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
+      System.exit(0);
+      return;
       
     } else if ( cmd.hasOption(ArgumentNameConstants.ROLLBACK) ) {
     

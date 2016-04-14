@@ -24,4 +24,4 @@ package org.opendatakit.appengine.updater;
  * @author mitchellsundt@gmail.com
  *
  */
-public enum AppCfgActions { deleteToken, getToken, verifyToken, listBackends, deleteBackendBackground, update, rollback, status }
+public enum AppCfgActions { deleteToken, getToken, verifyToken, listBackends, deleteBackendBackground, deleteModuleBackground, update, updateBackendBackground, rollback, status }

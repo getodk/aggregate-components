@@ -31,4 +31,23 @@ public class EffectiveArgumentValues {
   public String token_granting_code;
   
   public boolean noGUI;
+
+  /**
+   * 
+   * @return true if the user has created a NewRemoval directory, indicating that modules should be removed.
+   */
+  public boolean hasNewRemoval() {
+    File newRemoval = new File(install_root, "NewRemoval");
+    return (newRemoval.exists());
+  }
+  
+  /**
+   * 
+   * @return true if we are attempting an upload of a legacy backends install.
+   */
+  public boolean isLegacyUpload() {
+    File defaultPath = new File( new File(install_root, "ODKAggregate"), "default");
+    return !defaultPath.exists();
+  }
+
 }

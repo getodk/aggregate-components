@@ -535,7 +535,7 @@ public class UpdaterWindow implements WindowListener {
     }
   }
   
-  enum StepState { GET_TOKEN, VERIFY_TOKEN, LIST_BACKENDS, DELETE_BACKENDS, UPDATE, ROLLBACK, DONE, ABORTED };
+  enum StepState { GET_TOKEN, VERIFY_TOKEN, LIST_BACKENDS, DELETE_BACKENDS, DELETE_MODULE_BACKGROUND, UPDATE, UPDATE_BACKGROUND, ROLLBACK, DONE, ABORTED };
   
   protected void setActiveHandler(StateExecuteResultHandler activeHandler) {
     this.activeHandler = activeHandler;
@@ -568,6 +568,7 @@ public class UpdaterWindow implements WindowListener {
       // execute appCfg
       EffectiveArgumentValues args = getArgs();
       StateExecuteResultHandler executionHandler;
+      StepState nextState;
       switch ( successState ) {
       case GET_TOKEN:
         // odd state to be in
@@ -589,18 +590,35 @@ public class UpdaterWindow implements WindowListener {
         AppCfgWrapper.listBackends(args, executionHandler);
         break;
       case DELETE_BACKENDS:
-        // delete the background backend; whether or not it is ok, updae.
+        // delete the background backend; then either remove the background module or update.
+        // TODO: add this once appcfg supports deleting modules
+        // nextState = (args.hasNewRemoval() ? StepState.DELETE_MODULE_BACKGROUND : StepState.UPDATE);
         executionHandler = new StateExecuteResultHandler(StepState.UPDATE, StepState.ABORTED);
         setActiveHandler(executionHandler);
         updateUI();
         AppCfgWrapper.deleteBackendBackground(args, executionHandler);
         break;
+      case DELETE_MODULE_BACKGROUND:
+        // delete the background backend; whether or not it is ok, update.
+        executionHandler = new StateExecuteResultHandler(StepState.UPDATE, StepState.ABORTED);
+        setActiveHandler(executionHandler);
+        updateUI();
+        AppCfgWrapper.deleteModuleBackground(args, executionHandler);
+        break;
       case UPDATE:
+        // update
+        nextState =(args.isLegacyUpload() ? StepState.UPDATE_BACKGROUND : StepState.DONE);
+        executionHandler = new StateExecuteResultHandler(nextState, StepState.ABORTED);
+        setActiveHandler(executionHandler);
+        updateUI();
+        AppCfgWrapper.update(args, executionHandler);
+        break;
+      case UPDATE_BACKGROUND:
         // update
         executionHandler = new StateExecuteResultHandler(StepState.DONE, StepState.ABORTED);
         setActiveHandler(executionHandler);
         updateUI();
-        AppCfgWrapper.update(args, executionHandler);
+        AppCfgWrapper.updateBackendBackground(args, executionHandler);
         break;
       case ROLLBACK:
         // rollback
@@ -628,25 +646,6 @@ public class UpdaterWindow implements WindowListener {
       // we need to publish because we need these to be emitted in-order
       EventBus.publish(new PublishOutputEvent(StreamType.OUT, AppCfgActions.status, t(TranslatedStrings.ABORTED_BY_USER_ACTION)));
       updateUI();
-
-      switch ( errorState ) {
-      case GET_TOKEN:
-        break;
-      case VERIFY_TOKEN:
-        break;
-      case LIST_BACKENDS:
-        break;
-      case DELETE_BACKENDS:
-        break;
-      case UPDATE:
-        break;
-      case ROLLBACK:
-        break;
-      case DONE:
-        break;
-      case ABORTED:
-        break;
-      }
     }
 
     @Override
