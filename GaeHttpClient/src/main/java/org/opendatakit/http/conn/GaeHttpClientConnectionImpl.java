@@ -17,17 +17,11 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.EntityEnclosingRequestWrapper;
-import org.apache.http.impl.client.RequestWrapper;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.protocol.HTTP;
@@ -41,18 +35,22 @@ public class GaeHttpClientConnectionImpl implements HttpClientConnection {
 
     private static final Log logger = LogFactory.getLog(GaeHttpClientConnectionImpl.class);
 	
-	/** The state object associated with this connection */
+	/** The state object associated with this connection (unused) */
+	@SuppressWarnings("unused")
 	private Object state;
 	
-	/** The route of this connection. */
+	/** The route of this connection (unused). */
+	@SuppressWarnings("unused")
 	private HttpRoute route;
 	
 	/** The context for the open() request (unused) */
+	@SuppressWarnings("unused")
 	private HttpContext context;
 	
-	private SocketConfig socketConfig;
-	
+	@SuppressWarnings("unused")
 	private ConnectionConfig connectionConfig;
+	
+	private SocketConfig socketConfig;
 	
 	private RequestConfig requestConfig;
 	
@@ -207,21 +205,8 @@ public class GaeHttpClientConnectionImpl implements HttpClientConnection {
 		f.validateCertificate();
 
 		com.google.appengine.api.urlfetch.HTTPMethod method;
-		if ( request instanceof HttpGet ) {
-			method = HTTPMethod.GET;
-		} else if ( request instanceof HttpPut ) {
-			method = HTTPMethod.PUT;
-		} else if ( request instanceof HttpPost ) {
-			method = HTTPMethod.POST;
-		} else if ( request instanceof HttpHead ) {
-			method = HTTPMethod.HEAD;
-		} else if ( request instanceof HttpDelete ) {
-			method = HTTPMethod.DELETE;
-		} else if ( request instanceof EntityEnclosingRequestWrapper ) {
-			String name = ((EntityEnclosingRequestWrapper) request).getMethod();
-			method = HTTPMethod.valueOf(name);
-		} else if ( request instanceof RequestWrapper ) {
-			String name = ((RequestWrapper) request).getMethod();
+		if ( request instanceof HttpUriRequest ) {
+			String name = ((HttpUriRequest) request).getMethod();
 			method = HTTPMethod.valueOf(name);
 		} else {
 			throw new IllegalStateException("Unrecognized Http request method");
@@ -279,8 +264,16 @@ public class GaeHttpClientConnectionImpl implements HttpClientConnection {
 	
 		byte[] byteArray = response.getContent();
 		if ( byteArray != null ) {
+			Header[] headers = resp.getAllHeaders();
 			ByteArrayEntity entity = new ByteArrayEntity(response.getContent());
-			entity.setContentType(resp.getFirstHeader(HTTP.CONTENT_TYPE));
+			for ( Header h : headers ) {
+				if ( h.getName().equalsIgnoreCase(HTTP.CONTENT_TYPE) ) {
+					entity.setContentType(h.getValue());
+				}
+				if ( h.getName().equalsIgnoreCase(HTTP.CONTENT_ENCODING) ) {
+					entity.setContentEncoding(h.getValue());
+				}
+			}
 			resp.setEntity(entity);
 		}
 	}
@@ -295,7 +288,9 @@ public class GaeHttpClientConnectionImpl implements HttpClientConnection {
 				response.getResponseCode(), null);
 		
 		for ( com.google.appengine.api.urlfetch.HTTPHeader h : response.getHeaders() ) {
-			resp.addHeader(new BasicHeader(h.getName(), h.getValue()));
+			final String name = h.getName();
+			final String value = h.getValue();
+			resp.addHeader(new BasicHeader(name, value));
 		}
 
 		return resp;
