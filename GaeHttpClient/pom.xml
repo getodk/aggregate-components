@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.opendatakit</groupId>
 	<artifactId>odk-httpclient-gae</artifactId>
-	<version>4.5.2</version>
+	<version>4.5.2-1</version>
     <packaging>jar</packaging>
 	<name>GaeHttpClient</name>
 	<description>HttpClient 4.5.2 libraries and modified client manager code needed for GAE operation  see: http://peterkenji.blogspot.com/2009/08/using-apache-httpclient-4-with-google.html and http://esxx.blogspot.com/2009/06/using-apaches-httpclient-on-google-app.html</description>
