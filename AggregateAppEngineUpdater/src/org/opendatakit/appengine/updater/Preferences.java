@@ -24,7 +24,7 @@ package org.opendatakit.appengine.updater;
  *
  */
 public class Preferences {
-  public static final String VERSION = "1.4.8";
+  public static final String VERSION = "2016-04-21";
   public static final String JAR_NAME = "ODKAggregateAppEngineUpdater.jar";
   public static final String APP_ENGINE_OAUTH2_JAVA_FILENAME = ".appcfg_oauth2_tokens_java";
   // SDK location under installer
