@@ -77,7 +77,7 @@ public class MonitoredPumpStreamHandler extends AbstractPumpStreamHandler {
     @Override
     protected String processLineSoFar(String line, boolean hasNewLine) throws IOException {
 
-      if ( !hasNewLine && line.equals("Please enter code: ") ) {
+      if (line.trim().equals("Please enter code:") ) {
         if ( tokenSent || startingToken == null) {
           // TODO: communicate with user to get token
           EventBus.publish(new TokenRequestEvent(MonitoredPumpStreamHandler.this));
