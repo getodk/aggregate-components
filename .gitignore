@@ -1,4 +1,6 @@
-bin
-.metadata
-target
-.recommenders/
+.idea
+*.iml
+gradle
+.gradle
+build
+out
