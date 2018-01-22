@@ -3,15 +3,22 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
   }
 }
 
+apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
+apply plugin: 'idea'
 
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
+mainClassName = 'org.opendatakit.appengine.updater.UpdaterWindow'
 
 repositories {
+  mavenCentral()
   jcenter()
 }
 
@@ -25,10 +32,3 @@ dependencies {
   compile group: 'org.bushe', name: 'eventbus', version: '1.4'
 }
 
-jar {
-  manifest {
-    attributes(
-        'Main-Class': 'org.opendatakit.appengine.updater.UpdaterWindow'
-    )
-  }
-}
