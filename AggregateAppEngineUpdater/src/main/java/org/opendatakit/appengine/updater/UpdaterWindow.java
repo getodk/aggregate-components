@@ -291,6 +291,11 @@ public class UpdaterWindow implements WindowListener {
     }
   }
 
+  private static boolean isLinux() {
+      String os = System.getProperty("os.name").toLowerCase();
+      return (os.contains("nix") || os.contains("nux") || os.contains("aix"));
+  }
+
   /**
    * Create the application.
    */
@@ -299,7 +304,7 @@ public class UpdaterWindow implements WindowListener {
     AnnotationProcessor.process(this);// if not using AOP
     this.cmd = cmd;
     frame = new JFrame();
-    frame.setBounds(100, 100, 680, 595);
+    frame.setBounds(100, 100, isLinux() ? 720 : 680, 595);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     frame.addWindowListener(new WindowListener() {
