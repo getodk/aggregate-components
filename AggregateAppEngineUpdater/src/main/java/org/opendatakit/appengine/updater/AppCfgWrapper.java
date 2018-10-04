@@ -21,7 +21,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.apache.commons.lang.SystemUtils;
 import org.opendatakit.apache.commons.exec.CommandLine;
 import org.opendatakit.apache.commons.exec.DefaultExecutor;
 import org.opendatakit.apache.commons.exec.ExecuteException;
@@ -47,8 +46,8 @@ public class AppCfgWrapper {
   public static File locateTokenFile() {
     String userhome = System.getProperty("user.home");
     String althome = null;
-    if ( SystemUtils.IS_OS_WINDOWS ) {
-      String username = System.getProperty("user.name");
+    if ( Host.isWindows() ) {
+        String username = System.getProperty("user.name");
       althome = "C:\\Users\\" + username;
     }
     File dirHome = new File(userhome);
