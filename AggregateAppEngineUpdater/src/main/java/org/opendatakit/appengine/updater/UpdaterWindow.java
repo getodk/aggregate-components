@@ -729,7 +729,7 @@ public class UpdaterWindow implements WindowListener {
           break;
         case VERIFY_TOKEN:
           // verify the token; if ok, then list backends
-          executionHandler = new StateExecuteResultHandler(StepState.LIST_BACKENDS, StepState.ABORTED);
+          executionHandler = new StateExecuteResultHandler(StepState.UPDATE, StepState.ABORTED);
           setActiveHandler(executionHandler);
           updateUI();
           AppCfgWrapper.getToken(args, executionHandler);
@@ -833,11 +833,11 @@ public class UpdaterWindow implements WindowListener {
       // execute appCfg
       EffectiveArgumentValues args = getArgs();
 
-      StateExecuteResultHandler executionHandler = new StateExecuteResultHandler(StepState.DELETE_BACKENDS, StepState.ABORTED);
+      StateExecuteResultHandler executionHandler = new StateExecuteResultHandler((args.isLegacyUpload() ? StepState.UPDATE_BACKGROUND : StepState.DONE), StepState.ABORTED);
       setActiveHandler(executionHandler);
       updateUI();
 
-      AppCfgWrapper.listBackends(args, executionHandler);
+      AppCfgWrapper.update(args, executionHandler);
     }
   }
 
