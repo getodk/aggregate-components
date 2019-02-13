@@ -43,8 +43,7 @@ public class EffectiveArgumentValues {
    * @return true if we are attempting an upload of a legacy backends install.
    */
   public boolean isLegacyUpload() {
-    File defaultPath = new File(new File(install_root, "ODKAggregate"), "default");
-    return !defaultPath.exists();
+    return false;
   }
 
 }
