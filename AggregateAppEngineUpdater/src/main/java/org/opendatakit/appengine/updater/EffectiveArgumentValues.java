@@ -34,6 +34,7 @@ public class EffectiveArgumentValues {
   /**
    * @return true if the user has created a NewRemoval directory, indicating that modules should be removed.
    */
+  // TODO: This method has to do with the UpdaterCLI.run() method which has a commented block that would use it
   public boolean hasNewRemoval() {
     File newRemoval = new File(install_root, "NewRemoval");
     return (newRemoval.exists());
