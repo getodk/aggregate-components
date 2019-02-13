@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -43,7 +43,7 @@ import java.util.StringTokenizer;
 /**
  * Supplement of commons-lang, the stringSubstitution() was in a simpler
  * implementation available in an older commons-lang implementation.
- *
+ * <p>
  * This class is not part of the public API and could change without
  * warning.
  *
@@ -51,173 +51,168 @@ import java.util.StringTokenizer;
  */
 public class StringUtils {
 
-    private static final char SLASH_CHAR = '/';
-    private static final char BACKSLASH_CHAR = '\\';
+  private static final char SLASH_CHAR = '/';
+  private static final char BACKSLASH_CHAR = '\\';
 
 
-    /**
-     * Perform a series of substitutions.
-     * <p>
-     * The substitutions are performed by replacing ${variable} in the target string with the value of provided by the
-     * key "variable" in the provided hash table.
-     * </p>
-     * <p>
-     * A key consists of the following characters:
-     * </p>
-     * <ul>
-     * <li>letter
-     * <li>digit
-     * <li>dot character
-     * <li>hyphen character
-     * <li>plus character
-     * <li>underscore character
-     * </ul>
-     *
-     * @param argStr
-     *            the argument string to be processed
-     * @param vars
-     *            name/value pairs used for substitution
-     * @param isLenient
-     *            ignore a key not found in vars or throw a RuntimeException?
-     * @return String target string with replacements.
-     */
-    public static StringBuffer stringSubstitution(final String argStr, final Map<? super String, ?> vars, final boolean isLenient) {
+  /**
+   * Perform a series of substitutions.
+   * <p>
+   * The substitutions are performed by replacing ${variable} in the target string with the value of provided by the
+   * key "variable" in the provided hash table.
+   * </p>
+   * <p>
+   * A key consists of the following characters:
+   * </p>
+   * <ul>
+   * <li>letter
+   * <li>digit
+   * <li>dot character
+   * <li>hyphen character
+   * <li>plus character
+   * <li>underscore character
+   * </ul>
+   *
+   * @param argStr    the argument string to be processed
+   * @param vars      name/value pairs used for substitution
+   * @param isLenient ignore a key not found in vars or throw a RuntimeException?
+   * @return String target string with replacements.
+   */
+  public static StringBuffer stringSubstitution(final String argStr, final Map<? super String, ?> vars, final boolean isLenient) {
 
-        final StringBuffer argBuf = new StringBuffer();
+    final StringBuffer argBuf = new StringBuffer();
 
-        if (argStr == null || argStr.length() == 0) {
-            return argBuf;
-        }
+    if (argStr == null || argStr.length() == 0) {
+      return argBuf;
+    }
 
-        if (vars == null || vars.size() == 0) {
-            return argBuf.append(argStr);
-        }
+    if (vars == null || vars.size() == 0) {
+      return argBuf.append(argStr);
+    }
 
-        final int argStrLength = argStr.length();
+    final int argStrLength = argStr.length();
 
-        for (int cIdx = 0; cIdx < argStrLength;) {
+    for (int cIdx = 0; cIdx < argStrLength; ) {
 
-            char ch = argStr.charAt(cIdx);
-            char del = ' ';
+      char ch = argStr.charAt(cIdx);
+      char del = ' ';
 
-            switch (ch) {
+      switch (ch) {
 
-                case '$':
-                    final StringBuilder nameBuf = new StringBuilder();
-                    del = argStr.charAt(cIdx + 1);
-                    if (del == '{') {
-                        cIdx++;
+        case '$':
+          final StringBuilder nameBuf = new StringBuilder();
+          del = argStr.charAt(cIdx + 1);
+          if (del == '{') {
+            cIdx++;
 
-                        for (++cIdx; cIdx < argStr.length(); ++cIdx) {
-                            ch = argStr.charAt(cIdx);
-                            if (ch == '_' || ch == '.' || ch == '-' || ch == '+' || Character.isLetterOrDigit(ch)) {
-                                nameBuf.append(ch);
-                            } else {
-                                break;
-                            }
-                        }
-
-                        if (nameBuf.length() >= 0) {
-
-                            String value;
-                            final Object temp = vars.get(nameBuf.toString());
-
-                            if (temp instanceof File) {
-                                // for a file we have to fix the separator chars to allow
-                                // cross-platform compatibility
-                                value = fixFileSeparatorChar(((File) temp).getAbsolutePath());
-                            }
-                            else {
-                                value = temp != null ? temp.toString() : null;    
-                            }
-
-                            if (value != null) {
-                                argBuf.append(value);
-                            } else {
-                                if (isLenient) {
-                                    // just append the unresolved variable declaration
-                                    argBuf.append("${").append(nameBuf.toString()).append("}");
-                                } else {
-                                    // complain that no variable was found
-                                    throw new RuntimeException("No value found for : " + nameBuf);
-                                }
-                            }
-
-                            del = argStr.charAt(cIdx);
-
-                            if (del != '}') {
-                                throw new RuntimeException("Delimiter not found for : " + nameBuf);
-                            }
-                        }
-
-                        cIdx++;
-                    }
-                    else {
-                        argBuf.append(ch);
-                        ++cIdx;
-                    }
-
-                    break;
-
-                default:
-                    argBuf.append(ch);
-                    ++cIdx;
-                    break;
+            for (++cIdx; cIdx < argStr.length(); ++cIdx) {
+              ch = argStr.charAt(cIdx);
+              if (ch == '_' || ch == '.' || ch == '-' || ch == '+' || Character.isLetterOrDigit(ch)) {
+                nameBuf.append(ch);
+              } else {
+                break;
+              }
             }
-        }
 
-        return argBuf;
-    }
+            if (nameBuf.length() >= 0) {
 
-    /**
-     * Split a string into an array of strings based
-     * on a separator.
-     *
-     * @param input     what to split
-     * @param splitChar what to split on
-     * @return the array of strings
-     */
-    public static String[] split(final String input, final String splitChar) {
-        final StringTokenizer tokens = new StringTokenizer(input, splitChar);
-        final List<String> strList = new ArrayList<String>();
-        while (tokens.hasMoreTokens()) {
-            strList.add(tokens.nextToken());
-        }
-        return strList.toArray(new String[strList.size()]);
-    }
+              String value;
+              final Object temp = vars.get(nameBuf.toString());
 
-    /**
-     * Fixes the file separator char for the target platform
-     * using the following replacement.
-     * 
-     * <ul>
-     *  <li>'/' &#x2192; File.separatorChar</li>
-     *  <li>'\\' &#x2192; File.separatorChar</li>
-     * </ul>
-     *
-     * @param arg the argument to fix
-     * @return the transformed argument 
-     */
-    public static String fixFileSeparatorChar(final String arg) {
-        return arg.replace(SLASH_CHAR, File.separatorChar).replace(
-                BACKSLASH_CHAR, File.separatorChar);
-    }
+              if (temp instanceof File) {
+                // for a file we have to fix the separator chars to allow
+                // cross-platform compatibility
+                value = fixFileSeparatorChar(((File) temp).getAbsolutePath());
+              } else {
+                value = temp != null ? temp.toString() : null;
+              }
 
-    /**
-     * Concatenates an array of string using a separator.
-     *
-     * @param strings the strings to concatenate
-     * @param separator the separator between two strings
-     * @return the concatenated strings
-     */
-    public static String toString(final String[] strings, final String separator) {
-        final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < strings.length; i++) {
-            if (i > 0) {
-                sb.append(separator);
+              if (value != null) {
+                argBuf.append(value);
+              } else {
+                if (isLenient) {
+                  // just append the unresolved variable declaration
+                  argBuf.append("${").append(nameBuf.toString()).append("}");
+                } else {
+                  // complain that no variable was found
+                  throw new RuntimeException("No value found for : " + nameBuf);
+                }
+              }
+
+              del = argStr.charAt(cIdx);
+
+              if (del != '}') {
+                throw new RuntimeException("Delimiter not found for : " + nameBuf);
+              }
             }
-            sb.append(strings[i]);
-        }
-        return sb.toString();
+
+            cIdx++;
+          } else {
+            argBuf.append(ch);
+            ++cIdx;
+          }
+
+          break;
+
+        default:
+          argBuf.append(ch);
+          ++cIdx;
+          break;
+      }
     }
+
+    return argBuf;
+  }
+
+  /**
+   * Split a string into an array of strings based
+   * on a separator.
+   *
+   * @param input     what to split
+   * @param splitChar what to split on
+   * @return the array of strings
+   */
+  public static String[] split(final String input, final String splitChar) {
+    final StringTokenizer tokens = new StringTokenizer(input, splitChar);
+    final List<String> strList = new ArrayList<String>();
+    while (tokens.hasMoreTokens()) {
+      strList.add(tokens.nextToken());
+    }
+    return strList.toArray(new String[strList.size()]);
+  }
+
+  /**
+   * Fixes the file separator char for the target platform
+   * using the following replacement.
+   *
+   * <ul>
+   * <li>'/' &#x2192; File.separatorChar</li>
+   * <li>'\\' &#x2192; File.separatorChar</li>
+   * </ul>
+   *
+   * @param arg the argument to fix
+   * @return the transformed argument
+   */
+  public static String fixFileSeparatorChar(final String arg) {
+    return arg.replace(SLASH_CHAR, File.separatorChar).replace(
+        BACKSLASH_CHAR, File.separatorChar);
+  }
+
+  /**
+   * Concatenates an array of string using a separator.
+   *
+   * @param strings   the strings to concatenate
+   * @param separator the separator between two strings
+   * @return the concatenated strings
+   */
+  public static String toString(final String[] strings, final String separator) {
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < strings.length; i++) {
+      if (i > 0) {
+        sb.append(separator);
+      }
+      sb.append(strings[i]);
+    }
+    return sb.toString();
+  }
 }

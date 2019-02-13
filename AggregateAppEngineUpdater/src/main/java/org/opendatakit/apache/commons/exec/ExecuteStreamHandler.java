@@ -14,7 +14,7 @@
  * the License.
  */
 
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -46,58 +46,50 @@ import java.io.OutputStream;
  */
 public interface ExecuteStreamHandler {
 
-    /**
-     * Install a handler for the input stream of the subprocess.
-     * 
-     * @param os
-     *            output stream to write to the standard input stream of the subprocess
-     * @throws IOException
-     *             thrown when an I/O exception occurs.
-     */
-    void setProcessInputStream(OutputStream os) throws IOException;
+  /**
+   * Install a handler for the input stream of the subprocess.
+   *
+   * @param os output stream to write to the standard input stream of the subprocess
+   * @throws IOException thrown when an I/O exception occurs.
+   */
+  void setProcessInputStream(OutputStream os) throws IOException;
 
-    /**
-     * Install a handler for the error stream of the subprocess.
-     * 
-     * @param is
-     *            input stream to read from the error stream from the subprocess
-     * @throws IOException
-     *             thrown when an I/O exception occurs.
-     */
-    void setProcessErrorStream(InputStream is) throws IOException;
+  /**
+   * Install a handler for the error stream of the subprocess.
+   *
+   * @param is input stream to read from the error stream from the subprocess
+   * @throws IOException thrown when an I/O exception occurs.
+   */
+  void setProcessErrorStream(InputStream is) throws IOException;
 
-    /**
-     * Install a handler for the output stream of the subprocess.
-     * 
-     * @param is
-     *            input stream to read from the error stream from the subprocess
-     * @throws IOException
-     *             thrown when an I/O exception occurs.
-     */
-    void setProcessOutputStream(InputStream is) throws IOException;
+  /**
+   * Install a handler for the output stream of the subprocess.
+   *
+   * @param is input stream to read from the error stream from the subprocess
+   * @throws IOException thrown when an I/O exception occurs.
+   */
+  void setProcessOutputStream(InputStream is) throws IOException;
 
-    /**
-     * Start handling of the streams.
-     * 
-     * @throws IOException
-     *             thrown when an I/O exception occurs.
-     */
-    void start() throws IOException;
+  /**
+   * Start handling of the streams.
+   *
+   * @throws IOException thrown when an I/O exception occurs.
+   */
+  void start() throws IOException;
 
-    /**
-     * Stop handling of the streams - will not be restarted. Will wait for pump threads to complete.
-     * 
-     * @throws IOException
-     *             thrown when an I/O exception occurs.
-     */
-    void stop() throws IOException;
+  /**
+   * Stop handling of the streams - will not be restarted. Will wait for pump threads to complete.
+   *
+   * @throws IOException thrown when an I/O exception occurs.
+   */
+  void stop() throws IOException;
 
-    /**
-     * After the process has exited, determine whether it is likely to have failed.
-     * If it has failed, an ExecuteException will be raised.
-     * 
-     * @param exitValue
-     * @return
-     */
-    public boolean isFailure(final int exitValue);
+  /**
+   * After the process has exited, determine whether it is likely to have failed.
+   * If it has failed, an ExecuteException will be raised.
+   *
+   * @param exitValue
+   * @return
+   */
+  boolean isFailure(final int exitValue);
 }

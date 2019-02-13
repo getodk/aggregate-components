@@ -21,7 +21,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import org.bushe.swing.event.EventBus;
 import org.opendatakit.apache.commons.exec.AbstractLineBufferingCharacterStreamPumper;
 import org.opendatakit.apache.commons.exec.AbstractPumpStreamHandler;
@@ -36,10 +35,10 @@ import org.opendatakit.appengine.updater.TokenRequestEvent;
  * Copied from PumpStreamHandler, then extensively modified to use
  * TriggeringStreamPumpers that look for certain strings in the output and/or
  * error streams and fire events.
- * 
+ * <p>
  * The PumpStreamHandler class didn't have the necessary hooks to preclude
  * wholesale copying of its implementation.
- * 
+ * <p>
  * Copies standard output and error of sub-processes to standard output and
  * error of the parent process. If output or error stream are set to null, any
  * feedback from that stream will be lost.
@@ -53,67 +52,17 @@ public class MonitoredPumpStreamHandler extends AbstractPumpStreamHandler {
   private boolean tokenSent = false;
   private FileOutputStream outs;
   private FileOutputStream errs;
-  /**
-   * Buffers the input into lines and copies all data from the input stream to the 
-   * output stream. Allows output to be modified and additional actions to be taken.
-   *
-   * @version $Id: StreamPumper.java 1557263 2014-01-10 21:18:09Z ggregory $
-   */
-  public class TriggeringStreamPumper extends AbstractLineBufferingCharacterStreamPumper {
-    
-    StreamType type;
-    
-    /**
-     * Create a new stream pumper.
-     * 
-     * @param is input stream to read data from
-     * @param os output stream to write data to.
-     */
-    public TriggeringStreamPumper(StreamType type, final InputStream is, final OutputStream os) {
-      super(is, os);
-      this.type = type;
-    }
 
-    @Override
-    protected String processLineSoFar(String line, boolean hasNewLine) throws IOException {
-
-      if (line.trim().equals("Please enter code:") ) {
-        if ( tokenSent || startingToken == null) {
-          // TODO: communicate with user to get token
-          EventBus.publish(new TokenRequestEvent(MonitoredPumpStreamHandler.this));
-        } else {
-          tokenSent = true;
-          emitToken(startingToken);
-        }
-      }
-      
-      if ( hasNewLine ) {
-        EventBus.publish(new PublishOutputEvent(type, action, line));
-      }
-
-      return line;
-    }
-  }
-
-  public void emitToken(String token) throws IOException {
-    try {
-      token = token + System.lineSeparator() + System.lineSeparator() + "\u0003" + System.lineSeparator();
-      byte[] output = token.getBytes();
-      this.writeInputStream(output, 0, output.length);
-    } catch ( IOException e) {
-      // ignore
-    }
-  }
-  
   /**
    * Construct a new <CODE>PumpStreamHandler</CODE>.
-   * @throws IOException 
+   *
+   * @throws IOException
    */
 
   public MonitoredPumpStreamHandler(String startingToken, AppCfgActions action, File outLogFile, File errLogFile)
       throws IOException {
     super();
-    
+
     this.startingToken = startingToken;
     this.action = action;
 
@@ -125,15 +74,26 @@ public class MonitoredPumpStreamHandler extends AbstractPumpStreamHandler {
       @Override
       public AbstractStreamPumper newStreamPumper(StreamType type, InputStream is) {
         switch (type) {
-        default:
-        case OUT:
-          return new TriggeringStreamPumper(type, is, outs);
-        case ERR:
-          return new TriggeringStreamPumper(type, is, errs);
+          default:
+          case OUT:
+            return new TriggeringStreamPumper(type, is, outs);
+          case ERR:
+            return new TriggeringStreamPumper(type, is, errs);
         }
-      }});
+      }
+    });
   }
-  
+
+  public void emitToken(String token) throws IOException {
+    try {
+      token = token + System.lineSeparator() + System.lineSeparator() + "\u0003" + System.lineSeparator();
+      byte[] output = token.getBytes();
+      this.writeInputStream(output, 0, output.length);
+    } catch (IOException e) {
+      // ignore
+    }
+  }
+
   public AppCfgActions getAction() {
     return action;
   }
@@ -144,5 +104,47 @@ public class MonitoredPumpStreamHandler extends AbstractPumpStreamHandler {
   @Override
   public boolean isFailure(int exitValue) {
     return (exitValue != 0);
+  }
+
+  /**
+   * Buffers the input into lines and copies all data from the input stream to the
+   * output stream. Allows output to be modified and additional actions to be taken.
+   *
+   * @version $Id: StreamPumper.java 1557263 2014-01-10 21:18:09Z ggregory $
+   */
+  public class TriggeringStreamPumper extends AbstractLineBufferingCharacterStreamPumper {
+
+    StreamType type;
+
+    /**
+     * Create a new stream pumper.
+     *
+     * @param is input stream to read data from
+     * @param os output stream to write data to.
+     */
+    public TriggeringStreamPumper(StreamType type, final InputStream is, final OutputStream os) {
+      super(is, os);
+      this.type = type;
+    }
+
+    @Override
+    protected String processLineSoFar(String line, boolean hasNewLine) throws IOException {
+
+      if (line.trim().equals("Please enter code:")) {
+        if (tokenSent || startingToken == null) {
+          // TODO: communicate with user to get token
+          EventBus.publish(new TokenRequestEvent(MonitoredPumpStreamHandler.this));
+        } else {
+          tokenSent = true;
+          emitToken(startingToken);
+        }
+      }
+
+      if (hasNewLine) {
+        EventBus.publish(new PublishOutputEvent(type, action, line));
+      }
+
+      return line;
+    }
   }
 }

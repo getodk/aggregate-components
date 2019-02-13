@@ -18,10 +18,9 @@ package org.opendatakit.appengine.updater;
 
 /**
  * The various appCfg commands that we support, with the addition of:
- *    status      -- for displaying overall status of a command (used internally)
- *    deleteToken -- remove the Token file on the system.
- *    
- * @author mitchellsundt@gmail.com
+ * status      -- for displaying overall status of a command (used internally)
+ * deleteToken -- remove the Token file on the system.
  *
+ * @author mitchellsundt@gmail.com
  */
-public enum AppCfgActions { deleteToken, getToken, verifyToken, listBackends, deleteBackendBackground, deleteModuleBackground, update, updateBackendBackground, rollback, status }
+public enum AppCfgActions {deleteToken, getToken, verifyToken, listBackends, deleteBackendBackground, deleteModuleBackground, update, updateBackendBackground, rollback, status}

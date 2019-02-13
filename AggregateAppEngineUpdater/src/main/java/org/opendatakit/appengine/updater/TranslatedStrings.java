@@ -19,11 +19,10 @@ package org.opendatakit.appengine.updater;
 import java.util.ListResourceBundle;
 
 /**
- * Strings that we could translate if we want to internationalize this 
+ * Strings that we could translate if we want to internationalize this
  * applicaiton.
- * 
- * @author mitchellsundt@gmail.com
  *
+ * @author mitchellsundt@gmail.com
  */
 public class TranslatedStrings extends ListResourceBundle {
 
@@ -39,13 +38,13 @@ public class TranslatedStrings extends ListResourceBundle {
   public static final String UPLOAD_LABEL = "j";
   public static final String ROLLBACK_LABEL = "k";
   public static final String VERSION_INFO = "l";
-  
+
   public static final String ARG_IS_REQUIRED = "m";
   public static final String ARG_IS_REQUIRED_CMD = "n";
   public static final String CONFLICTING_ARGS_CMD = "o";
 
   public static final String BAD_INSTALL_ROOT_PATH = "p";
-  
+
   public static final String WARNING_ERRANT_LABEL = "q";
   public static final String WARNING_REDIRECT_LABEL = "r";
 
@@ -70,13 +69,13 @@ public class TranslatedStrings extends ListResourceBundle {
   public static final String OUTPUT_LBL = "jj";
   public static final String FILE_NOT_FOUND_EXCEPTION = "kk";
   public static final String IO_EXCEPTION = "ll";
-  
+
   public static final String AGG_INSTALLER_VERSION = "zz";
-  
+
   @Override
   protected Object[][] getContents() {
-    return new Object[][] {
-    // LOCALIZE THIS
+    return new Object[][]{
+        // LOCALIZE THIS
         {LAUNCH_FAILED, "Launch Failed: %1$s"},
         {DIR_RUNNABLE_JAR, "Directory of this runnable Jar: %1$s"},
         {INSTALL_ROOT_REQUIRED, "Unable to determine path to %1$s. Relaunch supplying %2$s argument value."},
@@ -89,13 +88,13 @@ public class TranslatedStrings extends ListResourceBundle {
         {UPLOAD_LABEL, "Upload ODK Aggregate"},
         {ROLLBACK_LABEL, "Rollback"},
         {VERSION_INFO, "version %1$s"},
-        
+
         {ARG_IS_REQUIRED, "%1$s is required"},
         {ARG_IS_REQUIRED_CMD, "%1$s is required when executing a command"},
         {CONFLICTING_ARGS_CMD, "Conflicting arguments. Only one of %1$s or %2$s can be specified."},
 
         {BAD_INSTALL_ROOT_PATH, "Bad %1$s path: %2$s"},
-        
+
         {WARNING_ERRANT_LABEL, "<html>A token was detected on your system. Click on \"Upload ODK Aggregate\" to upload ODK Aggregate to your App Engine instance. If the token is invalid, you may be redirected to a browser to obtain a code from Google's account authorization web page. If that occurs, copy that code into the pop-up window that will appear, and click OK to proceed. <br><br><strong>IMPORTANT NOTE:</strong> The code is several characters wider than the text area that displays it on Google's web page. Please make sure you copy-and-paste the entire code into the pop-up window (and not just what is visible).</html>"},
         {WARNING_REDIRECT_LABEL, "<html>After entering the Email address, Click on \"Get Token.\" <br><br>You will be redirected to a browser to obtain a code from Google's account authorization web page. <br>Copy that code into the pop-up window that will appear, and click OK to proceed. <br><br><strong>IMPORTANT NOTE:</strong> The code is several characters wider than the text area that displays it on Google's web page. Please make sure you copy-and-paste the entire code into the pop-up window (and not just what is visible).</html>"},
 
@@ -122,7 +121,7 @@ public class TranslatedStrings extends ListResourceBundle {
         {IO_EXCEPTION, "IO Exception"},
 
         {AGG_INSTALLER_VERSION, "ODK Aggregate App Engine Updater - Version %1$s"}
-    // END OF MATERIAL TO LOCALIZE
+        // END OF MATERIAL TO LOCALIZE
     };
   }
 

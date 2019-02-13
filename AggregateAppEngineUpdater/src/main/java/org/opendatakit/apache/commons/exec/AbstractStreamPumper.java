@@ -14,7 +14,7 @@
  * the License.
  */
 
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -37,50 +37,50 @@ package org.opendatakit.apache.commons.exec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import org.opendatakit.apache.commons.exec.util.DebugUtils;
 
 /**
- * Moved the guts of StreamPumper here. 
- * 
+ * Moved the guts of StreamPumper here.
+ * <p>
  * - places the read-write handling within the abstract attemptProcessInputStreamBytes method.
  * - move Thread inside this class; add shouldClose flag and ability to forcibly shut down the pumper thread.
- * 
+ * <p>
  * Copies all data from an input stream to an output stream.
  *
  * @version $Id: StreamPumper.java 1557263 2014-01-10 21:18:09Z ggregory $
  */
 public abstract class AbstractStreamPumper implements Runnable {
-  
+
   protected final Thread executionThread;
-  
-  /** the input stream to pump from */
+
+  /**
+   * the input stream to pump from
+   */
   protected final InputStream is;
 
-  /** the output stream to pmp into */
+  /**
+   * the output stream to pmp into
+   */
   protected final OutputStream os;
 
-  /** signal worker thread that it should terminate */
+  /**
+   * signal worker thread that it should terminate
+   */
   protected boolean shouldClose = false;
 
-  /** was the end of the stream reached */
+  /**
+   * was the end of the stream reached
+   */
   private boolean finished;
-
-  protected abstract void attemptProcessInputStreamBytes(InputStream is, OutputStream os)
-      throws IOException, InterruptedException;
 
   /**
    * Create a new stream pumper.
    *
-   * @param is
-   *          input stream to read data from
-   * @param os
-   *          output stream to write data to.
-   * @param closeWhenExhausted
-   *          if true, the output stream will be closed when the input is
-   *          exhausted.
-   * @param size
-   *          the size of the internal buffer for copying the streams
+   * @param is                 input stream to read data from
+   * @param os                 output stream to write data to.
+   * @param closeWhenExhausted if true, the output stream will be closed when the input is
+   *                           exhausted.
+   * @param size               the size of the internal buffer for copying the streams
    */
   protected AbstractStreamPumper(final InputStream is, final OutputStream os) {
     this.is = is;
@@ -89,10 +89,13 @@ public abstract class AbstractStreamPumper implements Runnable {
     executionThread.setDaemon(true);
   }
 
+  protected abstract void attemptProcessInputStreamBytes(InputStream is, OutputStream os)
+      throws IOException, InterruptedException;
+
   public void start() {
     executionThread.start();
   }
-  
+
   /**
    * Copies data from the input stream to the output stream. Terminates as soon
    * as the input stream is closed or an error occurs.
@@ -129,14 +132,14 @@ public abstract class AbstractStreamPumper implements Runnable {
 
   public void signalShouldClose() {
     shouldClose = true;
-    if ( Thread.currentThread() != executionThread ) {
+    if (Thread.currentThread() != executionThread) {
       executionThread.interrupt();
     }
   }
-  
+
   /**
    * Tells whether the end of the stream has been reached.
-   * 
+   *
    * @return true is the stream has been exhausted.
    */
   public synchronized boolean isFinished() {
@@ -149,8 +152,8 @@ public abstract class AbstractStreamPumper implements Runnable {
    * @see #isFinished()
    */
   public void waitFor() {
-    for (;!isFinished();) {
-      synchronized(this) {
+    for (; !isFinished(); ) {
+      synchronized (this) {
         try {
           wait();
         } catch (InterruptedException e) {

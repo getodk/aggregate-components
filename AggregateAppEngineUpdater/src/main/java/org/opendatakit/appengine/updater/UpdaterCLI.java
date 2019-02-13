@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-
 import org.apache.commons.cli.CommandLine;
 import org.bushe.swing.event.annotation.AnnotationProcessor;
 import org.bushe.swing.event.annotation.EventSubscriber;
@@ -40,7 +39,7 @@ public class UpdaterCLI {
     this.cmd = cmd;
     cliReader = new BufferedReader(new InputStreamReader(System.in, Charset.defaultCharset()));
   }
-  
+
   public static EffectiveArgumentValues getArgs(CommandLine cmd) {
     // execute appCfg
     EffectiveArgumentValues args = new EffectiveArgumentValues();
@@ -83,14 +82,14 @@ public class UpdaterCLI {
 
   public void run() throws InterruptedException {
     DefaultExecuteResultHandler handler;
-    
-    if ( cmd.hasOption(ArgumentNameConstants.UPLOAD) ) {
+
+    if (cmd.hasOption(ArgumentNameConstants.UPLOAD)) {
 
       EffectiveArgumentValues args = getArgs(cmd);
       handler = new DefaultExecuteResultHandler();
       AppCfgWrapper.listBackends(args, handler);
       handler.waitFor();
-      if ( handler.getException() != null ) {
+      if (handler.getException() != null) {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
         System.exit(-1);
@@ -99,7 +98,7 @@ public class UpdaterCLI {
       handler = new DefaultExecuteResultHandler();
       AppCfgWrapper.deleteBackendBackground(args, handler);
       handler.waitFor();
-      if ( handler.getException() != null ) {
+      if (handler.getException() != null) {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
         System.exit(-1);
@@ -122,37 +121,37 @@ public class UpdaterCLI {
       handler = new DefaultExecuteResultHandler();
       AppCfgWrapper.update(args, handler);
       handler.waitFor();
-      if ( handler.getException() != null ) {
+      if (handler.getException() != null) {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
         System.exit(-1);
         return;
       }
-      
+
       if (args.isLegacyUpload()) {
         handler = new DefaultExecuteResultHandler();
         AppCfgWrapper.updateBackendBackground(args, handler);
         handler.waitFor();
-        if ( handler.getException() != null ) {
+        if (handler.getException() != null) {
           System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
               UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
           System.exit(-1);
           return;
         }
       }
-      
+
       System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
           UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
       System.exit(0);
       return;
-      
-    } else if ( cmd.hasOption(ArgumentNameConstants.ROLLBACK) ) {
-    
+
+    } else if (cmd.hasOption(ArgumentNameConstants.ROLLBACK)) {
+
       EffectiveArgumentValues args = getArgs(cmd);
       handler = new DefaultExecuteResultHandler();
       AppCfgWrapper.rollback(args, handler);
       handler.waitFor();
-      if ( handler.getException() != null ) {
+      if (handler.getException() != null) {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
         System.exit(-1);
@@ -164,13 +163,13 @@ public class UpdaterCLI {
         return;
       }
 
-    } else if ( cmd.hasOption(ArgumentNameConstants.CLEAR) ) {
-      
+    } else if (cmd.hasOption(ArgumentNameConstants.CLEAR)) {
+
       File tokenFile = AppCfgWrapper.locateTokenFile();
-      if ( tokenFile.exists() ) {
+      if (tokenFile.exists()) {
         tokenFile.delete();
         System.out.println(AppCfgActions.deleteToken.name() + ": " +
-              UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
+            UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
         System.exit(0);
         return;
       }
@@ -180,7 +179,7 @@ public class UpdaterCLI {
       handler = new DefaultExecuteResultHandler();
       AppCfgWrapper.getToken(args, handler);
       handler.waitFor();
-      if ( handler.getException() != null ) {
+      if (handler.getException() != null) {
         System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
             UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
         System.exit(-1);
@@ -201,11 +200,11 @@ public class UpdaterCLI {
     try {
       System.out.println(UpdaterWindow.t(TranslatedStrings.ENTER_TOKEN_GRANTING_CODE_LBL));
       String token = cliReader.readLine();
-      if ( token != null ) {
+      if (token != null) {
         token = token.trim();
         event.stream.emitToken(token);
       }
-    } catch ( IOException e ) {
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }

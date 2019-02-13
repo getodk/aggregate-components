@@ -20,7 +20,7 @@ import java.io.InputStream;
 
 /**
  * Builder that mimics the behavior of the original PumpStreamHandler class.
- * 
+ *
  * @author mitchellsundt@gmail.com
  */
 public class SimplePumperBuilder implements StreamPumperBuilder {

@@ -14,7 +14,7 @@
  * the License.
  */
 
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -36,7 +36,7 @@ package org.opendatakit.apache.commons.exec;
 
 /**
  * The equivalent of the original PumpStreamHandler class, now using AbstractPumpStreamHandler.
- * 
+ * <p>
  * Copies standard output and error of sub-processes to standard output and error
  * of the parent process. If output or error stream are set to null, any feedback
  * from that stream will be lost.
@@ -45,29 +45,29 @@ package org.opendatakit.apache.commons.exec;
  */
 public class PumpStreamHandler extends AbstractPumpStreamHandler {
 
-    /**
-     * Construct a new <CODE>PumpStreamHandler</CODE>.
-     */
-    public PumpStreamHandler() {
-      super();
-      init(new SimplePumperBuilder());
-    }
+  /**
+   * Construct a new <CODE>PumpStreamHandler</CODE>.
+   */
+  public PumpStreamHandler() {
+    super();
+    init(new SimplePumperBuilder());
+  }
 
-    /**
-     * Construct a new <CODE>PumpStreamHandler</CODE>.
-     * 
-     * @param streamPumperBuilder a builder that returns the stream pumper for the out and err streams.
-     */
-    public PumpStreamHandler(final StreamPumperBuilder streamPumperBuilder) {
-      super();
-      init(streamPumperBuilder);
-    }
+  /**
+   * Construct a new <CODE>PumpStreamHandler</CODE>.
+   *
+   * @param streamPumperBuilder a builder that returns the stream pumper for the out and err streams.
+   */
+  public PumpStreamHandler(final StreamPumperBuilder streamPumperBuilder) {
+    super();
+    init(streamPumperBuilder);
+  }
 
-    /**
-     * consider a non-zero return value to be an error.
-     */
-    @Override
-    public boolean isFailure(int exitValue) {
-      return (exitValue != 0);
-    }
+  /**
+   * consider a non-zero return value to be an error.
+   */
+  @Override
+  public boolean isFailure(int exitValue) {
+    return (exitValue != 0);
+  }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -40,17 +40,17 @@ import java.util.Map;
 
 /**
  * The main abstraction to start an external process.
- *
+ * <p>
  * The interface allows to
  * <ul>
- *  <li>set a current working directory for the subprocess</li>
- *  <li>provide a set of environment variables passed to the subprocess</li>
- *  <li>capture the subprocess output of stdout and stderr using an ExecuteStreamHandler</li>
- *  <li>kill long-running processes using an ExecuteWatchdog</li>
- *  <li>define a set of expected exit values</li>
- *  <li>terminate any started processes when the main process is terminating using a ProcessDestroyer</li>
+ * <li>set a current working directory for the subprocess</li>
+ * <li>provide a set of environment variables passed to the subprocess</li>
+ * <li>capture the subprocess output of stdout and stderr using an ExecuteStreamHandler</li>
+ * <li>kill long-running processes using an ExecuteWatchdog</li>
+ * <li>define a set of expected exit values</li>
+ * <li>terminate any started processes when the main process is terminating using a ProcessDestroyer</li>
  * </ul>
- *
+ * <p>
  * The following example shows the basic usage:
  *
  * <pre>
@@ -64,125 +64,127 @@ import java.util.Map;
 
 public interface Executor {
 
-    /** Invalid exit code. */
-    int INVALID_EXITVALUE = 0xdeadbeef;
+  /**
+   * Invalid exit code.
+   */
+  int INVALID_EXITVALUE = 0xdeadbeef;
 
-    /**
-     * Get the StreamHandler used for providing input and
-     * retrieving the output.
-     * 
-     * @return the StreamHandler 
-     */
-    ExecuteStreamHandler getStreamHandler();
+  /**
+   * Get the StreamHandler used for providing input and
+   * retrieving the output.
+   *
+   * @return the StreamHandler
+   */
+  ExecuteStreamHandler getStreamHandler();
 
-    /**
-     * Set a custom the StreamHandler used for providing
-     * input and retrieving the output. If you don't provide
-     * a proper stream handler the executed process might block
-     * when writing to stdout and/or stderr (see
-     * {@link java.lang.Process Process}).
-     *
-     * @param streamHandler the stream handler
-     */
-    void setStreamHandler(ExecuteStreamHandler streamHandler);
+  /**
+   * Set a custom the StreamHandler used for providing
+   * input and retrieving the output. If you don't provide
+   * a proper stream handler the executed process might block
+   * when writing to stdout and/or stderr (see
+   * {@link java.lang.Process Process}).
+   *
+   * @param streamHandler the stream handler
+   */
+  void setStreamHandler(ExecuteStreamHandler streamHandler);
 
-    /**
-     * Get the watchdog used to kill of processes running,
-     * typically, too long time.
-     *
-     * @return the watchdog
-     */
-    ExecuteWatchdog getWatchdog();
+  /**
+   * Get the watchdog used to kill of processes running,
+   * typically, too long time.
+   *
+   * @return the watchdog
+   */
+  ExecuteWatchdog getWatchdog();
 
-    /**
-     * Set the watchdog used to kill of processes running, 
-     * typically, too long time.
-     *
-     * @param watchDog the watchdog
-     */
-    void setWatchdog(ExecuteWatchdog watchDog);
+  /**
+   * Set the watchdog used to kill of processes running,
+   * typically, too long time.
+   *
+   * @param watchDog the watchdog
+   */
+  void setWatchdog(ExecuteWatchdog watchDog);
 
-    /**
-     * Set the handler for cleanup of started processes if the main process
-     * is going to terminate.
-     *
-     * @return the ProcessDestroyer
-     */
-    ProcessDestroyer getProcessDestroyer();
+  /**
+   * Set the handler for cleanup of started processes if the main process
+   * is going to terminate.
+   *
+   * @return the ProcessDestroyer
+   */
+  ProcessDestroyer getProcessDestroyer();
 
-    /**
-     * Get the handler for cleanup of started processes if the main process
-     * is going to terminate.
-     *
-     * @param processDestroyer the ProcessDestroyer
-     */
-    void setProcessDestroyer(ProcessDestroyer processDestroyer);
+  /**
+   * Get the handler for cleanup of started processes if the main process
+   * is going to terminate.
+   *
+   * @param processDestroyer the ProcessDestroyer
+   */
+  void setProcessDestroyer(ProcessDestroyer processDestroyer);
 
-    /**
-     * Get the working directory of the created process.
-     *
-     * @return the working directory
-     */
-    File getWorkingDirectory();
+  /**
+   * Get the working directory of the created process.
+   *
+   * @return the working directory
+   */
+  File getWorkingDirectory();
 
-    /**
-     * Set the working directory of the created process. The
-     * working directory must exist when you start the process.
-     *
-     * @param dir the working directory
-     */
-    void setWorkingDirectory(File dir);
+  /**
+   * Set the working directory of the created process. The
+   * working directory must exist when you start the process.
+   *
+   * @param dir the working directory
+   */
+  void setWorkingDirectory(File dir);
 
-    /**
-     * Methods for starting synchronous execution. The child process inherits
-     * all environment variables of the parent process.
-     *
-     * @param command the command to execute
-     * @return process exit value
-     * @throws ExecuteException execution of subprocess failed or the
-     *          subprocess returned a exit value indicating a failure
-     *          {@link Executor#setExitValue(int)}.
-     */
-    int execute(CommandLine command)
-        throws ExecuteException, IOException;
+  /**
+   * Methods for starting synchronous execution. The child process inherits
+   * all environment variables of the parent process.
+   *
+   * @param command the command to execute
+   * @return process exit value
+   * @throws ExecuteException execution of subprocess failed or the
+   *                          subprocess returned a exit value indicating a failure
+   *                          {@link Executor#setExitValue(int)}.
+   */
+  int execute(CommandLine command)
+      throws IOException;
 
-    /**
-     * Methods for starting synchronous execution.
-     *
-     * @param command the command to execute
-     * @param environment The environment for the new process. If null, the
-     *          environment of the current process is used.
-     * @return process exit value
-     * @throws ExecuteException execution of subprocess failed or the
-     *          subprocess returned a exit value indicating a failure
-     *          {@link Executor#setExitValue(int)}.
-     */
-    int execute(CommandLine command, Map<String, String> environment)
-        throws ExecuteException, IOException;
-    
-    /**
-     * Methods for starting asynchronous execution. The child process inherits
-     * all environment variables of the parent process. Result provided to
-     * callback handler.
-     *
-     * @param command the command to execute
-     * @param handler capture process termination and exit code
-     * @throws ExecuteException execution of subprocess failed
-     */
-    void execute(CommandLine command, ExecuteResultHandler handler)
-        throws ExecuteException, IOException;
+  /**
+   * Methods for starting synchronous execution.
+   *
+   * @param command     the command to execute
+   * @param environment The environment for the new process. If null, the
+   *                    environment of the current process is used.
+   * @return process exit value
+   * @throws ExecuteException execution of subprocess failed or the
+   *                          subprocess returned a exit value indicating a failure
+   *                          {@link Executor#setExitValue(int)}.
+   */
+  int execute(CommandLine command, Map<String, String> environment)
+      throws IOException;
 
-    /**
-     * Methods for starting asynchronous execution. The child process inherits
-     * all environment variables of the parent process. Result provided to
-     * callback handler.
-     *
-     * @param command the command to execute
-     * @param environment The environment for the new process. If null, the
-     *          environment of the current process is used.
-     * @param handler capture process termination and exit code 
-     * @throws ExecuteException execution of subprocess failed     
-     */
-    void execute(CommandLine command, Map<String, String> environment, ExecuteResultHandler handler)
-        throws ExecuteException, IOException;
+  /**
+   * Methods for starting asynchronous execution. The child process inherits
+   * all environment variables of the parent process. Result provided to
+   * callback handler.
+   *
+   * @param command the command to execute
+   * @param handler capture process termination and exit code
+   * @throws ExecuteException execution of subprocess failed
+   */
+  void execute(CommandLine command, ExecuteResultHandler handler)
+      throws IOException;
+
+  /**
+   * Methods for starting asynchronous execution. The child process inherits
+   * all environment variables of the parent process. Result provided to
+   * callback handler.
+   *
+   * @param command     the command to execute
+   * @param environment The environment for the new process. If null, the
+   *                    environment of the current process is used.
+   * @param handler     capture process termination and exit code
+   * @throws ExecuteException execution of subprocess failed
+   */
+  void execute(CommandLine command, Map<String, String> environment, ExecuteResultHandler handler)
+      throws IOException;
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -37,43 +37,42 @@ package org.opendatakit.apache.commons.exec;
 /**
  * The callback handlers for the result of asynchronous process execution. When a
  * process is started asynchronously the callback provides you with the result of
- * the executed process, i.e. the exit value or an exception. 
- *
- * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine, java.util.Map, ExecuteResultHandler)
+ * the executed process, i.e. the exit value or an exception.
  *
  * @version $Id: ExecuteResultHandler.java 1636056 2014-11-01 21:12:52Z ggregory $
+ * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine, java.util.Map, ExecuteResultHandler)
  */
 public interface ExecuteResultHandler {
+
+  /**
+   * Return the ExecuteStreamHandler object.
+   * The derived class of this can contain
+   * finer levels of error status.
+   *
+   * @return
+   */
+  ExecuteStreamHandler getExecuteStreamHandler();
 
   /**
    * Set the ExecuteStreamHandler used by the Executor.
    * This is used later for accessing finer levels of
    * error status (when down-caste to specific implementations)
-   * 
+   *
    * @param obj
    */
   void setExecuteStreamHandler(ExecuteStreamHandler obj);
-  
-  /**
-   * Return the ExecuteStreamHandler object. 
-   * The derived class of this can contain
-   * finer levels of error status.
-   * 
-   * @return
-   */
-  ExecuteStreamHandler getExecuteStreamHandler();
-  
+
   /**
    * The asynchronous execution completed.
    *
    * @param exitValue the exit value of the sub-process
    */
-    void onProcessComplete(int exitValue);
+  void onProcessComplete(int exitValue);
 
   /**
    * The asynchronous execution failed.
    *
    * @param e the {@code ExecuteException} containing the root cause
    */
-    void onProcessFailed(ExecuteException e);
+  void onProcessFailed(ExecuteException e);
 }
