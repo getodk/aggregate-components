@@ -25,7 +25,6 @@ import org.opendatakit.apache.commons.exec.CommandLine;
 import org.opendatakit.apache.commons.exec.DefaultExecutor;
 import org.opendatakit.apache.commons.exec.ExecuteException;
 import org.opendatakit.apache.commons.exec.ExecuteResultHandler;
-import org.opendatakit.appengine.updater.exec.extended.LegacyRemovalPumpStreamHandler;
 import org.opendatakit.appengine.updater.exec.extended.MonitoredPumpStreamHandler;
 
 /**
@@ -164,103 +163,6 @@ public class AppCfgWrapper {
     }
   }
 
-
-  public static void listBackends(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
-    AppCfgActions action = AppCfgActions.listBackends;
-    InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-
-    iObj.cmdLine.addArgument("--sdk_root=${sdk_root}");
-    iObj.cmdLine.addArgument("--email=${email}");
-    iObj.cmdLine.addArgument("backends");
-    iObj.cmdLine.addArgument("${legacy_install}");
-    iObj.cmdLine.addArgument("list");
-
-    File outlog = new File(args.install_root, action.name() + ".stdout.log");
-    File errlog = new File(args.install_root, action.name() + ".stderr.log");
-    try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
-      executionHandler.setExecuteStreamHandler(handler);
-      iObj.executor.setStreamHandler(handler);
-      iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.FILE_NOT_FOUND_EXCEPTION), -1, e));
-    } catch (ExecuteException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.IO_EXCEPTION), -1, e));
-    }
-  }
-
-
-  public static void deleteBackendBackground(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
-    AppCfgActions action = AppCfgActions.deleteBackendBackground;
-    InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-
-    iObj.cmdLine.addArgument("--sdk_root=${sdk_root}");
-    iObj.cmdLine.addArgument("--email=${email}");
-    iObj.cmdLine.addArgument("backends");
-    iObj.cmdLine.addArgument("${legacy_install}");
-    iObj.cmdLine.addArgument("delete");
-    iObj.cmdLine.addArgument("background");
-
-    File outlog = new File(args.install_root, action.name() + ".stdout.log");
-    File errlog = new File(args.install_root, action.name() + ".stderr.log");
-    try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
-      executionHandler.setExecuteStreamHandler(handler);
-      iObj.executor.setStreamHandler(handler);
-      iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.FILE_NOT_FOUND_EXCEPTION), -1, e));
-    } catch (ExecuteException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.IO_EXCEPTION), -1, e));
-    }
-  }
-
-
-  /**
-   * This does not work. Version is required but cannot be passed into appcfg.
-   *
-   * @param args
-   * @param executionHandler
-   */
-  public static void deleteModuleBackground(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
-    AppCfgActions action = AppCfgActions.deleteModuleBackground;
-    InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-
-    iObj.cmdLine.addArgument("--sdk_root=${sdk_root}");
-    iObj.cmdLine.addArgument("--email=${email}");
-    iObj.cmdLine.addArgument("--module=background");
-    iObj.cmdLine.addArgument("--version=1");
-    iObj.cmdLine.addArgument("delete_version");
-    iObj.cmdLine.addArgument("${legacy_install}");
-
-    File outlog = new File(args.install_root, action.name() + ".stdout.log");
-    File errlog = new File(args.install_root, action.name() + ".stderr.log");
-    try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
-      executionHandler.setExecuteStreamHandler(handler);
-      iObj.executor.setStreamHandler(handler);
-      iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.FILE_NOT_FOUND_EXCEPTION), -1, e));
-    } catch (ExecuteException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.IO_EXCEPTION), -1, e));
-    }
-  }
 
   public static void update(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
     AppCfgActions action = AppCfgActions.update;
