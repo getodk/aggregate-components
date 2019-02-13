@@ -688,7 +688,7 @@ public class UpdaterWindow implements WindowListener {
     }
   }
 
-  enum StepState {GET_TOKEN, VERIFY_TOKEN, UPDATE, UPDATE_BACKGROUND, ROLLBACK, DONE, ABORTED}
+  enum StepState {GET_TOKEN, VERIFY_TOKEN, UPDATE, ROLLBACK, DONE, ABORTED}
 
   class DeleteTokenActionListener implements ActionListener {
 
@@ -740,13 +740,6 @@ public class UpdaterWindow implements WindowListener {
           setActiveHandler(executionHandler);
           updateUI();
           AppCfgWrapper.update(args, executionHandler);
-          break;
-        case UPDATE_BACKGROUND:
-          // update
-          executionHandler = new StateExecuteResultHandler(StepState.DONE, StepState.ABORTED);
-          setActiveHandler(executionHandler);
-          updateUI();
-          AppCfgWrapper.updateBackendBackground(args, executionHandler);
           break;
         case ROLLBACK:
           // rollback
