@@ -688,7 +688,7 @@ public class UpdaterWindow implements WindowListener {
     }
   }
 
-  enum StepState {GET_TOKEN, VERIFY_TOKEN, LIST_BACKENDS, DELETE_BACKENDS, DELETE_MODULE_BACKGROUND, UPDATE, UPDATE_BACKGROUND, ROLLBACK, DONE, ABORTED}
+  enum StepState {GET_TOKEN, VERIFY_TOKEN, UPDATE, UPDATE_BACKGROUND, ROLLBACK, DONE, ABORTED}
 
   class DeleteTokenActionListener implements ActionListener {
 
@@ -733,29 +733,6 @@ public class UpdaterWindow implements WindowListener {
           setActiveHandler(executionHandler);
           updateUI();
           AppCfgWrapper.getToken(args, executionHandler);
-          break;
-        case LIST_BACKENDS:
-          // list the backends; whether or not it is ok, delete the background backend.
-          executionHandler = new StateExecuteResultHandler(StepState.DELETE_BACKENDS, StepState.ABORTED);
-          setActiveHandler(executionHandler);
-          updateUI();
-          AppCfgWrapper.listBackends(args, executionHandler);
-          break;
-        case DELETE_BACKENDS:
-          // delete the background backend; then either remove the background module or update.
-          // TODO: add this once appcfg supports deleting modules
-          // nextState = (args.hasNewRemoval() ? StepState.DELETE_MODULE_BACKGROUND : StepState.UPDATE);
-          executionHandler = new StateExecuteResultHandler(StepState.UPDATE, StepState.ABORTED);
-          setActiveHandler(executionHandler);
-          updateUI();
-          AppCfgWrapper.deleteBackendBackground(args, executionHandler);
-          break;
-        case DELETE_MODULE_BACKGROUND:
-          // delete the background backend; whether or not it is ok, update.
-          executionHandler = new StateExecuteResultHandler(StepState.UPDATE, StepState.ABORTED);
-          setActiveHandler(executionHandler);
-          updateUI();
-          AppCfgWrapper.deleteModuleBackground(args, executionHandler);
           break;
         case UPDATE:
           // update
