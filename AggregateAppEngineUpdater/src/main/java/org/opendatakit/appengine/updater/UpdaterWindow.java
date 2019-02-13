@@ -736,8 +736,7 @@ public class UpdaterWindow implements WindowListener {
           break;
         case UPDATE:
           // update
-          nextState = (args.isLegacyUpload() ? StepState.UPDATE_BACKGROUND : StepState.DONE);
-          executionHandler = new StateExecuteResultHandler(nextState, StepState.ABORTED);
+          executionHandler = new StateExecuteResultHandler(StepState.DONE, StepState.ABORTED);
           setActiveHandler(executionHandler);
           updateUI();
           AppCfgWrapper.update(args, executionHandler);
@@ -810,7 +809,7 @@ public class UpdaterWindow implements WindowListener {
       // execute appCfg
       EffectiveArgumentValues args = getArgs();
 
-      StateExecuteResultHandler executionHandler = new StateExecuteResultHandler((args.isLegacyUpload() ? StepState.UPDATE_BACKGROUND : StepState.DONE), StepState.ABORTED);
+      StateExecuteResultHandler executionHandler = new StateExecuteResultHandler(StepState.DONE, StepState.ABORTED);
       setActiveHandler(executionHandler);
       updateUI();
 

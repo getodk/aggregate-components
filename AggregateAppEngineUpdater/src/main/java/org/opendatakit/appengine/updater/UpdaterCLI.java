@@ -110,18 +110,6 @@ public class UpdaterCLI {
         return;
       }
 
-      if (args.isLegacyUpload()) {
-        handler = new DefaultExecuteResultHandler();
-        AppCfgWrapper.updateBackendBackground(args, handler);
-        handler.waitFor();
-        if (handler.getException() != null) {
-          System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
-              UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
-          System.exit(-1);
-          return;
-        }
-      }
-
       System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
           UpdaterWindow.t(TranslatedStrings.SUCCEEDED_ACTION));
       System.exit(0);

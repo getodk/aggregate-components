@@ -39,11 +39,4 @@ public class EffectiveArgumentValues {
     return (newRemoval.exists());
   }
 
-  /**
-   * @return true if we are attempting an upload of a legacy backends install.
-   */
-  public boolean isLegacyUpload() {
-    return false;
-  }
-
 }
