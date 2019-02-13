@@ -86,24 +86,6 @@ public class UpdaterCLI {
     if (cmd.hasOption(ArgumentNameConstants.UPLOAD)) {
 
       EffectiveArgumentValues args = getArgs(cmd);
-      handler = new DefaultExecuteResultHandler();
-      AppCfgWrapper.listBackends(args, handler);
-      handler.waitFor();
-      if (handler.getException() != null) {
-        System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
-            UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
-        System.exit(-1);
-        return;
-      }
-      handler = new DefaultExecuteResultHandler();
-      AppCfgWrapper.deleteBackendBackground(args, handler);
-      handler.waitFor();
-      if (handler.getException() != null) {
-        System.out.println(((MonitoredPumpStreamHandler) handler.getExecuteStreamHandler()).getAction().name() + ": " +
-            UpdaterWindow.t(TranslatedStrings.ABORTED_BY_USER_ACTION));
-        System.exit(-1);
-        return;
-      }
       // TODO: This is broken until appcfg can actually delete a module version
       /*
       if ( args.hasNewRemoval() ) {
