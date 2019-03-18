@@ -17,12 +17,10 @@
 package org.opendatakit.appengine.updater;
 
 /**
- * 
  * @author Admin
- *
  */
 public class ArgumentNameConstants {
-  
+
   public static final String EMAIL = "email";
   public static final String TOKEN_GRANTING_CODE = "code";
   public static final String HELP = "help";

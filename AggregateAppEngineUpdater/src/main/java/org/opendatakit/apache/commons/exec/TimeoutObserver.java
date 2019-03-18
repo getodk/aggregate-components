@@ -14,7 +14,7 @@
  * the License.
  */
 
-/* 
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -36,17 +36,16 @@ package org.opendatakit.apache.commons.exec;
 
 /**
  * Interface for classes that want to be notified by Watchdog.
- * 
- * @see org.opendatakit.apache.commons.exec.Watchdog
  *
  * @version $Id: TimeoutObserver.java 1556869 2014-01-09 16:51:11Z britter $
+ * @see org.opendatakit.apache.commons.exec.Watchdog
  */
 public interface TimeoutObserver {
 
-    /**
-     * Called when the watchdog times out.
-     * 
-     * @param w the watchdog that timed out.
-     */
-    void timeoutOccured(Watchdog w);
+  /**
+   * Called when the watchdog times out.
+   *
+   * @param w the watchdog that timed out.
+   */
+  void timeoutOccured(Watchdog w);
 }

@@ -21,13 +21,12 @@ import org.opendatakit.appengine.updater.exec.extended.MonitoredPumpStreamHandle
 /**
  * Event that is published when the "enter code:" prompt is detected
  * that requests a Google Token-Granting Authorization Code.
- * 
- * @author mitchellsundt@gmail.com
  *
+ * @author mitchellsundt@gmail.com
  */
 public class TokenRequestEvent {
   public final MonitoredPumpStreamHandler stream;
-  
+
   public TokenRequestEvent(MonitoredPumpStreamHandler stream) {
     this.stream = stream;
   }

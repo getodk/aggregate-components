@@ -25,22 +25,20 @@ import org.opendatakit.apache.commons.exec.CommandLine;
 import org.opendatakit.apache.commons.exec.DefaultExecutor;
 import org.opendatakit.apache.commons.exec.ExecuteException;
 import org.opendatakit.apache.commons.exec.ExecuteResultHandler;
-import org.opendatakit.appengine.updater.exec.extended.LegacyRemovalPumpStreamHandler;
 import org.opendatakit.appengine.updater.exec.extended.MonitoredPumpStreamHandler;
 
 /**
  * Static methods to configure an InvokationObject and execute an appCfg command.
  * The passed-in ExecuteResultHandler manages the outcome of the execution.
- *  
- * @author mitchellsundt@gmail.com
  *
+ * @author mitchellsundt@gmail.com
  */
 public class AppCfgWrapper {
-  
+
   /**
-   * Attempt to return a File object that holds the 
+   * Attempt to return a File object that holds the
    * oauth2 tokens.
-   *  
+   *
    * @return null if a suitable home directory can't be found.
    */
   public static File locateTokenFile() {
@@ -51,12 +49,12 @@ public class AppCfgWrapper {
       althome = "C:\\Users\\" + username;
     }
     File dirHome = new File(userhome);
-    if ( !dirHome.exists() ) {
-      if ( althome == null ) {
+    if (!dirHome.exists()) {
+      if (althome == null) {
         return null;
       } else {
         dirHome = new File(althome);
-        if ( !dirHome.exists() ) {
+        if (!dirHome.exists()) {
           return null;
         }
       }
@@ -67,37 +65,37 @@ public class AppCfgWrapper {
 
   /**
    * When invoking Java, or the tools, everything is entirely broken w.r.t. spaces appearing
-   * in the path and file names. The underlying implementation uses ProcessBuilder to 
-   * construct the process. But even though we pass an array of arguments, these appear to 
+   * in the path and file names. The underlying implementation uses ProcessBuilder to
+   * construct the process. But even though we pass an array of arguments, these appear to
    * be appended before invoking the command, causing everything to break if these have spaces
-   * regardless of what escaping or quoting we do for Linux. 
-   * 
+   * regardless of what escaping or quoting we do for Linux.
+   * <p>
    * Therefore, we force the current working directory to be the directory containing this jar
-   * and then reference everything as a relative path from this jar location. This eliminates 
+   * and then reference everything as a relative path from this jar location. This eliminates
    * the need for spaces in any of the arguments.
-   * 
+   *
    * @param args
    * @return
    */
   private static InvokationObject buildAppCfgInvokation(EffectiveArgumentValues args, int millisecondTimeout) {
     File app;
-    // all the scripts are crap. 
+    // all the scripts are crap.
     // directly launch java
     // we already know it is Java 7.
     // we already know where it is.
-    
+
     InvokationObject iObj = new InvokationObject();
 
     System.out.println(args.install_root.getAbsolutePath());
 
     // point environment to the android sdk
-    iObj.envMap = new HashMap<String,String>(System.getenv());
+    iObj.envMap = new HashMap<String, String>(System.getenv());
 //    File sdk_root = new File(args.install_root, APP_ENGINE_SDK_DIRNAME);
 //    iObj.envMap.put("ANDROID_HOME", sdk_root.getAbsolutePath());
 
     // substitution map
-    iObj.substitutionMap = new HashMap<String,Object>();
-    iObj.substitutionMap.put("email",  args.email);
+    iObj.substitutionMap = new HashMap<String, Object>();
+    iObj.substitutionMap.put("email", args.email);
     iObj.substitutionMap.put("sdk_root", "." + File.separator + Preferences.APP_ENGINE_SDK_DIRNAME);
     iObj.substitutionMap.put("legacy_install", "." + File.separator + Preferences.LEGACY_REMOVAL_DIRNAME);
     iObj.substitutionMap.put("modules_install", "." + File.separator + Preferences.ODK_AGGREGATE_EAR_DIRNAME);
@@ -108,11 +106,11 @@ public class AppCfgWrapper {
 
     // find java and declare it as the executable
     String javahome = System.getProperty("java.home");
-    if ( javahome == null ) {
+    if (javahome == null) {
       throw new IllegalStateException("unable to find java.home property");
     }
     System.out.println("java.home path: " + javahome);
-    app = new File( new File( new File(javahome), "bin"), "java");
+    app = new File(new File(new File(javahome), "bin"), "java");
     System.out.println("java.home java path: " + app.getAbsolutePath());
     iObj.cmdLine = new CommandLine(app);
     iObj.cmdLine.setSubstitutionMap(iObj.substitutionMap);
@@ -133,19 +131,19 @@ public class AppCfgWrapper {
 
     return iObj;
   }
-  
+
   public static void getToken(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
     AppCfgActions action = AppCfgActions.getToken;
     InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-    
-    if ( args.token_granting_code != null ) {
+
+    if (args.token_granting_code != null) {
       action = AppCfgActions.verifyToken;
     }
 
     iObj.cmdLine.addArgument("--email=${email}");
     iObj.cmdLine.addArgument("resource_limits_info");
     iObj.cmdLine.addArgument("${legacy_install}");
-    
+
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {
@@ -165,103 +163,6 @@ public class AppCfgWrapper {
     }
   }
 
-
-  public static void listBackends(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
-    AppCfgActions action = AppCfgActions.listBackends;
-    InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-
-    iObj.cmdLine.addArgument("--sdk_root=${sdk_root}");
-    iObj.cmdLine.addArgument("--email=${email}");
-    iObj.cmdLine.addArgument("backends");
-    iObj.cmdLine.addArgument("${legacy_install}");
-    iObj.cmdLine.addArgument("list");
-
-    File outlog = new File(args.install_root, action.name() + ".stdout.log");
-    File errlog = new File(args.install_root, action.name() + ".stderr.log");
-    try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
-      executionHandler.setExecuteStreamHandler(handler);
-      iObj.executor.setStreamHandler(handler);
-      iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.FILE_NOT_FOUND_EXCEPTION), -1, e));
-    } catch (ExecuteException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.IO_EXCEPTION), -1, e));
-    }
-  }
-
-
-  public static void deleteBackendBackground(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
-    AppCfgActions action = AppCfgActions.deleteBackendBackground;
-    InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-
-    iObj.cmdLine.addArgument("--sdk_root=${sdk_root}");
-    iObj.cmdLine.addArgument("--email=${email}");
-    iObj.cmdLine.addArgument("backends");
-    iObj.cmdLine.addArgument("${legacy_install}");
-    iObj.cmdLine.addArgument("delete");
-    iObj.cmdLine.addArgument("background");
-    
-    File outlog = new File(args.install_root, action.name() + ".stdout.log");
-    File errlog = new File(args.install_root, action.name() + ".stderr.log");
-    try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
-      executionHandler.setExecuteStreamHandler(handler);
-      iObj.executor.setStreamHandler(handler);
-      iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.FILE_NOT_FOUND_EXCEPTION), -1, e));
-    } catch (ExecuteException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.IO_EXCEPTION), -1, e));
-    }
-  }
-
-
-  /**
-   * This does not work. Version is required but cannot be passed into appcfg.
-   * 
-   * @param args
-   * @param executionHandler
-   */
-  public static void deleteModuleBackground(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
-    AppCfgActions action = AppCfgActions.deleteModuleBackground;
-    InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-
-    iObj.cmdLine.addArgument("--sdk_root=${sdk_root}");
-    iObj.cmdLine.addArgument("--email=${email}");
-    iObj.cmdLine.addArgument("--module=background");
-    iObj.cmdLine.addArgument("--version=1");
-    iObj.cmdLine.addArgument("delete_version");
-    iObj.cmdLine.addArgument("${legacy_install}");
-    
-    File outlog = new File(args.install_root, action.name() + ".stdout.log");
-    File errlog = new File(args.install_root, action.name() + ".stderr.log");
-    try {
-      LegacyRemovalPumpStreamHandler handler = new LegacyRemovalPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
-      executionHandler.setExecuteStreamHandler(handler);
-      iObj.executor.setStreamHandler(handler);
-      iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.FILE_NOT_FOUND_EXCEPTION), -1, e));
-    } catch (ExecuteException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.IO_EXCEPTION), -1, e));
-    }
-  }
 
   public static void update(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
     AppCfgActions action = AppCfgActions.update;
@@ -271,37 +172,7 @@ public class AppCfgWrapper {
     iObj.cmdLine.addArgument("--email=${email}");
     iObj.cmdLine.addArgument("update");
     iObj.cmdLine.addArgument("${modules_install}");
-    
-    File outlog = new File(args.install_root, action.name() + ".stdout.log");
-    File errlog = new File(args.install_root, action.name() + ".stderr.log");
-    try {
-      MonitoredPumpStreamHandler handler = new MonitoredPumpStreamHandler(args.token_granting_code, action, outlog, errlog);
-      executionHandler.setExecuteStreamHandler(handler);
-      iObj.executor.setStreamHandler(handler);
-      iObj.executor.execute(iObj.cmdLine, iObj.envMap, executionHandler);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.FILE_NOT_FOUND_EXCEPTION), -1, e));
-    } catch (ExecuteException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      executionHandler.onProcessFailed(new ExecuteException(UpdaterWindow.t(TranslatedStrings.IO_EXCEPTION), -1, e));
-    }
-  }
 
-
-  public static void updateBackendBackground(EffectiveArgumentValues args, ExecuteResultHandler executionHandler) {
-    AppCfgActions action = AppCfgActions.updateBackendBackground;
-    InvokationObject iObj = buildAppCfgInvokation(args, 60000);
-
-    iObj.cmdLine.addArgument("--sdk_root=${sdk_root}");
-    iObj.cmdLine.addArgument("--email=${email}");
-    iObj.cmdLine.addArgument("backends");
-    iObj.cmdLine.addArgument("update");
-    iObj.cmdLine.addArgument("${modules_install}");
-    
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {
@@ -330,7 +201,7 @@ public class AppCfgWrapper {
     iObj.cmdLine.addArgument("--email=${email}");
     iObj.cmdLine.addArgument("rollback");
     iObj.cmdLine.addArgument("${modules_install}");
-    
+
     File outlog = new File(args.install_root, action.name() + ".stdout.log");
     File errlog = new File(args.install_root, action.name() + ".stderr.log");
     try {

@@ -40,14 +40,14 @@ import java.util.Map;
  * The default class to start a subprocess. The implementation
  * allows to
  * <ul>
- *  <li>set a current working directory for the subprocess</li>
- *  <li>provide a set of environment variables passed to the subprocess</li>
- *  <li>capture the subprocess output of stdout and stderr using an ExecuteStreamHandler</li>
- *  <li>kill long-running processes using an ExecuteWatchdog</li>
- *  <li>define a set of expected exit values</li>
- *  <li>terminate any started processes when the main process is terminating using a ProcessDestroyer</li>
+ * <li>set a current working directory for the subprocess</li>
+ * <li>provide a set of environment variables passed to the subprocess</li>
+ * <li>capture the subprocess output of stdout and stderr using an ExecuteStreamHandler</li>
+ * <li>kill long-running processes using an ExecuteWatchdog</li>
+ * <li>define a set of expected exit values</li>
+ * <li>terminate any started processes when the main process is terminating using a ProcessDestroyer</li>
  * </ul>
- *
+ * <p>
  * The following example shows the basic usage:
  *
  * <pre>
@@ -60,362 +60,363 @@ import java.util.Map;
  */
 public class DefaultExecutor implements Executor {
 
-    /** taking care of output and error stream */
-    private ExecuteStreamHandler streamHandler;
+  /**
+   * taking care of output and error stream
+   */
+  private ExecuteStreamHandler streamHandler;
 
-    /** the working directory of the process */
-    private File workingDirectory;
+  /**
+   * the working directory of the process
+   */
+  private File workingDirectory;
 
-    /** monitoring of long running processes */
-    private ExecuteWatchdog watchdog;
+  /**
+   * monitoring of long running processes
+   */
+  private ExecuteWatchdog watchdog;
 
-    /** optional cleanup of started processes */ 
-    private ProcessDestroyer processDestroyer;
+  /**
+   * optional cleanup of started processes
+   */
+  private ProcessDestroyer processDestroyer;
 
-    /** worker thread for asynchronous execution */
-    private Thread executorThread;
+  /**
+   * worker thread for asynchronous execution
+   */
+  private Thread executorThread;
 
-    /** the first exception being caught to be thrown to the caller */
-    private IOException exceptionCaught;
+  /**
+   * the first exception being caught to be thrown to the caller
+   */
+  private IOException exceptionCaught;
 
-    /**
-     * Default constructor creating a default {@code PumpStreamHandler}
-     * and sets the working directory of the subprocess to the current
-     * working directory.
-     *
-     * The {@code PumpStreamHandler} pumps the output of the subprocess
-     * into our {@code System.out} and {@code System.err} to avoid
-     * into our {@code System.out} and {@code System.err} to avoid
-     * a blocked or deadlocked subprocess (see{@link java.lang.Process Process}).
-     */
-    public DefaultExecutor() {
-        this.streamHandler = new PumpStreamHandler();
-        this.workingDirectory = new File(".");
-        this.exceptionCaught = null;
+  /**
+   * Default constructor creating a default {@code PumpStreamHandler}
+   * and sets the working directory of the subprocess to the current
+   * working directory.
+   * <p>
+   * The {@code PumpStreamHandler} pumps the output of the subprocess
+   * into our {@code System.out} and {@code System.err} to avoid
+   * into our {@code System.out} and {@code System.err} to avoid
+   * a blocked or deadlocked subprocess (see{@link java.lang.Process Process}).
+   */
+  public DefaultExecutor() {
+    this.streamHandler = new PumpStreamHandler();
+    this.workingDirectory = new File(".");
+    this.exceptionCaught = null;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#getStreamHandler()
+   */
+  public ExecuteStreamHandler getStreamHandler() {
+    return streamHandler;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#setStreamHandler(org.opendatakit.apache.commons.exec.ExecuteStreamHandler)
+   */
+  public void setStreamHandler(final ExecuteStreamHandler streamHandler) {
+    this.streamHandler = streamHandler;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#getWatchdog()
+   */
+  public ExecuteWatchdog getWatchdog() {
+    return watchdog;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#setWatchdog(org.opendatakit.apache.commons.exec.ExecuteWatchdog)
+   */
+  public void setWatchdog(final ExecuteWatchdog watchDog) {
+    this.watchdog = watchDog;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#getProcessDestroyer()
+   */
+  public ProcessDestroyer getProcessDestroyer() {
+    return this.processDestroyer;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#setProcessDestroyer(ProcessDestroyer)
+   */
+  public void setProcessDestroyer(final ProcessDestroyer processDestroyer) {
+    this.processDestroyer = processDestroyer;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#getWorkingDirectory()
+   */
+  public File getWorkingDirectory() {
+    return workingDirectory;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#setWorkingDirectory(java.io.File)
+   */
+  public void setWorkingDirectory(final File dir) {
+    this.workingDirectory = dir;
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine)
+   */
+  public int execute(final CommandLine command) throws
+      IOException {
+    return execute(command, (Map<String, String>) null);
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine, java.util.Map)
+   */
+  public int execute(final CommandLine command, final Map<String, String> environment)
+      throws IOException {
+
+    if (workingDirectory != null && !workingDirectory.exists()) {
+      throw new IOException(workingDirectory + " doesn't exist.");
     }
 
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#getStreamHandler()
-     */
-    public ExecuteStreamHandler getStreamHandler() {
-        return streamHandler;
+    return executeInternal(command, environment, workingDirectory, streamHandler);
+
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine,
+   *     org.opendatakit.apache.commons.exec.ExecuteResultHandler)
+   */
+  public void execute(final CommandLine command, final ExecuteResultHandler handler)
+      throws IOException {
+    execute(command, null, handler);
+  }
+
+  /**
+   * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine,
+   *     java.util.Map, org.opendatakit.apache.commons.exec.ExecuteResultHandler)
+   */
+  public void execute(final CommandLine command, final Map<String, String> environment,
+                      final ExecuteResultHandler handler) throws IOException {
+
+    if (workingDirectory != null && !workingDirectory.exists()) {
+      throw new IOException(workingDirectory + " doesn't exist.");
     }
 
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#setStreamHandler(org.opendatakit.apache.commons.exec.ExecuteStreamHandler)
-     */
-    public void setStreamHandler(final ExecuteStreamHandler streamHandler) {
-        this.streamHandler = streamHandler;
+    if (watchdog != null) {
+      watchdog.setProcessNotStarted();
     }
 
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#getWatchdog()
-     */
-    public ExecuteWatchdog getWatchdog() {
-        return watchdog;
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#setWatchdog(org.opendatakit.apache.commons.exec.ExecuteWatchdog)
-     */
-    public void setWatchdog(final ExecuteWatchdog watchDog) {
-        this.watchdog = watchDog;
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#getProcessDestroyer()
-     */
-    public ProcessDestroyer getProcessDestroyer() {
-      return this.processDestroyer;
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#setProcessDestroyer(ProcessDestroyer)
-     */
-    public void setProcessDestroyer(final ProcessDestroyer processDestroyer) {
-      this.processDestroyer = processDestroyer;
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#getWorkingDirectory()
-     */
-    public File getWorkingDirectory() {
-        return workingDirectory;
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#setWorkingDirectory(java.io.File)
-     */
-    public void setWorkingDirectory(final File dir) {
-        this.workingDirectory = dir;
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine)
-     */
-    public int execute(final CommandLine command) throws ExecuteException,
-            IOException {
-        return execute(command, (Map<String, String>) null);
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine, java.util.Map)
-     */
-    public int execute(final CommandLine command, final Map<String, String> environment)
-            throws ExecuteException, IOException {
-
-        if (workingDirectory != null && !workingDirectory.exists()) {
-            throw new IOException(workingDirectory + " doesn't exist.");
-        }
-        
-        return executeInternal(command, environment, workingDirectory, streamHandler);
-
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine,
-     *      org.opendatakit.apache.commons.exec.ExecuteResultHandler)
-     */
-    public void execute(final CommandLine command, final ExecuteResultHandler handler)
-            throws ExecuteException, IOException {
-        execute(command, null, handler);
-    }
-
-    /**
-     * @see org.opendatakit.apache.commons.exec.Executor#execute(CommandLine,
-     *      java.util.Map, org.opendatakit.apache.commons.exec.ExecuteResultHandler)
-     */
-    public void execute(final CommandLine command, final Map<String, String> environment,
-            final ExecuteResultHandler handler) throws ExecuteException, IOException {
-
-        if (workingDirectory != null && !workingDirectory.exists()) {
-            throw new IOException(workingDirectory + " doesn't exist.");
-        }
-
-        if (watchdog != null) {
-            watchdog.setProcessNotStarted();
-        }
-
-        final Runnable runnable = new Runnable()
-        {
-            public void run()
-            {
-                int exitValue = Executor.INVALID_EXITVALUE;
-                try {
-                    exitValue = executeInternal(command, environment, workingDirectory, streamHandler);
-                    handler.onProcessComplete(exitValue);
-                } catch (final ExecuteException e) {
-                    handler.onProcessFailed(e);
-                } catch (final Exception e) {
-                    handler.onProcessFailed(new ExecuteException("Execution failed", exitValue, e));
-                }
-            }
-        };
-
-        this.executorThread = createThread(runnable, "Exec Default Executor");
-        getExecutorThread().start();
-    }
-
-    /**
-     * Factory method to create a thread waiting for the result of an
-     * asynchronous execution.
-     *
-     * @param runnable the runnable passed to the thread
-     * @param name the name of the thread
-     * @return the thread
-     */
-    protected Thread createThread(final Runnable runnable, final String name) {
-        return new Thread(runnable, name);
-    }
-
-    /**
-     * Creates a process that runs a command.
-     *
-     * @param command
-     *            the command to run
-     * @param env
-     *            the environment for the command
-     * @param dir
-     *            the working directory for the command
-     * @return the process started
-     * @throws IOException
-     *             forwarded from the particular launcher used
-     */
-    protected Process launch(final CommandLine command, final Map<String, String> env,
-            final File workingDir) throws IOException {
-
-        if (workingDir != null && !workingDir.exists()) {
-            throw new IOException(workingDir.getAbsolutePath() + " doesn't exist.");
-        }
-
-        final String[] cmdParts = command.toStrings();
-        System.out.println("cmd issued:");
-        for ( String s : cmdParts ) {
-          System.out.println(s);
-        }
-        System.out.println("<END>");
-        ProcessBuilder pb = new ProcessBuilder(cmdParts);
-        pb.environment().putAll(env);
-        pb.directory(workingDir);
-        pb.redirectErrorStream(false);
-      
-        return pb.start();
-    }
-
-    /**
-     * Get the worker thread being used for asynchronous execution.
-     *
-     * @return the worker thread
-     */
-    protected Thread getExecutorThread() {
-        return executorThread;
-    }
-    
-    /**
-     * Close the streams belonging to the given Process.
-     *
-     * @param process the <CODE>Process</CODE>.
-     */
-    private void closeProcessStreams(final Process process) {
-
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        int exitValue = Executor.INVALID_EXITVALUE;
         try {
-            process.getInputStream().close();
+          exitValue = executeInternal(command, environment, workingDirectory, streamHandler);
+          handler.onProcessComplete(exitValue);
+        } catch (final ExecuteException e) {
+          handler.onProcessFailed(e);
+        } catch (final Exception e) {
+          handler.onProcessFailed(new ExecuteException("Execution failed", exitValue, e));
         }
-        catch (final IOException e) {
-            setExceptionCaught(e);
-        }
+      }
+    };
 
-        try {
-            process.getOutputStream().close();
-        }
-        catch (final IOException e) {
-            setExceptionCaught(e);
-        }
+    this.executorThread = createThread(runnable, "Exec Default Executor");
+    getExecutorThread().start();
+  }
 
-        try {
-            process.getErrorStream().close();
-        }
-        catch (final IOException e) {
-            setExceptionCaught(e);
-        }
+  /**
+   * Factory method to create a thread waiting for the result of an
+   * asynchronous execution.
+   *
+   * @param runnable the runnable passed to the thread
+   * @param name     the name of the thread
+   * @return the thread
+   */
+  protected Thread createThread(final Runnable runnable, final String name) {
+    return new Thread(runnable, name);
+  }
+
+  /**
+   * Creates a process that runs a command.
+   *
+   * @param command the command to run
+   * @param env     the environment for the command
+   * @param dir     the working directory for the command
+   * @return the process started
+   * @throws IOException forwarded from the particular launcher used
+   */
+  protected Process launch(final CommandLine command, final Map<String, String> env,
+                           final File workingDir) throws IOException {
+
+    if (workingDir != null && !workingDir.exists()) {
+      throw new IOException(workingDir.getAbsolutePath() + " doesn't exist.");
     }
 
-    /**
-     * Execute an internal process. If the executing thread is interrupted while waiting for the
-     * child process to return the child process will be killed.
-     *
-     * @param command the command to execute
-     * @param environment the execution environment
-     * @param dir the working directory
-     * @param streams process the streams (in, out, err) of the process
-     * @return the exit code of the process
-     * @throws IOException executing the process failed
-     */
-    private int executeInternal(final CommandLine command, final Map<String, String> environment,
-            final File dir, final ExecuteStreamHandler streams) throws IOException {
+    final String[] cmdParts = command.toStrings();
+    System.out.println("cmd issued:");
+    for (String s : cmdParts) {
+      System.out.println(s);
+    }
+    System.out.println("<END>");
+    ProcessBuilder pb = new ProcessBuilder(cmdParts);
+    pb.environment().putAll(env);
+    pb.directory(workingDir);
+    pb.redirectErrorStream(false);
 
-        setExceptionCaught(null);
+    return pb.start();
+  }
 
-        final Process process = this.launch(command, environment, dir);
+  /**
+   * Get the worker thread being used for asynchronous execution.
+   *
+   * @return the worker thread
+   */
+  protected Thread getExecutorThread() {
+    return executorThread;
+  }
 
-        // this also starts the streams
+  /**
+   * Close the streams belonging to the given Process.
+   *
+   * @param process the <CODE>Process</CODE>.
+   */
+  private void closeProcessStreams(final Process process) {
+
+    try {
+      process.getInputStream().close();
+    } catch (final IOException e) {
+      setExceptionCaught(e);
+    }
+
+    try {
+      process.getOutputStream().close();
+    } catch (final IOException e) {
+      setExceptionCaught(e);
+    }
+
+    try {
+      process.getErrorStream().close();
+    } catch (final IOException e) {
+      setExceptionCaught(e);
+    }
+  }
+
+  /**
+   * Execute an internal process. If the executing thread is interrupted while waiting for the
+   * child process to return the child process will be killed.
+   *
+   * @param command     the command to execute
+   * @param environment the execution environment
+   * @param dir         the working directory
+   * @param streams     process the streams (in, out, err) of the process
+   * @return the exit code of the process
+   * @throws IOException executing the process failed
+   */
+  private int executeInternal(final CommandLine command, final Map<String, String> environment,
+                              final File dir, final ExecuteStreamHandler streams) throws IOException {
+
+    setExceptionCaught(null);
+
+    final Process process = this.launch(command, environment, dir);
+
+    // this also starts the streams
+    try {
+      streams.setProcessInputStream(process.getOutputStream());
+      streams.setProcessOutputStream(process.getInputStream());
+      streams.setProcessErrorStream(process.getErrorStream());
+    } catch (final IOException e) {
+      streams.stop();
+      process.destroy();
+      throw e;
+    }
+
+    streams.start();
+
+    try {
+
+      // add the process to the list of those to destroy if the VM exits
+      if (this.getProcessDestroyer() != null) {
+        this.getProcessDestroyer().add(process);
+      }
+
+      // associate the watchdog with the newly created process
+      if (watchdog != null) {
+        watchdog.start(process);
+      }
+
+      int exitValue = Executor.INVALID_EXITVALUE;
+
+      try {
+        exitValue = process.waitFor();
+      } catch (final InterruptedException e) {
+        process.destroy();
+      } finally {
+        // see http://bugs.sun.com/view_bug.do?bug_id=6420270
+        // see https://issues.apache.org/jira/browse/EXEC-46
+        // Process.waitFor should clear interrupt status when throwing InterruptedException
+        // but we have to do that manually
+        Thread.interrupted();
+      }
+
+      if (watchdog != null) {
+        watchdog.stop();
+      }
+
+      try {
+        streams.stop();
+      } catch (final IOException e) {
+        setExceptionCaught(e);
+      }
+
+      closeProcessStreams(process);
+
+      if (getExceptionCaught() != null) {
+        throw getExceptionCaught();
+      }
+
+      if (watchdog != null) {
         try {
-            streams.setProcessInputStream(process.getOutputStream());
-            streams.setProcessOutputStream(process.getInputStream());
-            streams.setProcessErrorStream(process.getErrorStream());
+          watchdog.checkException();
         } catch (final IOException e) {
-            streams.stop();
-            process.destroy();
-            throw e;
+          throw e;
+        } catch (final Exception e) {
+          throw new IOException(e.getMessage());
         }
+      }
 
-        streams.start();
-        
-        try {
+      if (streams.isFailure(exitValue)) {
+        throw new ExecuteException("Process exited with an error: " + exitValue, exitValue);
+      }
 
-            // add the process to the list of those to destroy if the VM exits
-            if (this.getProcessDestroyer() != null) {
-              this.getProcessDestroyer().add(process);
-            }
-
-            // associate the watchdog with the newly created process
-            if (watchdog != null) {
-                watchdog.start(process);
-            }
-
-            int exitValue = Executor.INVALID_EXITVALUE;
-
-            try {
-                exitValue = process.waitFor();
-            } catch (final InterruptedException e) {
-                process.destroy();
-            }
-            finally {
-                // see http://bugs.sun.com/view_bug.do?bug_id=6420270
-                // see https://issues.apache.org/jira/browse/EXEC-46
-                // Process.waitFor should clear interrupt status when throwing InterruptedException
-                // but we have to do that manually
-                Thread.interrupted();
-            }            
-
-            if (watchdog != null) {
-                watchdog.stop();
-            }
-
-            try {
-                streams.stop();
-            }
-            catch (final IOException e) {
-                setExceptionCaught(e);
-            }
-
-            closeProcessStreams(process);
-
-            if (getExceptionCaught() != null) {
-                throw getExceptionCaught();
-            }
-
-            if (watchdog != null) {
-                try {
-                    watchdog.checkException();
-                } catch (final IOException e) {
-                    throw e;
-                } catch (final Exception e) {
-                    throw new IOException(e.getMessage());
-                }
-            }
-
-            if (streams.isFailure(exitValue)) {
-                throw new ExecuteException("Process exited with an error: " + exitValue, exitValue);
-            }
-
-            return exitValue;
-        } finally {
-            // remove the process to the list of those to destroy if the VM exits
-            if (this.getProcessDestroyer() != null) {
-              this.getProcessDestroyer().remove(process);
-            }
-        }
+      return exitValue;
+    } finally {
+      // remove the process to the list of those to destroy if the VM exits
+      if (this.getProcessDestroyer() != null) {
+        this.getProcessDestroyer().remove(process);
+      }
     }
+  }
 
-    /**
-     * Keep track of the first IOException being thrown.
-     *
-     * @param e the IOException
-     */
-    private void setExceptionCaught(final IOException e) {
-        if (this.exceptionCaught == null) {
-            this.exceptionCaught = e;
-        }
-    }
+  /**
+   * Get the first IOException being thrown.
+   *
+   * @return the first IOException being caught
+   */
+  private IOException getExceptionCaught() {
+    return this.exceptionCaught;
+  }
 
-    /**
-     * Get the first IOException being thrown.
-     *
-     * @return the first IOException being caught
-     */
-    private IOException getExceptionCaught() {
-        return this.exceptionCaught;
+  /**
+   * Keep track of the first IOException being thrown.
+   *
+   * @param e the IOException
+   */
+  private void setExceptionCaught(final IOException e) {
+    if (this.exceptionCaught == null) {
+      this.exceptionCaught = e;
     }
+  }
 
 }

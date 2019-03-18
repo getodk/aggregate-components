@@ -17,20 +17,18 @@
 package org.opendatakit.appengine.updater;
 
 import java.util.Map;
-
 import org.opendatakit.apache.commons.exec.CommandLine;
 import org.opendatakit.apache.commons.exec.DefaultExecutor;
 
 /**
- * Structure holding the pieces of configuration and action classes to 
+ * Structure holding the pieces of configuration and action classes to
  * execute the appCfg process with the appropriate parameters and context.
- * 
- * @author mitchellsundt@gmail.com
  *
+ * @author mitchellsundt@gmail.com
  */
 public class InvokationObject {
-  Map<String,Object> substitutionMap;
-  Map<String,String> envMap;
+  Map<String, Object> substitutionMap;
+  Map<String, String> envMap;
   DefaultExecutor executor;
   CommandLine cmdLine;
 }

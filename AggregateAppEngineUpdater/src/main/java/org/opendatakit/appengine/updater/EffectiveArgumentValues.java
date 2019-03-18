@@ -20,34 +20,24 @@ import java.io.File;
 
 /**
  * Argument values that are derived, perhaps modified in the UI, or supplied as command line arguments.
- * 
- * @author mitchellsundt@gmail.com
  *
+ * @author mitchellsundt@gmail.com
  */
 public class EffectiveArgumentValues {
 
   public File install_root;
   public String email;
   public String token_granting_code;
-  
+
   public boolean noGUI;
 
   /**
-   * 
    * @return true if the user has created a NewRemoval directory, indicating that modules should be removed.
    */
+  // TODO: This method has to do with the UpdaterCLI.run() method which has a commented block that would use it
   public boolean hasNewRemoval() {
     File newRemoval = new File(install_root, "NewRemoval");
     return (newRemoval.exists());
-  }
-  
-  /**
-   * 
-   * @return true if we are attempting an upload of a legacy backends install.
-   */
-  public boolean isLegacyUpload() {
-    File defaultPath = new File( new File(install_root, "ODKAggregate"), "default");
-    return !defaultPath.exists();
   }
 
 }
